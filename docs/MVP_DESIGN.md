@@ -37,6 +37,7 @@ The MVP should not:
 
 ```bash
 coprogrammer digest --base origin/main --head HEAD
+coprogrammer digest --base origin/main --head HEAD --language zh-CN
 coprogrammer digest --base origin/main --working-tree
 coprogrammer manifest validate path/to/change-manifest.json
 coprogrammer heartbeat new --agent agent-a --task "Implement backend API"

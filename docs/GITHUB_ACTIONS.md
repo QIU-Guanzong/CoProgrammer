@@ -16,6 +16,16 @@ On every PR open, synchronize, reopen, or ready-for-review event, the workflow:
 The workflow intentionally avoids autonomous code changes. It only creates a
 review artifact.
 
+## Language
+
+The workflow reads `COPROGRAMMER_LANGUAGE` from repository variables and
+defaults to `zh-CN`.
+
+Use:
+
+- `zh-CN` for Chinese PR digest comments;
+- `en` for English PR digest comments.
+
 ## Why Same-Repository PR Comments Only
 
 Fork PRs often run with restricted token permissions. The digest artifact is

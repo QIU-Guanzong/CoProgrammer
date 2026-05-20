@@ -13,6 +13,9 @@ permissions:
   issues: write
   pull-requests: write
 
+env:
+  COPROGRAMMER_LANGUAGE: ${{ vars.COPROGRAMMER_LANGUAGE || 'zh-CN' }}
+
 jobs:
   digest:
     runs-on: ubuntu-latest
@@ -27,7 +30,7 @@ jobs:
       - name: Fetch base branch
         run: |
           git remote add base "https://github.com/${{ github.repository }}.git"
-          git fetch base "${{ github.base_ref }}:refs/remotes/base/${{ github.base_ref }}" --depth=1
+          git fetch base "${{ github.base_ref }}:refs/remotes/base/${{ github.base_ref }}"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,6 +45,7 @@ jobs:
           coprogrammer digest \
             --base "base/${{ github.base_ref }}" \
             --head HEAD \
+            --language "$COPROGRAMMER_LANGUAGE" \
             --output branch-digest.md
 
       - name: Upload branch digest
@@ -54,4 +58,4 @@ jobs:
         if: github.event.pull_request.head.repo.full_name == github.repository
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: coprogrammer github-comment --file branch-digest.md
+        run: coprogrammer github-comment --file branch-digest.md --language "$COPROGRAMMER_LANGUAGE"

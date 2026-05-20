@@ -8,6 +8,8 @@ from coprogrammer.cli import (
     classify_risks,
     load_pull_request_number,
     new_heartbeat,
+    render_digest,
+    resolve_language,
     validate_manifest,
 )
 
@@ -25,6 +27,24 @@ class RiskClassificationTest(unittest.TestCase):
         self.assertIn("contract", risks)
         self.assertIn("security", risks)
         self.assertNotIn("build", risks)
+
+
+class LocalizationTest(unittest.TestCase):
+    def test_resolves_chinese_alias(self) -> None:
+        self.assertEqual(resolve_language("zh"), "zh-CN")
+
+    def test_render_digest_in_chinese(self) -> None:
+        digest = render_digest(
+            "origin/main",
+            "HEAD",
+            [{"status": "A", "path": "schemas/api.json"}],
+            ["abc123 Add API"],
+            "zh-CN",
+        )
+
+        self.assertIn("# 分支消化报告", digest)
+        self.assertIn("## 变更文件", digest)
+        self.assertIn("**共享契约**", digest)
 
 
 class ManifestValidationTest(unittest.TestCase):
@@ -80,6 +100,12 @@ class GitHubCommentTest(unittest.TestCase):
 
         self.assertLessEqual(len(body), 65000)
         self.assertIn("truncated", body)
+
+    def test_build_pr_comment_body_in_chinese(self) -> None:
+        body = build_pr_comment_body("# 分支消化报告", language="zh-CN")
+
+        self.assertIn("CoProgrammer 分支消化报告", body)
+        self.assertIn("由 CoProgrammer 生成", body)
 
     def test_load_pull_request_number(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

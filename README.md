@@ -3,6 +3,9 @@
 CoProgrammer is an open protocol and toolkit for multi-agent software
 development in the AI coding era.
 
+CoProgrammer 同时支持中文团队协作场景：PR 分支消化报告可以用
+`zh-CN` 输出，也可以通过仓库变量切回英文。
+
 The project starts from one practical belief:
 
 > AI-era merging is not only a text conflict problem. It is a semantic
@@ -60,10 +63,13 @@ This repository already contains a minimal local CLI prototype:
 
 ```bash
 python -m coprogrammer digest --base origin/main --head HEAD --output branch-digest.md
+python -m coprogrammer digest --base origin/main --head HEAD --language zh-CN
 python -m coprogrammer digest --base origin/main --working-tree
 python -m coprogrammer manifest validate templates/change-manifest.json
 python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
 ```
+
+Language can also be controlled by `COPROGRAMMER_LANGUAGE=en|zh-CN`.
 
 For local development:
 
