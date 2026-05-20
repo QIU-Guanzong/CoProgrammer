@@ -1,0 +1,57 @@
+name: Branch Digest
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request head
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Fetch base branch
+        run: |
+          git remote add base "https://github.com/${{ github.repository }}.git"
+          git fetch base "${{ github.base_ref }}:refs/remotes/base/${{ github.base_ref }}" --depth=1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install CoProgrammer
+        run: python -m pip install -e .
+
+      - name: Generate branch digest
+        run: |
+          coprogrammer digest \
+            --base "base/${{ github.base_ref }}" \
+            --head HEAD \
+            --output branch-digest.md
+
+      - name: Upload branch digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-digest
+          path: branch-digest.md
+
+      - name: Comment on pull request
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: coprogrammer github-comment --file branch-digest.md

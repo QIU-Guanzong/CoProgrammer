@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/branch-digest.schema.json",
+  "title": "CoProgrammer Branch Digest",
+  "type": "object",
+  "required": [
+    "branch_intent",
+    "core_contribution",
+    "non_essential_changes",
+    "contract_changes",
+    "architecture_conflicts",
+    "risk_level",
+    "integration_plan",
+    "human_decisions"
+  ],
+  "properties": {
+    "branch_intent": { "type": "string" },
+    "core_contribution": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "non_essential_changes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "contract_changes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "architecture_conflicts": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical", "unknown"]
+    },
+    "integration_plan": { "type": "string" },
+    "human_decisions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

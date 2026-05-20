@@ -1,0 +1,4 @@
+# Protocol and schema changes need explicit human review.
+/protocols/ @QIU-Guanzong
+/schemas/ @QIU-Guanzong
+/.github/ @QIU-Guanzong

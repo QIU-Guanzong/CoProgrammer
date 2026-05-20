@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/agent-heartbeat.schema.json",
+  "title": "CoProgrammer Agent Heartbeat",
+  "type": "object",
+  "required": [
+    "agent",
+    "task",
+    "timestamp",
+    "status",
+    "currently_editing",
+    "next_step",
+    "contracts_touched",
+    "blockers",
+    "insights"
+  ],
+  "properties": {
+    "agent": { "type": "string" },
+    "task": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "working", "blocked", "ready_for_review", "done"]
+    },
+    "currently_editing": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "next_step": { "type": "string" },
+    "contracts_touched": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "insights": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

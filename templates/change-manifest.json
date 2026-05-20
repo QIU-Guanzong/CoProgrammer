@@ -1,0 +1,9 @@
+{
+  "task": "Describe the assigned task",
+  "intent": "Explain the problem solved by this change",
+  "scope": "frontend | backend | docs | tests | tooling | other",
+  "core_changes": [],
+  "contracts": [],
+  "tests": [],
+  "risks": []
+}

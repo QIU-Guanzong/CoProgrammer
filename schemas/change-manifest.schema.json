@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/change-manifest.schema.json",
+  "title": "CoProgrammer Change Manifest",
+  "type": "object",
+  "required": [
+    "task",
+    "intent",
+    "scope",
+    "core_changes",
+    "contracts",
+    "tests",
+    "risks"
+  ],
+  "properties": {
+    "task": { "type": "string" },
+    "intent": { "type": "string" },
+    "scope": { "type": "string" },
+    "core_changes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "change_type", "compatibility"],
+        "properties": {
+          "name": { "type": "string" },
+          "change_type": {
+            "type": "string",
+            "enum": ["none", "additive", "breaking", "unknown"]
+          },
+          "compatibility": { "type": "string" }
+        }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

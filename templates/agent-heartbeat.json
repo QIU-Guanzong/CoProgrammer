@@ -1,0 +1,11 @@
+{
+  "agent": "agent-a",
+  "task": "Describe the active task",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "status": "working",
+  "currently_editing": [],
+  "next_step": "",
+  "contracts_touched": [],
+  "blockers": [],
+  "insights": []
+}
