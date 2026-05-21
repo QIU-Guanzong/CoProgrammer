@@ -24,6 +24,8 @@ Validation:
 
 - one real PR includes a branch digest;
 - reviewers can identify core contribution without reading the entire diff.
+- protected-path risk is visible in the digest;
+- project policy can be validated locally and in CI.
 
 ## Phase 1: Branch Digest Bot
 
@@ -45,8 +47,17 @@ Outputs:
 - noise and unrelated changes;
 - contract impact;
 - architecture risk;
+- protected path matches;
 - integration plan;
 - human decision list.
+
+Current implemented foundation:
+
+- local `coprogrammer digest`;
+- PR digest GitHub Action;
+- bilingual digest output;
+- `.coprogrammer.json` policy config;
+- protected-path risk scoring.
 
 ## Phase 2: Integration Patch Bot
 
@@ -61,6 +72,12 @@ Workflow:
 4. implement minimal patch;
 5. run validation;
 6. open integration PR with traceability to source branch.
+
+Required before implementation:
+
+- explicit human approval step;
+- validation command registry;
+- rollback plan format.
 
 ## Phase 3: Multi-Agent Orchestrator
 

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/integration-record.schema.json",
+  "title": "CoProgrammer Integration Record",
+  "type": "object",
+  "required": [
+    "source_branch",
+    "source_head",
+    "main_base",
+    "integration_branch",
+    "preserved_insights",
+    "dropped_changes",
+    "human_decisions",
+    "validation",
+    "outcome"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "source_branch": { "type": "string" },
+    "source_head": { "type": "string" },
+    "main_base": { "type": "string" },
+    "integration_branch": { "type": "string" },
+    "branch_digest": { "type": "string" },
+    "preserved_insights": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "dropped_changes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "human_decisions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string" },
+          "command": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed", "skipped", "not_applicable"]
+          },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["merged", "rejected", "needs_revision", "superseded"]
+    },
+    "protocol_updates": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

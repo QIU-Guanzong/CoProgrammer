@@ -46,6 +46,12 @@ CoProgrammer organizes collaboration as a continuous loop:
 └── .github/              PR template, issue templates, CI, and PR digest workflow
 ```
 
+Start with:
+
+- `docs/RESEARCH_LANDSCAPE.md` for current tool landscape and gaps;
+- `docs/ARCHITECTURE.md` for the system architecture;
+- `docs/FRAMEWORK.md` for the research framework.
+
 ## First MVP
 
 The first useful version is a **Branch Digest Bot**:
@@ -103,4 +109,5 @@ This is an early research and tooling scaffold. The current focus is:
 2. branch digest format;
 3. lightweight CLI;
 4. GitHub Action integration;
-5. later: semantic integration bot and multi-agent orchestrator.
+5. project policy and risk scoring;
+6. later: semantic integration bot and multi-agent orchestrator.

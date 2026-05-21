@@ -3,6 +3,10 @@
 This framework treats AI-assisted software development as a full collaboration
 cycle, not as a one-time merge conflict event.
 
+For the concrete system architecture, see `docs/ARCHITECTURE.md`. For the
+external tool landscape that motivates this design, see
+`docs/RESEARCH_LANDSCAPE.md`.
+
 ## Problem Statement
 
 Traditional merge tools ask:
@@ -58,6 +62,18 @@ After coding, a branch is not reviewed only as a raw diff. It is digested into:
 The integration agent starts from latest `main`, reads the branch digest, and
 rebuilds the smallest safe patch. The original feature branch becomes evidence,
 not the thing that must be merged directly.
+
+## Product Architecture Mapping
+
+The four-layer research framework maps to five product planes:
+
+| Research Layer | Product Plane |
+| --- | --- |
+| Protocol | Protocol Plane |
+| Collaboration Telemetry | Collaboration Telemetry Plane |
+| Branch Digestion | Branch Intelligence Plane |
+| Semantic Integration | Semantic Integration Plane |
+| Closed-loop learning | Feedback Plane |
 
 ## Closed Loop
 

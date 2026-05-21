@@ -1,0 +1,14 @@
+{
+  "$schema": "../schemas/integration-record.schema.json",
+  "source_branch": "feature/...",
+  "source_head": "<sha>",
+  "main_base": "main@<sha>",
+  "integration_branch": "integration/...",
+  "branch_digest": "branch-digest.md",
+  "preserved_insights": [],
+  "dropped_changes": [],
+  "human_decisions": [],
+  "validation": [],
+  "outcome": "needs_revision",
+  "protocol_updates": []
+}
