@@ -213,9 +213,12 @@ CoProgrammer should remain conservative:
    intent/core contribution sections.
 2. **Policy gates**: optionally fail PR checks when high-risk protected paths
    lack manifests or owner review.
-3. **Telemetry store**: collect agent heartbeats during development and surface
+3. **Discussion-backed research loop**: keep tool scans, architecture debates,
+   and reusable small-feature leads in Discussions before turning them into
+   executable issues.
+4. **Telemetry store**: collect agent heartbeats during development and surface
    conflict forecasts before PR creation.
-4. **Integration record writer**: write the record automatically from an
+5. **Integration record writer**: write the record automatically from an
    integration PR after validation.
-5. **Integration Patch Bot**: create a fresh branch from latest main and rebuild
+6. **Integration Patch Bot**: create a fresh branch from latest main and rebuild
    the minimal patch after human approval.

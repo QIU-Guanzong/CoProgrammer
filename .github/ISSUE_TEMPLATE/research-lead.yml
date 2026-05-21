@@ -1,0 +1,52 @@
+name: Research lead
+description: Track a similar project, paper, tool, or small feature that may influence CoProgrammer
+title: "[Research] "
+labels: ["research"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this issue form only when the research lead has an executable follow-up. For open-ended discussion, prefer GitHub Discussions.
+  - type: input
+    id: name
+    attributes:
+      label: Project or Feature
+      placeholder: reviewdog, Danger JS, GitWand, ...
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links
+      description: Source links, docs, repos, demos, papers, or discussion threads.
+      placeholder: |
+        - https://...
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Direct competitor
+        - Adjacent capability
+        - Reusable component
+        - Research-only reference
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: action
+    attributes:
+      label: Proposed Action
+      description: What should we do with this lead?
+      placeholder: Compare, integrate, borrow schema idea, add to docs, build spike, ignore.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What will make this research task complete?
+    validations:
+      required: true

@@ -1,0 +1,22 @@
+title: "[General] "
+labels: ["discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this space for broad CoProgrammer questions, coordination, and open-ended discussion.
+  - type: textarea
+    id: topic
+    attributes:
+      label: Topic / 主题
+      description: What should the community discuss?
+      placeholder: Describe the discussion topic.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / 背景
+      description: Share context, links, or examples.
+    validations:
+      required: false

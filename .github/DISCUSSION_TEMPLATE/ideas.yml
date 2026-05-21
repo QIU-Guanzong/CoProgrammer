@@ -1,0 +1,28 @@
+title: "[Idea] "
+labels: ["idea", "discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for product, protocol, or workflow ideas that are not ready to become implementation issues.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 问题
+      description: What collaboration or integration problem does this idea address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal / 方案
+      description: What should CoProgrammer do differently?
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / 风险
+      description: What could go wrong if we build this?
+    validations:
+      required: false

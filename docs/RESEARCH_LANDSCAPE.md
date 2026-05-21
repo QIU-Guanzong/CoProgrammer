@@ -7,6 +7,9 @@ current ecosystem can review, queue, test, and structurally merge code, but it
 does not yet provide a complete branch-intent digestion and semantic
 reintegration layer.
 
+For a living list of open-source adjacent projects and reusable small features,
+see `docs/OPEN_SOURCE_SCAN.md`.
+
 ## Key Finding
 
 The market already has strong tools for:

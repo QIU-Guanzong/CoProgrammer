@@ -1,0 +1,49 @@
+title: "[Research] "
+labels: ["research", "landscape"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to share similar projects, papers, tools, small reusable features, or prior art.
+  - type: input
+    id: name
+    attributes:
+      label: Project or Feature / 项目或功能
+      placeholder: reviewdog, Danger JS, GitWand, ...
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links / 链接
+      description: Add source links, docs, papers, repos, demos, or discussions.
+      placeholder: |
+        - https://...
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category / 分类
+      options:
+        - Direct competitor
+        - Adjacent capability
+        - Reusable component
+        - Research-only reference
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: relevance
+    attributes:
+      label: Relevance to CoProgrammer / 与 CoProgrammer 的关系
+      description: What can we reuse, integrate, compare against, or avoid?
+    validations:
+      required: true
+  - type: textarea
+    id: gaps
+    attributes:
+      label: Remaining Gap / 仍然缺什么
+      description: What does this project not solve?
+    validations:
+      required: false

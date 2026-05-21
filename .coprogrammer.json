@@ -28,6 +28,18 @@
       "owner_review": true
     },
     {
+      "pattern": ".github/DISCUSSION_TEMPLATE/**",
+      "risk": "medium",
+      "reason": "community discussion intake behavior",
+      "owner_review": false
+    },
+    {
+      "pattern": ".github/ISSUE_TEMPLATE/**",
+      "risk": "medium",
+      "reason": "issue intake and triage behavior",
+      "owner_review": false
+    },
+    {
       "pattern": "src/coprogrammer/cli.py",
       "risk": "medium",
       "reason": "CLI behavior affects PR digest generation",

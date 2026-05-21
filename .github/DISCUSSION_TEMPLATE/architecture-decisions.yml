@@ -1,0 +1,31 @@
+title: "[Architecture] "
+labels: ["architecture", "discussion"]
+body:
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision to Discuss / 待讨论决策
+      description: What architecture decision is being considered?
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options / 可选方案
+      description: List the options and tradeoffs.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints / 约束
+      description: What main-branch principles, protocols, or product goals constrain this decision?
+    validations:
+      required: false
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired Outcome / 期望输出
+      description: What should happen after the discussion?
+    validations:
+      required: true

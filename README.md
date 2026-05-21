@@ -49,6 +49,8 @@ CoProgrammer organizes collaboration as a continuous loop:
 Start with:
 
 - `docs/RESEARCH_LANDSCAPE.md` for current tool landscape and gaps;
+- `docs/OPEN_SOURCE_SCAN.md` for adjacent open-source projects and reusable features;
+- `docs/DISCUSSIONS.md` for discussion categories and research intake;
 - `docs/ARCHITECTURE.md` for the system architecture;
 - `docs/FRAMEWORK.md` for the research framework.
 
