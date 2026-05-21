@@ -30,5 +30,6 @@ Use `.github/PULL_REQUEST_TEMPLATE.md` and `templates/branch-digest.md`.
 ```bash
 python -m pip install -e .
 python -m unittest discover -s tests
+python -m coprogrammer config validate
 python -m coprogrammer manifest validate templates/change-manifest.json
 ```

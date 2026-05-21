@@ -7,9 +7,12 @@ from coprogrammer.cli import (
     build_pr_comment_body,
     classify_risks,
     load_pull_request_number,
+    match_protected_paths,
     new_heartbeat,
     render_digest,
     resolve_language,
+    score_risk,
+    validate_config_data,
     validate_manifest,
 )
 
@@ -28,6 +31,25 @@ class RiskClassificationTest(unittest.TestCase):
         self.assertIn("security", risks)
         self.assertNotIn("build", risks)
 
+    def test_matches_protected_paths_and_scores_highest_risk(self) -> None:
+        config = {
+            "risk_level_by_category": {"security": "high"},
+            "protected_paths": [
+                {
+                    "pattern": "schemas/**",
+                    "risk": "critical",
+                    "reason": "contract",
+                    "owner_review": True,
+                }
+            ],
+        }
+        paths = ["schemas/api.json", "src/auth/session.py"]
+        risks = classify_risks(paths)
+        matches = match_protected_paths(paths, config)
+
+        self.assertEqual(matches[0]["path"], "schemas/api.json")
+        self.assertEqual(score_risk(risks, matches, config), "critical")
+
 
 class LocalizationTest(unittest.TestCase):
     def test_resolves_chinese_alias(self) -> None:
@@ -45,6 +67,33 @@ class LocalizationTest(unittest.TestCase):
         self.assertIn("# 分支消化报告", digest)
         self.assertIn("## 变更文件", digest)
         self.assertIn("**共享契约**", digest)
+
+
+class ConfigValidationTest(unittest.TestCase):
+    def test_accepts_minimal_config(self) -> None:
+        ok, errors = validate_config_data(
+            {
+                "language": "zh-CN",
+                "protected_paths": [{"pattern": "schemas/**", "risk": "high"}],
+            }
+        )
+
+        self.assertTrue(ok)
+        self.assertEqual(errors, [])
+
+    def test_rejects_invalid_risk_level(self) -> None:
+        ok, errors = validate_config_data(
+            {"protected_paths": [{"pattern": "schemas/**", "risk": "severe"}]}
+        )
+
+        self.assertFalse(ok)
+        self.assertTrue(any("risk" in error for error in errors))
+
+    def test_rejects_unknown_config_key(self) -> None:
+        ok, errors = validate_config_data({"unknown": True})
+
+        self.assertFalse(ok)
+        self.assertIn("unknown config key: unknown", errors)
 
 
 class ManifestValidationTest(unittest.TestCase):

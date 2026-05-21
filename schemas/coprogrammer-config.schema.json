@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/coprogrammer-config.schema.json",
+  "title": "CoProgrammer Project Config",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "language": {
+      "type": "string",
+      "enum": ["en", "en-US", "zh", "zh-CN", "zh_CN", "cn"]
+    },
+    "risk_level_by_category": {
+      "type": "object",
+      "properties": {
+        "contract": { "$ref": "#/$defs/riskLevel" },
+        "database": { "$ref": "#/$defs/riskLevel" },
+        "security": { "$ref": "#/$defs/riskLevel" },
+        "build": { "$ref": "#/$defs/riskLevel" },
+        "architecture": { "$ref": "#/$defs/riskLevel" }
+      },
+      "additionalProperties": false
+    },
+    "protected_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern"],
+        "properties": {
+          "pattern": { "type": "string", "minLength": 1 },
+          "risk": { "$ref": "#/$defs/riskLevel" },
+          "reason": { "type": "string" },
+          "owner_review": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "riskLevel": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    }
+  }
+}

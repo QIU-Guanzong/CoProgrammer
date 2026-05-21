@@ -25,6 +25,9 @@ export COPROGRAMMER_LANGUAGE=zh-CN
 coprogrammer digest --base origin/main --head HEAD
 ```
 
+If no CLI flag or environment variable is set, `coprogrammer digest` uses the
+`language` value from `.coprogrammer.json`.
+
 ## GitHub Actions
 
 The PR digest workflow reads the repository variable

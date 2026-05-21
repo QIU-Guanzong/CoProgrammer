@@ -42,6 +42,7 @@ CoProgrammer organizes collaboration as a continuous loop:
 ├── templates/            Task, heartbeat, digest, and integration templates
 ├── src/coprogrammer/     First CLI scaffold
 ├── tests/                Unit tests for the CLI scaffold
+├── .coprogrammer.json    Project policy config
 └── .github/              PR template, issue templates, CI, and PR digest workflow
 ```
 
@@ -65,6 +66,7 @@ This repository already contains a minimal local CLI prototype:
 python -m coprogrammer digest --base origin/main --head HEAD --output branch-digest.md
 python -m coprogrammer digest --base origin/main --head HEAD --language zh-CN
 python -m coprogrammer digest --base origin/main --working-tree
+python -m coprogrammer config validate
 python -m coprogrammer manifest validate templates/change-manifest.json
 python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
 ```

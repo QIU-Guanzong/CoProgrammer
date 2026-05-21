@@ -16,6 +16,9 @@ On every PR open, synchronize, reopen, or ready-for-review event, the workflow:
 The workflow intentionally avoids autonomous code changes. It only creates a
 review artifact.
 
+Digest generation reads `.coprogrammer.json`, so protected paths and risk
+levels are controlled by the same project policy used locally.
+
 ## Language
 
 The workflow reads `COPROGRAMMER_LANGUAGE` from repository variables and

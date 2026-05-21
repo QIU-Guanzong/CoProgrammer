@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import subprocess
@@ -26,6 +27,8 @@ DEFAULT_GITHUB_API_URL = "https://api.github.com"
 DEFAULT_COMMENT_MARKER = "<!-- coprogrammer-branch-digest -->"
 GITHUB_COMMENT_LIMIT = 65000
 DEFAULT_LANGUAGE = "en"
+DEFAULT_CONFIG_FILE = ".coprogrammer.json"
+RISK_LEVELS = ("low", "medium", "high", "critical")
 
 RISK_PATTERNS: dict[str, tuple[str, ...]] = {
     "contract": (
@@ -48,6 +51,20 @@ RISK_PATTERNS: dict[str, tuple[str, ...]] = {
         "requirements",
     ),
     "architecture": ("architecture", "constitution", "config", "settings"),
+}
+
+DEFAULT_RISK_LEVEL_BY_CATEGORY = {
+    "contract": "medium",
+    "database": "high",
+    "security": "high",
+    "build": "medium",
+    "architecture": "medium",
+}
+
+DEFAULT_CONFIG: dict[str, Any] = {
+    "language": DEFAULT_LANGUAGE,
+    "risk_level_by_category": DEFAULT_RISK_LEVEL_BY_CATEGORY,
+    "protected_paths": [],
 }
 
 LANGUAGE_ALIASES = {
@@ -93,6 +110,10 @@ DIGEST_TEXT = {
         "no_commits": "- No commits detected.",
         "signals": "Contract and Architecture Signals",
         "no_signals": "- No high-signal risk paths detected by the first-pass rules.",
+        "risk_level": "Risk Level",
+        "protected_paths": "Protected Path Matches",
+        "no_protected_paths": "- No protected path matches detected.",
+        "owner_review": "owner review required",
         "noise": "Noise / Non-Essential Changes",
         "noise_todo": (
             "TODO: Identify formatting churn, broad rewrites, temporary debugging, "
@@ -128,6 +149,10 @@ DIGEST_TEXT = {
         "no_commits": "- 未检测到提交。",
         "signals": "契约与架构信号",
         "no_signals": "- 第一轮规则未检测到高信号风险路径。",
+        "risk_level": "风险等级",
+        "protected_paths": "受保护路径命中",
+        "no_protected_paths": "- 未命中受保护路径。",
+        "owner_review": "需要 owner review",
         "noise": "噪声 / 非必要变更",
         "noise_todo": "TODO: 标记格式化扰动、大范围重写、临时调试、生成物或无关重构。",
         "integration_plan": "融合计划",
@@ -168,6 +193,98 @@ def resolve_language(language: str | None = None) -> str:
         supported = ", ".join(sorted(set(LANGUAGE_ALIASES)))
         raise RuntimeError(f"unsupported language '{requested}'. Supported: {supported}")
     return resolved
+
+
+def merge_config(config: dict[str, Any] | None) -> dict[str, Any]:
+    merged = {
+        "language": DEFAULT_CONFIG["language"],
+        "risk_level_by_category": dict(DEFAULT_RISK_LEVEL_BY_CATEGORY),
+        "protected_paths": [],
+    }
+    if not config:
+        return merged
+
+    if "language" in config:
+        merged["language"] = config["language"]
+    if isinstance(config.get("risk_level_by_category"), dict):
+        merged["risk_level_by_category"].update(config["risk_level_by_category"])
+    if isinstance(config.get("protected_paths"), list):
+        merged["protected_paths"] = config["protected_paths"]
+    return merged
+
+
+def load_config(cwd: Path, config_path: str | None = None) -> dict[str, Any]:
+    path = Path(config_path or DEFAULT_CONFIG_FILE)
+    if not path.is_absolute():
+        path = cwd / path
+    if not path.exists():
+        return merge_config(None)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"invalid config JSON: {path}: {exc}") from exc
+    ok, errors = validate_config_data(data)
+    if not ok:
+        joined = "; ".join(errors)
+        raise RuntimeError(f"invalid config {path}: {joined}")
+    return merge_config(data)
+
+
+def validate_config_data(data: dict[str, Any]) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+    allowed_keys = {"$schema", "language", "risk_level_by_category", "protected_paths"}
+    for key in data:
+        if key not in allowed_keys:
+            errors.append(f"unknown config key: {key}")
+
+    language = data.get("language")
+    if language is not None:
+        try:
+            resolve_language(str(language))
+        except RuntimeError as exc:
+            errors.append(str(exc))
+
+    risk_level_by_category = data.get("risk_level_by_category", {})
+    if risk_level_by_category and not isinstance(risk_level_by_category, dict):
+        errors.append("risk_level_by_category must be an object")
+    elif isinstance(risk_level_by_category, dict):
+        for category, level in risk_level_by_category.items():
+            if category not in RISK_PATTERNS:
+                errors.append(f"unknown risk category: {category}")
+            if level not in RISK_LEVELS:
+                errors.append(f"invalid risk level for {category}: {level}")
+
+    protected_paths = data.get("protected_paths", [])
+    if not isinstance(protected_paths, list):
+        errors.append("protected_paths must be an array")
+    else:
+        allowed_rule_keys = {"pattern", "risk", "reason", "owner_review"}
+        for index, rule in enumerate(protected_paths):
+            if not isinstance(rule, dict):
+                errors.append(f"protected_paths[{index}] must be an object")
+                continue
+            for key in rule:
+                if key not in allowed_rule_keys:
+                    errors.append(f"protected_paths[{index}] has unknown key: {key}")
+            if not isinstance(rule.get("pattern"), str) or not rule.get("pattern"):
+                errors.append(f"protected_paths[{index}].pattern is required")
+            level = rule.get("risk", "high")
+            if level not in RISK_LEVELS:
+                errors.append(f"protected_paths[{index}].risk must be one of {', '.join(RISK_LEVELS)}")
+            if "owner_review" in rule and not isinstance(rule["owner_review"], bool):
+                errors.append(f"protected_paths[{index}].owner_review must be a boolean")
+
+    return not errors, errors
+
+
+def validate_config(path: Path) -> tuple[bool, list[str]]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return False, [f"invalid JSON: {exc}"]
+    except OSError as exc:
+        return False, [str(exc)]
+    return validate_config_data(data)
 
 
 def run_git(args: list[str], cwd: Path) -> str:
@@ -226,17 +343,63 @@ def classify_risks(paths: list[str]) -> dict[str, list[str]]:
     return {name: sorted(set(matches)) for name, matches in risks.items() if matches}
 
 
+def match_protected_paths(
+    paths: list[str],
+    config: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    config = merge_config(config)
+    matches: list[dict[str, Any]] = []
+    for path in paths:
+        for rule in config["protected_paths"]:
+            pattern = rule["pattern"]
+            if fnmatch.fnmatch(path, pattern):
+                matches.append(
+                    {
+                        "path": path,
+                        "pattern": pattern,
+                        "risk": rule.get("risk", "high"),
+                        "reason": rule.get("reason", ""),
+                        "owner_review": rule.get("owner_review", True),
+                    }
+                )
+    return matches
+
+
+def highest_risk_level(levels: list[str]) -> str:
+    if not levels:
+        return "low"
+    return max(levels, key=RISK_LEVELS.index)
+
+
+def score_risk(
+    risks: dict[str, list[str]],
+    protected_matches: list[dict[str, Any]],
+    config: dict[str, Any] | None = None,
+) -> str:
+    config = merge_config(config)
+    levels: list[str] = []
+    for category, matches in risks.items():
+        if matches:
+            levels.append(config["risk_level_by_category"].get(category, "medium"))
+    levels.extend(match["risk"] for match in protected_matches)
+    return highest_risk_level(levels)
+
+
 def render_digest(
     base: str,
     head: str,
     files: list[dict[str, str]],
     commits: list[str],
     language: str = DEFAULT_LANGUAGE,
+    config: dict[str, Any] | None = None,
 ) -> str:
     language = resolve_language(language)
+    config = merge_config(config)
     text = DIGEST_TEXT[language]
     paths = [item["path"] for item in files]
     risks = classify_risks(paths)
+    protected_matches = match_protected_paths(paths, config)
+    risk_level = score_risk(risks, protected_matches, config)
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     changed_files = "\n".join(
@@ -253,6 +416,23 @@ def render_digest(
         risk_block = "\n".join(risk_lines)
     else:
         risk_block = text["no_signals"]
+
+    if protected_matches:
+        protected_lines = []
+        for match in protected_matches:
+            suffix = []
+            if match["reason"]:
+                suffix.append(match["reason"])
+            if match["owner_review"]:
+                suffix.append(text["owner_review"])
+            detail = f" ({'; '.join(suffix)})" if suffix else ""
+            protected_lines.append(
+                f"- `{match['path']}` matches `{match['pattern']}` "
+                f"[{match['risk']}]{detail}"
+            )
+        protected_block = "\n".join(protected_lines)
+    else:
+        protected_block = text["no_protected_paths"]
 
     validation_items = "\n".join(f"- [ ] {item}" for item in text["validation_items"])
 
@@ -282,6 +462,14 @@ Head: `{head}`
 ## {text["signals"]}
 
 {risk_block}
+
+## {text["risk_level"]}
+
+`{risk_level}`
+
+## {text["protected_paths"]}
+
+{protected_block}
 
 ## {text["noise"]}
 
@@ -423,6 +611,8 @@ def upsert_pr_comment(
 
 def command_digest(args: argparse.Namespace) -> int:
     cwd = Path(args.cwd).resolve()
+    config = load_config(cwd, args.config)
+    language = args.language or config.get("language") or DEFAULT_LANGUAGE
     if args.working_tree:
         files = get_working_tree_changed_files(args.base, cwd)
         head = "WORKING_TREE"
@@ -430,12 +620,22 @@ def command_digest(args: argparse.Namespace) -> int:
         files = get_changed_files(args.base, args.head, cwd)
         head = args.head
     commits = get_commits(args.base, args.head, cwd)
-    digest = render_digest(args.base, head, files, commits, args.language)
+    digest = render_digest(args.base, head, files, commits, language, config)
     if args.output:
         Path(args.output).write_text(digest, encoding="utf-8")
     else:
         print(digest)
     return 0
+
+
+def command_config_validate(args: argparse.Namespace) -> int:
+    ok, errors = validate_config(Path(args.file))
+    if ok:
+        print("config ok")
+        return 0
+    for error in errors:
+        print(error, file=sys.stderr)
+    return 1
 
 
 def command_github_comment(args: argparse.Namespace) -> int:
@@ -497,9 +697,14 @@ def build_parser() -> argparse.ArgumentParser:
     digest.add_argument("--cwd", default=".")
     digest.add_argument("--output")
     digest.add_argument(
+        "--config",
+        default=DEFAULT_CONFIG_FILE,
+        help=f"Project policy config path. Default: {DEFAULT_CONFIG_FILE}.",
+    )
+    digest.add_argument(
         "--language",
-        default=os.environ.get("COPROGRAMMER_LANGUAGE", DEFAULT_LANGUAGE),
-        help="Output language: en or zh-CN. Can also use COPROGRAMMER_LANGUAGE.",
+        default=os.environ.get("COPROGRAMMER_LANGUAGE"),
+        help="Output language: en or zh-CN. Overrides config and COPROGRAMMER_LANGUAGE.",
     )
     digest.add_argument(
         "--working-tree",
@@ -524,6 +729,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=os.environ.get("GITHUB_API_URL", DEFAULT_GITHUB_API_URL),
     )
     github_comment.set_defaults(func=command_github_comment)
+
+    config = subparsers.add_parser("config", help="Work with CoProgrammer config.")
+    config_subparsers = config.add_subparsers(dest="config_command", required=True)
+    config_validate = config_subparsers.add_parser("validate", help="Validate config JSON.")
+    config_validate.add_argument("file", nargs="?", default=DEFAULT_CONFIG_FILE)
+    config_validate.set_defaults(func=command_config_validate)
 
     manifest = subparsers.add_parser("manifest", help="Work with change manifests.")
     manifest_subparsers = manifest.add_subparsers(dest="manifest_command", required=True)

@@ -1,0 +1,43 @@
+{
+  "$schema": "./schemas/coprogrammer-config.schema.json",
+  "language": "zh-CN",
+  "risk_level_by_category": {
+    "contract": "medium",
+    "database": "high",
+    "security": "high",
+    "build": "medium",
+    "architecture": "medium"
+  },
+  "protected_paths": [
+    {
+      "pattern": "protocols/**",
+      "risk": "high",
+      "reason": "collaboration protocol changes affect all agents",
+      "owner_review": true
+    },
+    {
+      "pattern": "schemas/**",
+      "risk": "high",
+      "reason": "machine-readable artifact contract changes",
+      "owner_review": true
+    },
+    {
+      "pattern": ".github/workflows/**",
+      "risk": "high",
+      "reason": "CI and automation behavior changes",
+      "owner_review": true
+    },
+    {
+      "pattern": "src/coprogrammer/cli.py",
+      "risk": "medium",
+      "reason": "CLI behavior affects PR digest generation",
+      "owner_review": false
+    },
+    {
+      "pattern": "pyproject.toml",
+      "risk": "medium",
+      "reason": "package and entrypoint configuration",
+      "owner_review": true
+    }
+  ]
+}
