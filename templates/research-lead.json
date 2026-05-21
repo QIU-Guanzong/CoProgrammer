@@ -1,0 +1,11 @@
+{
+  "$schema": "../schemas/research-lead.schema.json",
+  "name": "Project or feature name",
+  "category": "needs_verification",
+  "links": [],
+  "capabilities": [],
+  "useful_ideas": [],
+  "gap_vs_coprogrammer": "",
+  "status": "needs_verification",
+  "notes": ""
+}

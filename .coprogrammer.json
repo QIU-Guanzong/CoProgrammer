@@ -22,6 +22,12 @@
       "owner_review": true
     },
     {
+      "pattern": "research/**",
+      "risk": "medium",
+      "reason": "structured research data changes",
+      "owner_review": false
+    },
+    {
       "pattern": ".github/workflows/**",
       "risk": "high",
       "reason": "CI and automation behavior changes",

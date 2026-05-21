@@ -38,6 +38,7 @@ CoProgrammer organizes collaboration as a continuous loop:
 .
 ├── docs/                 Research route, framework, and MVP design
 ├── protocols/            Human-readable collaboration protocols
+├── research/             Structured research leads and prior-art data
 ├── schemas/              JSON schemas for machine-readable agent artifacts
 ├── templates/            Task, heartbeat, digest, and integration templates
 ├── src/coprogrammer/     First CLI scaffold
@@ -50,6 +51,7 @@ Start with:
 
 - `docs/RESEARCH_LANDSCAPE.md` for current tool landscape and gaps;
 - `docs/OPEN_SOURCE_SCAN.md` for adjacent open-source projects and reusable features;
+- `docs/FEATURE_GAP_MATRIX.md` for product-level comparison;
 - `docs/DISCUSSIONS.md` for discussion categories and research intake;
 - `docs/ARCHITECTURE.md` for the system architecture;
 - `docs/FRAMEWORK.md` for the research framework.

@@ -65,6 +65,10 @@ Use Issues when:
 3. Identify what CoProgrammer can reuse, integrate, or intentionally avoid.
 4. Convert to an issue only when a concrete action exists.
 
+Structured research leads can also be stored as JSON using
+`schemas/research-lead.schema.json`; the current seed file is
+`research/open-source-leads.json`.
+
 ## Maintainer Checklist
 
 - [ ] Enable GitHub Discussions.

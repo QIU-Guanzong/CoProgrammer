@@ -8,6 +8,9 @@ may influence CoProgrammer.
 The goal is not to prove that no similar tool exists. The goal is to keep a
 living map of prior art, reusable pieces, and differentiation.
 
+For a feature-by-feature product comparison, see
+`docs/FEATURE_GAP_MATRIX.md`.
+
 ## Classification
 
 | Category | Meaning |
@@ -30,6 +33,13 @@ living map of prior art, reusable pieces, and differentiation.
 | [Pullfrog](https://pullfrog.com/) | Adjacent capability | GitHub bot that runs AI agents for PR review, issue triage, CI fixes, plans, and merge conflict fixes. | Mention-triggered agent tasks, GitHub Actions execution, configurable repo instructions. | General agent execution layer; CoProgrammer should provide specific semantic integration protocol and artifacts. |
 | [CodeRabbit](https://docs.coderabbit.ai/guides/code-review-overview) | Adjacent capability | AI code review across PRs with summaries and comments. | Review summaries, continuous PR comments, reviewer UX. | Closed/commercial; reviews PRs as submitted rather than regenerating minimal patches. |
 | [GitHub Copilot Code Review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review) | Adjacent capability | GitHub-native Copilot-assisted PR review. | Native review UX and GitHub integration model. | Not an open-source component; does not own protocol or integration records. |
+| [Probot](https://github.com/probot/probot) | Reusable component | Framework for building GitHub Apps in Node.js/TypeScript. | Webhook app model, event routing, GitHub-native automation pattern. | App framework only; CoProgrammer still owns protocol and digest semantics. |
+| [Renovate](https://github.com/renovatebot/renovate) | Adjacent capability | Open-source dependency update automation that opens and tracks update PRs. | Highly configurable policy, generated PR bodies, dependency dashboard, confidence metadata. | Domain-specific for dependencies; does not perform semantic branch integration. |
+| [Prow Tide](https://docs.prow.k8s.io/docs/components/core/tide/) | Adjacent capability | Kubernetes Prow component that manages PR pools, retests PRs, and merges when criteria pass. | Merge pool status, retest-before-merge principle, dashboard-friendly state. | Merge automation only; no branch-intent digest. |
+| [Sourcegraph Batch Changes](https://sourcegraph.com/docs/batch_changes) | Adjacent capability | Spec-driven large-scale code changes with changeset tracking across repositories. | Desired-state spec, changeset reconciliation, progress tracking. | Optimizes planned large-scale changes, not noisy multi-agent branch digestion. |
+| [OpenRewrite](https://docs.openrewrite.org/) | Reusable component | Open-source automated refactoring ecosystem using recipes and semantic trees. | Recipe-based deterministic transformations, semantic patch primitives. | Transformation engine only; no collaboration protocol or branch review layer. |
+| [Comby](https://comby.dev/) | Reusable component | Structural search and replace across many languages. | Syntax-aware transformation templates that avoid many regex pitfalls. | Patch primitive only. |
+| [Grit](https://docs.grit.io/) | Reusable component | Declarative code search and transformation via GritQL and migration workflows. | Declarative transformations, AI-assisted migration surface, PR-generation flow. | Transformation layer; not an integration governance system. |
 
 ## Small Features Worth Borrowing
 
@@ -109,6 +119,40 @@ Source inspiration: bors-ng and MergePilot.
 CoProgrammer's integration branch should be created from latest main, not from
 the source feature branch. The branch digest and integration plan become the
 inputs to reconstruct the patch.
+
+### 6. Spec and Reconciliation Loop
+
+Source inspiration: Sourcegraph Batch Changes.
+
+CoProgrammer's future Integration Patch Bot should separate:
+
+- desired semantic outcome;
+- generated patch attempt;
+- validation result;
+- review outcome;
+- final integration record.
+
+This is closer to a reconciliation loop than a one-shot merge.
+
+### 7. Recipe-Based Patch Primitives
+
+Source inspiration: OpenRewrite, Comby, and Grit.
+
+LLMs should not be the only way to rebuild patches. A mature CoProgrammer
+integration agent can mix:
+
+- deterministic codemods;
+- structural search/replace;
+- language-aware transformations;
+- LLM reasoning for intent and edge cases.
+
+### 8. Dashboard Issue / Research Inbox
+
+Source inspiration: Renovate dependency dashboard and GitHub Discussions.
+
+CoProgrammer should maintain a visible queue of research leads, high-risk
+integration decisions, and pending protocol updates. Discussions are the open
+research surface; issues are the executable task surface.
 
 ## Projects to Verify Later
 

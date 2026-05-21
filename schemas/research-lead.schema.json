@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/research-lead.schema.json",
+  "title": "CoProgrammer Research Lead",
+  "type": "object",
+  "required": [
+    "name",
+    "category",
+    "links",
+    "capabilities",
+    "useful_ideas",
+    "gap_vs_coprogrammer",
+    "status"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string" },
+    "category": {
+      "type": "string",
+      "enum": [
+        "direct_competitor",
+        "adjacent_capability",
+        "reusable_component",
+        "research_reference",
+        "needs_verification"
+      ]
+    },
+    "links": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "useful_ideas": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "gap_vs_coprogrammer": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["active", "watch", "archived", "needs_verification"]
+    },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}

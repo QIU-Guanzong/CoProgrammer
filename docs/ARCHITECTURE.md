@@ -149,6 +149,7 @@ Responsibilities:
 | Branch digest | CLI or PR workflow | Reviewer, integration agent | Implemented |
 | Integration plan | Reviewer or bot | Integration agent | Template |
 | Integration record | Future bot | Maintainer, protocol updater | Schema and template |
+| Research lead | Maintainer or community | Research discussion, roadmap | Schema and seed data |
 
 ## Control Flow
 

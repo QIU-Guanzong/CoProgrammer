@@ -8,7 +8,8 @@ does not yet provide a complete branch-intent digestion and semantic
 reintegration layer.
 
 For a living list of open-source adjacent projects and reusable small features,
-see `docs/OPEN_SOURCE_SCAN.md`.
+see `docs/OPEN_SOURCE_SCAN.md`. For a product-level comparison, see
+`docs/FEATURE_GAP_MATRIX.md`.
 
 ## Key Finding
 
