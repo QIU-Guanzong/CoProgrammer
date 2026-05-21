@@ -26,6 +26,7 @@ Legend:
 | Development telemetry | Heartbeats, contract board, conflict forecast. | Agent status logs, issue dashboards, CI dashboards. | Planned |
 | Integration record | Preserve why insights were kept or dropped. | Sourcegraph batch specs and changeset tracking, Renovate dashboard issues. | Schema/template |
 | Discussion-backed research loop | Keep exploratory leads out of implementation PRs. | GitHub Discussions, issue forms. | Implemented foundation |
+| Persistent manager plane | Store shared state for agents, leases, decisions, branch digests, and integration records. | Paperclip control plane, Prow status, Renovate dashboard. | Architecture hypothesis |
 
 ## Project-by-Project Fit
 
@@ -44,6 +45,7 @@ Legend:
 | GitWand | none | none | none | partial | none | partial | Borrow conflict confidence taxonomy. |
 | MergePilot | partial | partial | partial | partial | partial | partial | Track closely as direct competitor candidate. |
 | Pullfrog | partial | partial | none | partial | partial | none | Borrow mention-triggered agent task UX. |
+| Paperclip | native | partial | none | none | partial | partial | Borrow persistent manager/control-plane model, but specialize it for software integration. |
 
 ## Research Decisions
 
@@ -57,6 +59,9 @@ Legend:
    reconciliation" idea for Integration Patch Bot design.
 6. CoProgrammer should use Discussions to keep research leads alive until they
    become executable tasks.
+7. Paperclip validates the Manager Plane direction, but CoProgrammer should
+   narrow the domain to repository state and semantic integration rather than
+   broad AI-company operations.
 
 ## Next Research Questions
 
@@ -68,3 +73,5 @@ Legend:
   release-like artifacts?
 - What minimal GitHub App is needed beyond GitHub Actions?
 - How should agent heartbeats be stored without creating noisy repository churn?
+- Which Manager Plane objects are essential for an MVP: leases, decisions,
+  contract board, digest queue, or all four?

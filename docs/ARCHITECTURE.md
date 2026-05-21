@@ -7,12 +7,15 @@ It does not replace Git, CI, code review, CODEOWNERS, or merge queues. It adds
 the missing layer between "many agents produced branches" and "main branch
 should receive a small, reviewed, validated patch."
 
+For the persistent control-plane hypothesis, see `docs/MANAGER_PLANE.md`.
+
 ## System Boundary
 
 CoProgrammer owns:
 
 - collaboration protocol artifacts;
 - machine-readable project policy;
+- persistent Manager Plane state;
 - branch digest generation;
 - integration planning;
 - agent telemetry ingestion;
@@ -150,6 +153,9 @@ Responsibilities:
 | Integration plan | Reviewer or bot | Integration agent | Template |
 | Integration record | Future bot | Maintainer, protocol updater | Schema and template |
 | Research lead | Maintainer or community | Research discussion, roadmap | Schema and seed data |
+| Manager event | Agent, bot, or action | Manager Plane | Schema and template |
+| Workspace lease | Agent or maintainer | Manager Plane | Schema and template |
+| Decision record | Maintainer or advisor | Manager Plane | Schema and template |
 
 ## Control Flow
 
@@ -217,9 +223,11 @@ CoProgrammer should remain conservative:
 3. **Discussion-backed research loop**: keep tool scans, architecture debates,
    and reusable small-feature leads in Discussions before turning them into
    executable issues.
-4. **Telemetry store**: collect agent heartbeats during development and surface
+4. **Manager Plane MVP**: introduce a persistent state store for heartbeats,
+   leases, contract board entries, and decision requests.
+5. **Telemetry store**: collect agent heartbeats during development and surface
    conflict forecasts before PR creation.
-5. **Integration record writer**: write the record automatically from an
+6. **Integration record writer**: write the record automatically from an
    integration PR after validation.
-6. **Integration Patch Bot**: create a fresh branch from latest main and rebuild
+7. **Integration Patch Bot**: create a fresh branch from latest main and rebuild
    the minimal patch after human approval.

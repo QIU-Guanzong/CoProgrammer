@@ -33,6 +33,7 @@ For a feature-by-feature product comparison, see
 | [Pullfrog](https://pullfrog.com/) | Adjacent capability | GitHub bot that runs AI agents for PR review, issue triage, CI fixes, plans, and merge conflict fixes. | Mention-triggered agent tasks, GitHub Actions execution, configurable repo instructions. | General agent execution layer; CoProgrammer should provide specific semantic integration protocol and artifacts. |
 | [CodeRabbit](https://docs.coderabbit.ai/guides/code-review-overview) | Adjacent capability | AI code review across PRs with summaries and comments. | Review summaries, continuous PR comments, reviewer UX. | Closed/commercial; reviews PRs as submitted rather than regenerating minimal patches. |
 | [GitHub Copilot Code Review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review) | Adjacent capability | GitHub-native Copilot-assisted PR review. | Native review UX and GitHub integration model. | Not an open-source component; does not own protocol or integration records. |
+| [Paperclip](https://paperclip.ing/) | Direct competitor candidate | Open-source control plane for AI labor and AI-run companies with org charts, goals, tasks, budgets, approvals, heartbeats, and bring-your-own agents. | Persistent manager/control-plane metaphor, BYO agent model, heartbeats, budgets, governance, dashboard. | Broad company operations layer; CoProgrammer should specialize in repo state, branch digestion, semantic integration, and integration records. |
 | [Probot](https://github.com/probot/probot) | Reusable component | Framework for building GitHub Apps in Node.js/TypeScript. | Webhook app model, event routing, GitHub-native automation pattern. | App framework only; CoProgrammer still owns protocol and digest semantics. |
 | [Renovate](https://github.com/renovatebot/renovate) | Adjacent capability | Open-source dependency update automation that opens and tracks update PRs. | Highly configurable policy, generated PR bodies, dependency dashboard, confidence metadata. | Domain-specific for dependencies; does not perform semantic branch integration. |
 | [Prow Tide](https://docs.prow.k8s.io/docs/components/core/tide/) | Adjacent capability | Kubernetes Prow component that manages PR pools, retests PRs, and merges when criteria pass. | Merge pool status, retest-before-merge principle, dashboard-friendly state. | Merge automation only; no branch-intent digest. |
@@ -153,6 +154,20 @@ Source inspiration: Renovate dependency dashboard and GitHub Discussions.
 CoProgrammer should maintain a visible queue of research leads, high-risk
 integration decisions, and pending protocol updates. Discussions are the open
 research surface; issues are the executable task surface.
+
+### 9. Persistent Manager Plane
+
+Source inspiration: Paperclip.
+
+Paperclip's strongest idea is not "agents talk to agents." It is that agents
+report into a persistent control plane with goals, tasks, approvals,
+heartbeats, budgets, and governance. CoProgrammer should adopt this control
+plane pattern but narrow it to software integration:
+
+- repositories instead of companies;
+- branch digests instead of business tasks;
+- leases and contract boards instead of generic org-chart delegation;
+- integration records instead of general accountability logs.
 
 ## Projects to Verify Later
 

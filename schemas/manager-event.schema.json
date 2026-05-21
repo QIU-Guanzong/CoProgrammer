@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/manager-event.schema.json",
+  "title": "CoProgrammer Manager Event",
+  "type": "object",
+  "required": ["id", "type", "timestamp", "actor", "subject"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "agent.heartbeat",
+        "agent.blocked",
+        "lease.requested",
+        "lease.granted",
+        "lease.released",
+        "contract.change.proposed",
+        "branch.digest.created",
+        "decision.requested",
+        "decision.recorded",
+        "integration.plan.created",
+        "integration.recorded"
+      ]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "actor": { "type": "string" },
+    "subject": { "type": "string" },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

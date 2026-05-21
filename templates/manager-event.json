@@ -1,0 +1,9 @@
+{
+  "$schema": "../schemas/manager-event.schema.json",
+  "id": "evt_...",
+  "type": "agent.heartbeat",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "actor": "agent-a",
+  "subject": "repo:owner/name",
+  "payload": {}
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "../schemas/decision-record.schema.json",
+  "id": "decision_...",
+  "question": "Should this contract change be accepted?",
+  "context": "",
+  "options": [],
+  "decision": "",
+  "decider": "",
+  "status": "open",
+  "risk": "unknown",
+  "created_at": "2026-01-01T00:00:00Z",
+  "related_artifacts": []
+}

@@ -3,9 +3,18 @@
     "$schema": "../schemas/research-lead.schema.json",
     "name": "reviewdog",
     "category": "reusable_component",
-    "links": ["https://github.com/reviewdog/reviewdog"],
-    "capabilities": ["pr_diagnostics", "diff_aware_reporting"],
-    "useful_ideas": ["Reporter abstraction", "Line-level review comments", "Local and CI usage"],
+    "links": [
+      "https://github.com/reviewdog/reviewdog"
+    ],
+    "capabilities": [
+      "pr_diagnostics",
+      "diff_aware_reporting"
+    ],
+    "useful_ideas": [
+      "Reporter abstraction",
+      "Line-level review comments",
+      "Local and CI usage"
+    ],
     "gap_vs_coprogrammer": "Does not reason about branch intent or semantic integration.",
     "status": "active",
     "notes": "Candidate inspiration for digest finding reporters."
@@ -14,9 +23,17 @@
     "$schema": "../schemas/research-lead.schema.json",
     "name": "Danger JS",
     "category": "reusable_component",
-    "links": ["https://github.com/danger/danger-js"],
-    "capabilities": ["policy_as_code", "pr_comments"],
-    "useful_ideas": ["Team-specific PR rules", "Human-readable PR messaging"],
+    "links": [
+      "https://github.com/danger/danger-js"
+    ],
+    "capabilities": [
+      "policy_as_code",
+      "pr_comments"
+    ],
+    "useful_ideas": [
+      "Team-specific PR rules",
+      "Human-readable PR messaging"
+    ],
     "gap_vs_coprogrammer": "Rules run around a PR but do not digest branch intent or rebuild patches.",
     "status": "active",
     "notes": "Useful reference for future scriptable policy hooks."
@@ -25,9 +42,19 @@
     "$schema": "../schemas/research-lead.schema.json",
     "name": "Sourcegraph Batch Changes",
     "category": "adjacent_capability",
-    "links": ["https://sourcegraph.com/docs/batch_changes"],
-    "capabilities": ["batch_spec", "changeset_tracking", "large_scale_code_change"],
-    "useful_ideas": ["Spec-driven desired state", "Changeset reconciliation", "Progress tracking"],
+    "links": [
+      "https://sourcegraph.com/docs/batch_changes"
+    ],
+    "capabilities": [
+      "batch_spec",
+      "changeset_tracking",
+      "large_scale_code_change"
+    ],
+    "useful_ideas": [
+      "Spec-driven desired state",
+      "Changeset reconciliation",
+      "Progress tracking"
+    ],
     "gap_vs_coprogrammer": "Optimizes large-scale planned changes, not multi-agent branch digestion.",
     "status": "watch",
     "notes": "Strong reference for Integration Patch Bot records and reconciliation."
@@ -36,9 +63,17 @@
     "$schema": "../schemas/research-lead.schema.json",
     "name": "OpenRewrite",
     "category": "reusable_component",
-    "links": ["https://docs.openrewrite.org/"],
-    "capabilities": ["semantic_transformation", "recipe_based_refactoring"],
-    "useful_ideas": ["Recipe model", "Lossless semantic tree transformation"],
+    "links": [
+      "https://docs.openrewrite.org/"
+    ],
+    "capabilities": [
+      "semantic_transformation",
+      "recipe_based_refactoring"
+    ],
+    "useful_ideas": [
+      "Recipe model",
+      "Lossless semantic tree transformation"
+    ],
     "gap_vs_coprogrammer": "Transforms code according to recipes but does not decide branch intent or integration policy.",
     "status": "watch",
     "notes": "Possible deterministic patch primitive for future semantic integration."
@@ -47,9 +82,17 @@
     "$schema": "../schemas/research-lead.schema.json",
     "name": "Comby",
     "category": "reusable_component",
-    "links": ["https://comby.dev/"],
-    "capabilities": ["structural_search_replace", "codemod"],
-    "useful_ideas": ["Syntax-aware templates", "Safer-than-regex code transformations"],
+    "links": [
+      "https://comby.dev/"
+    ],
+    "capabilities": [
+      "structural_search_replace",
+      "codemod"
+    ],
+    "useful_ideas": [
+      "Syntax-aware templates",
+      "Safer-than-regex code transformations"
+    ],
     "gap_vs_coprogrammer": "Patch primitive only; no branch digestion or policy layer.",
     "status": "watch",
     "notes": "Candidate deterministic transformation backend."
@@ -58,9 +101,19 @@
     "$schema": "../schemas/research-lead.schema.json",
     "name": "Prow Tide",
     "category": "adjacent_capability",
-    "links": ["https://docs.prow.k8s.io/docs/components/core/tide/"],
-    "capabilities": ["merge_pool", "batch_testing", "status_visibility"],
-    "useful_ideas": ["Merge pool status", "Retest before merge", "Dashboard-friendly state"],
+    "links": [
+      "https://docs.prow.k8s.io/docs/components/core/tide/"
+    ],
+    "capabilities": [
+      "merge_pool",
+      "batch_testing",
+      "status_visibility"
+    ],
+    "useful_ideas": [
+      "Merge pool status",
+      "Retest before merge",
+      "Dashboard-friendly state"
+    ],
     "gap_vs_coprogrammer": "Coordinates merging after review; does not extract or preserve branch insights.",
     "status": "watch",
     "notes": "Reference for queue status, not for semantic integration."
@@ -69,11 +122,48 @@
     "$schema": "../schemas/research-lead.schema.json",
     "name": "MergePilot",
     "category": "direct_competitor",
-    "links": ["https://mergepilot-ai.com/"],
-    "capabilities": ["multi_pr_merge", "ai_conflict_resolution", "integration_branch"],
-    "useful_ideas": ["Slash-command flow", "Integration branch UX"],
+    "links": [
+      "https://mergepilot-ai.com/"
+    ],
+    "capabilities": [
+      "multi_pr_merge",
+      "ai_conflict_resolution",
+      "integration_branch"
+    ],
+    "useful_ideas": [
+      "Slash-command flow",
+      "Integration branch UX"
+    ],
     "gap_vs_coprogrammer": "Appears conflict-resolution oriented; protocol/digest/record layer remains CoProgrammer differentiation.",
     "status": "watch",
     "notes": "Track closely."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Paperclip",
+    "category": "direct_competitor",
+    "links": [
+      "https://paperclip.ing/",
+      "https://github.com/paperclipai/paperclip",
+      "https://docs.paperclip.ing/"
+    ],
+    "capabilities": [
+      "manager_plane",
+      "agent_organization",
+      "heartbeats",
+      "budgets",
+      "approvals",
+      "bring_your_own_agent"
+    ],
+    "useful_ideas": [
+      "Persistent control plane",
+      "Org/team metaphor",
+      "Goal/task alignment",
+      "Scheduled and event-based heartbeats",
+      "Budget and approval governance"
+    ],
+    "gap_vs_coprogrammer": "Paperclip manages broad AI labor and AI-run companies. CoProgrammer should specialize in repository state, branch digestion, semantic integration, contract risk, and integration records.",
+    "status": "active",
+    "notes": "Strongest current reference for Manager Plane direction. Track closely but keep CoProgrammer software-integration-specific."
   }
 ]

@@ -54,6 +54,7 @@ Start with:
 - `docs/FEATURE_GAP_MATRIX.md` for product-level comparison;
 - `docs/DISCUSSIONS.md` for discussion categories and research intake;
 - `docs/ARCHITECTURE.md` for the system architecture;
+- `docs/MANAGER_PLANE.md` for the cloud/self-hosted control plane hypothesis;
 - `docs/FRAMEWORK.md` for the research framework.
 
 ## First MVP
