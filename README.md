@@ -43,6 +43,7 @@ CoProgrammer organizes collaboration as a continuous loop:
 ├── templates/            Task, heartbeat, digest, and integration templates
 ├── src/coprogrammer/     First CLI scaffold
 ├── tests/                Unit tests for the CLI scaffold
+├── AGENTS.md             Minimal stable instructions for coding agents
 ├── .coprogrammer.json    Project policy config
 └── .github/              PR template, issue templates, CI, and PR digest workflow
 ```
@@ -61,6 +62,8 @@ Start with:
 - `docs/MANAGER_PLANE.md` for the cloud/self-hosted control plane hypothesis;
 - `docs/MANAGER_API_SKETCH.md` for the first Manager API surface;
 - `docs/EVENT_LOG_PROTOTYPE.md` for the local Manager Plane prototype;
+- `docs/AGENT_RUNTIME_INTEROP.md` for integrating with Codex, Copilot, OpenHands, and other runtimes;
+- `docs/CONTEXT_FILE_STRATEGY.md` for keeping `AGENTS.md` small and structured state separate;
 - `docs/FRAMEWORK.md` for the research framework.
 
 ## First MVP
@@ -84,6 +87,7 @@ python -m coprogrammer digest --base origin/main --head HEAD --output branch-dig
 python -m coprogrammer digest --base origin/main --head HEAD --language zh-CN
 python -m coprogrammer digest --base origin/main --working-tree
 python -m coprogrammer config validate
+python -m coprogrammer agents check
 python -m coprogrammer manifest validate templates/change-manifest.json
 python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
 python -m coprogrammer manager lease request --holder agent-a --pattern "src/api/**"

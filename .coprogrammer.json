@@ -10,6 +10,12 @@
   },
   "protected_paths": [
     {
+      "pattern": "AGENTS.md",
+      "risk": "medium",
+      "reason": "repository agent instructions affect all coding agents",
+      "owner_review": false
+    },
+    {
       "pattern": "protocols/**",
       "risk": "high",
       "reason": "collaboration protocol changes affect all agents",
@@ -49,6 +55,12 @@
       "pattern": "src/coprogrammer/cli.py",
       "risk": "medium",
       "reason": "CLI behavior affects PR digest generation",
+      "owner_review": false
+    },
+    {
+      "pattern": "templates/AGENTS.md",
+      "risk": "medium",
+      "reason": "agent instruction template affects downstream repository setup",
       "owner_review": false
     },
     {

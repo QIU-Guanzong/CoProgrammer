@@ -20,6 +20,7 @@ from coprogrammer.cli import (
     render_digest,
     resolve_language,
     score_risk,
+    validate_agents_file,
     validate_config_data,
     validate_manifest,
 )
@@ -133,6 +134,44 @@ class ManifestValidationTest(unittest.TestCase):
 
         self.assertFalse(ok)
         self.assertIn("missing required field: task", errors)
+
+
+class AgentsFileValidationTest(unittest.TestCase):
+    def test_accepts_minimal_agents_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "AGENTS.md"
+            path.write_text(
+                "# AGENTS.md\n\n## Validation\n\n```bash\npython -m unittest\n```\n",
+                encoding="utf-8",
+            )
+
+            ok, errors = validate_agents_file(path)
+
+        self.assertTrue(ok)
+        self.assertEqual(errors, [])
+
+    def test_rejects_live_state_headings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "AGENTS.md"
+            path.write_text(
+                "# AGENTS.md\n\n## Open Decisions\n\n- decide auth\n",
+                encoding="utf-8",
+            )
+
+            ok, errors = validate_agents_file(path)
+
+        self.assertFalse(ok)
+        self.assertTrue(any("open decisions" in error for error in errors))
+
+    def test_rejects_agents_file_over_max_lines(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "AGENTS.md"
+            path.write_text("\n".join(["line"] * 4), encoding="utf-8")
+
+            ok, errors = validate_agents_file(path, max_lines=3)
+
+        self.assertFalse(ok)
+        self.assertTrue(any("too long" in error for error in errors))
 
 
 class HeartbeatTest(unittest.TestCase):

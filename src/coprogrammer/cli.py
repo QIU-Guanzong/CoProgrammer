@@ -47,6 +47,20 @@ EVENT_TYPES = (
 )
 LEASE_KINDS = ("path", "contract", "test_surface", "integration_branch")
 DECISION_RECORD_STATUSES = ("decided", "deferred", "rejected", "superseded")
+AGENTS_FORBIDDEN_STATE_HEADINGS = {
+    "# backlog",
+    "## backlog",
+    "# current tasks",
+    "## current tasks",
+    "# current status",
+    "## current status",
+    "# active leases",
+    "## active leases",
+    "# open decisions",
+    "## open decisions",
+    "# decision log",
+    "## decision log",
+}
 
 RISK_PATTERNS: dict[str, tuple[str, ...]] = {
     "contract": (
@@ -534,6 +548,32 @@ def validate_manifest(path: Path) -> tuple[bool, list[str]]:
     return not errors, errors
 
 
+def validate_agents_file(path: Path, max_lines: int = 120) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        return False, [str(exc)]
+
+    if len(lines) > max_lines:
+        errors.append(
+            f"AGENTS.md is too long: {len(lines)} lines; expected <= {max_lines}"
+        )
+
+    headings = {
+        line.strip().lower()
+        for line in lines
+        if line.lstrip().startswith("#")
+    }
+    forbidden = sorted(headings & AGENTS_FORBIDDEN_STATE_HEADINGS)
+    for heading in forbidden:
+        errors.append(
+            f"AGENTS.md should not store live coordination state in heading: {heading}"
+        )
+
+    return not errors, errors
+
+
 def new_heartbeat(agent: str, task: str) -> dict[str, Any]:
     now = utc_now()
     return {
@@ -882,6 +922,16 @@ def command_manifest_validate(args: argparse.Namespace) -> int:
     return 1
 
 
+def command_agents_check(args: argparse.Namespace) -> int:
+    ok, errors = validate_agents_file(Path(args.file), args.max_lines)
+    if ok:
+        print("agents ok")
+        return 0
+    for error in errors:
+        print(error, file=sys.stderr)
+    return 1
+
+
 def command_heartbeat_new(args: argparse.Namespace) -> int:
     heartbeat = new_heartbeat(args.agent, args.task)
     text = json.dumps(heartbeat, indent=2, ensure_ascii=False) + "\n"
@@ -1165,6 +1215,19 @@ def build_parser() -> argparse.ArgumentParser:
     validate = manifest_subparsers.add_parser("validate", help="Validate a manifest.")
     validate.add_argument("file")
     validate.set_defaults(func=command_manifest_validate)
+
+    agents = subparsers.add_parser(
+        "agents",
+        help="Work with agent instruction files.",
+    )
+    agents_subparsers = agents.add_subparsers(dest="agents_command", required=True)
+    agents_check = agents_subparsers.add_parser(
+        "check",
+        help="Check that AGENTS.md stays minimal and static.",
+    )
+    agents_check.add_argument("file", nargs="?", default="AGENTS.md")
+    agents_check.add_argument("--max-lines", type=int, default=120)
+    agents_check.set_defaults(func=command_agents_check)
 
     heartbeat = subparsers.add_parser("heartbeat", help="Work with agent heartbeats.")
     heartbeat_subparsers = heartbeat.add_subparsers(dest="heartbeat_command", required=True)
