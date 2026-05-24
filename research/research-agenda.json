@@ -39,6 +39,32 @@
     "status": "active"
   },
   {
+    "id": "rq-agent-runtime-interop",
+    "title": "Define CoProgrammer's boundary with coding-agent runtimes",
+    "priority": "high",
+    "questions": [
+      "Which upstream runtimes should CoProgrammer support first?",
+      "Which artifacts can be consumed from Codex, Copilot Cloud Agent, OpenHands, and SWE-agent?",
+      "Should Manager Plane state be exposed through CLI first, then MCP or A2A?"
+    ],
+    "methods": ["runtime artifact review", "CLI integration spike", "MCP surface sketch"],
+    "deliverables": ["runtime integration shortlist", "Manager Plane protocol boundary", "MCP/A2A decision note"],
+    "status": "active"
+  },
+  {
+    "id": "rq-context-file-minimality",
+    "title": "Test minimal context files versus structured policy",
+    "priority": "high",
+    "questions": [
+      "What belongs in AGENTS.md versus .coprogrammer.json?",
+      "Can shorter instructions reduce agent drift and cost?",
+      "Which policy rules should be checked by tooling instead of natural language?"
+    ],
+    "methods": ["AGENTS.md A/B experiment", "instruction violation audit", "task cost comparison"],
+    "deliverables": ["minimal AGENTS.md template", "policy placement guide", "context-file experiment report"],
+    "status": "planned"
+  },
+  {
     "id": "rq-patch-primitives",
     "title": "Evaluate deterministic patch primitives",
     "priority": "medium",

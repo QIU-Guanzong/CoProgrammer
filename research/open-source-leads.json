@@ -469,21 +469,21 @@
     "name": "DevNous",
     "category": "research_reference",
     "links": [
-      "https://arxiv.org/abs/2603.21489"
+      "https://www.sciencedirect.com/science/article/pii/S0950584926000674"
     ],
     "capabilities": [
-      "asynchronous_agents",
-      "centralized_coordination",
-      "software_engineering_agents"
+      "project_governance",
+      "team_dialogue_structuring",
+      "hierarchical_multi_agent_pm"
     ],
     "useful_ideas": [
-      "Asynchronous coordination",
-      "Centralized planning and status",
-      "Agent work decomposition"
+      "Translate unstructured team dialogue into structured governance artifacts",
+      "Hierarchical multi-agent project management",
+      "Conversation-to-state pipeline"
     ],
-    "gap_vs_coprogrammer": "Research reference; CoProgrammer must translate coordination ideas into repo and branch integration artifacts.",
-    "status": "needs_verification",
-    "notes": "Verify paper details during Track C."
+    "gap_vs_coprogrammer": "Project-management oriented; CoProgrammer needs repository-native state such as leases, contracts, digests, and integration records.",
+    "status": "watch",
+    "notes": "Useful for manager-as-governance framing, especially turning chat into durable project state."
   },
   {
     "$schema": "../schemas/research-lead.schema.json",
@@ -505,5 +505,211 @@
     "gap_vs_coprogrammer": "Evidence source only; not a product or component.",
     "status": "needs_verification",
     "notes": "Use in Track B to validate failure taxonomy."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "OpenHands",
+    "category": "adjacent_capability",
+    "links": [
+      "https://github.com/OpenHands/OpenHands",
+      "https://arxiv.org/abs/2407.16741"
+    ],
+    "capabilities": [
+      "open_source_coding_agent",
+      "sandboxed_execution",
+      "agent_sdk",
+      "multi_agent_coordination"
+    ],
+    "useful_ideas": [
+      "Sandboxed developer-like agent runtime",
+      "Model-agnostic agent platform",
+      "Agent SDK and evaluation infrastructure"
+    ],
+    "gap_vs_coprogrammer": "Agent runtime and platform; does not define a repository integration manager with branch digestion, leases, or decision records.",
+    "status": "active",
+    "notes": "Integrate or interoperate as an agent runtime rather than competing with it."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "SWE-agent",
+    "category": "research_reference",
+    "links": [
+      "https://arxiv.org/abs/2405.15793",
+      "https://swe-agent.com/"
+    ],
+    "capabilities": [
+      "agent_computer_interface",
+      "autonomous_repo_navigation",
+      "test_execution"
+    ],
+    "useful_ideas": [
+      "Agent-computer interface as a first-class design problem",
+      "Repository navigation and edit affordances for agents",
+      "Task performance depends on interface design"
+    ],
+    "gap_vs_coprogrammer": "Optimizes a single agent's interface to software tools; CoProgrammer coordinates many agents and the integration path back to main.",
+    "status": "watch",
+    "notes": "Use as evidence that agents need purpose-built interfaces, then extend the idea to team-level interfaces."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "OpenAI Codex Cloud Agent",
+    "category": "adjacent_capability",
+    "links": [
+      "https://openai.com/index/introducing-codex/",
+      "https://openai.com/index/codex-now-generally-available/"
+    ],
+    "capabilities": [
+      "cloud_coding_agent",
+      "parallel_tasks",
+      "isolated_sandbox",
+      "pull_request_proposal"
+    ],
+    "useful_ideas": [
+      "Independent task sandboxes",
+      "Real-time progress monitoring",
+      "Terminal/test evidence attached to task results",
+      "Repository instructions through AGENTS.md"
+    ],
+    "gap_vs_coprogrammer": "Provides agent execution and task artifacts, but not a cross-agent semantic integration manager or durable lease/decision board.",
+    "status": "watch",
+    "notes": "Strong evidence that teams will run many background coding tasks in parallel and need coordination state above the agent runtime."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "GitHub Copilot Cloud Agent",
+    "category": "adjacent_capability",
+    "links": [
+      "https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent",
+      "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent"
+    ],
+    "capabilities": [
+      "issue_to_branch",
+      "cloud_agent_sessions",
+      "pull_request_workflow",
+      "session_logs"
+    ],
+    "useful_ideas": [
+      "GitHub-native task assignment",
+      "Branch creation and progress logs",
+      "Custom agents for specialized task types",
+      "REST API surface for starting and managing tasks"
+    ],
+    "gap_vs_coprogrammer": "Creates and iterates PRs inside GitHub; does not digest multiple agent branches into minimal integration patches under project policy.",
+    "status": "watch",
+    "notes": "Treat as a likely upstream agent producer. CoProgrammer should consume its PRs, logs, and branch outputs."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "AGENTS.md",
+    "category": "reusable_component",
+    "links": [
+      "https://github.com/agentsmd/agents.md",
+      "https://arxiv.org/abs/2602.11988",
+      "https://arxiv.org/abs/2602.14690"
+    ],
+    "capabilities": [
+      "agent_instructions",
+      "repository_context",
+      "cross_tool_configuration"
+    ],
+    "useful_ideas": [
+      "Predictable repository-level instructions for coding agents",
+      "Minimal build/test/PR guidance",
+      "Portable starting point across agent tools"
+    ],
+    "gap_vs_coprogrammer": "Instruction files guide agent behavior but do not store live state, leases, decisions, contract board entries, or integration records.",
+    "status": "active",
+    "notes": "CoProgrammer should generate or validate minimal AGENTS.md guidance, but avoid turning policy into a long prompt file."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Model Context Protocol",
+    "category": "reusable_component",
+    "links": [
+      "https://modelcontextprotocol.io/docs/learn/architecture"
+    ],
+    "capabilities": [
+      "tool_context_protocol",
+      "json_rpc",
+      "resources",
+      "prompts",
+      "tools"
+    ],
+    "useful_ideas": [
+      "Expose Manager Plane state as tools/resources",
+      "Keep agent runtime model-independent",
+      "Use elicitation for human decisions later"
+    ],
+    "gap_vs_coprogrammer": "MCP standardizes context/tool access; it does not define software integration objects or merge policy.",
+    "status": "active",
+    "notes": "Future CoProgrammer Manager should likely expose an MCP server."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Agent2Agent Protocol",
+    "category": "reusable_component",
+    "links": [
+      "https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents",
+      "https://github.com/a2aproject/A2A"
+    ],
+    "capabilities": [
+      "agent_interoperability",
+      "agent_discovery",
+      "secure_agent_communication"
+    ],
+    "useful_ideas": [
+      "Interoperability between heterogeneous agents",
+      "Open-governance protocol direction",
+      "Potential future bridge between Manager Plane and external agent runtimes"
+    ],
+    "gap_vs_coprogrammer": "Agent-to-agent communication does not solve repository-specific coordination, branch digestion, or semantic integration.",
+    "status": "watch",
+    "notes": "CoProgrammer should not become an A2A competitor; it can become a software-state service used through A2A."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Centralized Asynchronous Isolated Delegation",
+    "category": "research_reference",
+    "links": [
+      "https://huggingface.co/papers/2603.21489",
+      "https://arxiv.org/abs/2603.21489"
+    ],
+    "capabilities": [
+      "centralized_delegation",
+      "asynchronous_execution",
+      "isolated_workspaces",
+      "structured_integration"
+    ],
+    "useful_ideas": [
+      "Central manager decomposes work",
+      "Agents execute in isolated workspaces",
+      "Integration and tests consolidate progress",
+      "Branch-and-merge as a core multi-agent mechanism"
+    ],
+    "gap_vs_coprogrammer": "Research paradigm; CoProgrammer can operationalize it as leases, event logs, decision queues, and integration records.",
+    "status": "active",
+    "notes": "This is the closest research match to the Manager Plane direction."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Agentic PR Merge/Rejection Study",
+    "category": "research_reference",
+    "links": [
+      "https://arxiv.org/abs/2605.22534"
+    ],
+    "capabilities": [
+      "agentic_pr_outcomes",
+      "review_interaction_analysis",
+      "decision_rationale"
+    ],
+    "useful_ideas": [
+      "Measure review interactions, not only merge outcome",
+      "Capture decision rationale as first-class evidence",
+      "Separate agent failure from workflow constraints"
+    ],
+    "gap_vs_coprogrammer": "Evidence source only; reinforces need for decision records and integration history.",
+    "status": "active",
+    "notes": "Use to justify decision records and reviewer-interaction metrics in Track B."
   }
 ]

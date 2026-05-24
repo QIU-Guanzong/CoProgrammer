@@ -1,6 +1,6 @@
 # Open Source Scan
 
-Last updated: 2026-05-21
+Last updated: 2026-05-25
 
 This page tracks adjacent open-source projects and small reusable features that
 may influence CoProgrammer.
@@ -41,6 +41,19 @@ For a feature-by-feature product comparison, see
 | [OpenRewrite](https://docs.openrewrite.org/) | Reusable component | Open-source automated refactoring ecosystem using recipes and semantic trees. | Recipe-based deterministic transformations, semantic patch primitives. | Transformation engine only; no collaboration protocol or branch review layer. |
 | [Comby](https://comby.dev/) | Reusable component | Structural search and replace across many languages. | Syntax-aware transformation templates that avoid many regex pitfalls. | Patch primitive only. |
 | [Grit](https://docs.grit.io/) | Reusable component | Declarative code search and transformation via GritQL and migration workflows. | Declarative transformations, AI-assisted migration surface, PR-generation flow. | Transformation layer; not an integration governance system. |
+
+## 2026-05-25 Additions
+
+| Project | Category | What It Does | Useful Ideas | Gap vs. CoProgrammer |
+| --- | --- | --- | --- | --- |
+| [OpenAI Codex](https://openai.com/index/introducing-codex/) | Adjacent capability | Cloud coding agent that can run many tasks in parallel in isolated repository sandboxes and propose changes for review. | Parallel task model, sandbox evidence, AGENTS.md-guided execution, terminal/test citations. | Agent runtime; does not provide cross-agent leases, contract board, or semantic integration records. |
+| [GitHub Copilot Cloud Agent](https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent) | Adjacent capability | GitHub-native cloud agent that researches, plans, creates branches, and can open PRs from GitHub workflows. | GitHub task assignment, session logs, branch automation, custom agents. | Produces branches/PRs; does not digest multiple branches into minimal patches under project policy. |
+| [OpenHands](https://github.com/OpenHands/OpenHands) | Adjacent capability | Open-source AI-driven development platform and SDK for autonomous coding agents. | Sandboxed execution, model-agnostic runtime, SDK and evaluation infrastructure. | Runtime layer; CoProgrammer should coordinate outputs rather than replace the runtime. |
+| [SWE-agent](https://arxiv.org/abs/2405.15793) | Research reference | Agent-computer interface for automated software engineering tasks. | Purpose-built ACI, repo navigation, edit/test affordances. | Single-agent interface; CoProgrammer needs team-level integration state. |
+| [AGENTS.md](https://github.com/agentsmd/agents.md) | Reusable component | Open format for repository-level coding-agent instructions. | Stable build/test/PR guidance for agents. | Static instructions only; live state must remain in Manager events and structured policy. |
+| [Model Context Protocol](https://modelcontextprotocol.io/docs/learn/architecture) | Reusable component | Protocol for exposing tools, resources, prompts, notifications, and context to AI applications. | Future Manager Plane MCP server, tool/resource model, elicitation for human decisions. | Transport/context layer; not a software integration model. |
+| [Agent2Agent](https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents) | Reusable component | Open protocol project for secure agent-to-agent interoperability. | Future bridge across heterogeneous agent runtimes. | Agent communication layer; not repository lease, digest, or integration semantics. |
+| [CAID research](https://huggingface.co/papers/2603.21489) | Research reference | Centralized Asynchronous Isolated Delegation for multi-agent software engineering. | Central manager, async isolated workspaces, structured integration, test verification. | Research paradigm; CoProgrammer can productize it as event logs, leases, decisions, and integration records. |
 
 ## Small Features Worth Borrowing
 
@@ -168,6 +181,21 @@ plane pattern but narrow it to software integration:
 - branch digests instead of business tasks;
 - leases and contract boards instead of generic org-chart delegation;
 - integration records instead of general accountability logs.
+
+### 10. Minimal Agent Instructions
+
+Source inspiration: AGENTS.md and 2026 context-file studies.
+
+CoProgrammer should treat static instruction files as a stable onboarding layer,
+not as a live coordination database. A good repository setup should separate:
+
+- stable agent guidance in `AGENTS.md`;
+- machine-readable policy in `.coprogrammer.json`;
+- live work state in Manager events;
+- reviewable integration rationale in branch digests and decision records.
+
+This prevents the "one giant prompt file" failure mode while staying compatible
+with existing agent runtimes.
 
 ## Projects to Verify Later
 

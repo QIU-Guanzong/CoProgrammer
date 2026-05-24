@@ -47,6 +47,22 @@ company operations.
 | Governance | Budgets, org chart, approvals, accountability | Main constitution, protected paths, owner review, decision records |
 | Agent runtime | Bring your own agent | Bring your own coding agent |
 
+## 2026-05-25 Research Update
+
+The latest research update strengthens the Manager Plane direction:
+
+- Codex, GitHub Copilot Cloud Agent, OpenHands, and SWE-agent are best treated
+  as upstream coding-agent runtimes.
+- CAID-style research supports centralized delegation, asynchronous execution,
+  isolated workspaces, structured integration, and test verification.
+- AGENTS.md should remain a minimal stable instruction layer, while live state
+  belongs in Manager events, leases, decisions, contracts, and integration
+  records.
+- MCP and Agent2Agent are likely future access/interoperability layers, but
+  they do not replace CoProgrammer's repository-state model.
+
+See `docs/RESEARCH_UPDATE_2026-05-25.md`.
+
 ## Core Responsibilities
 
 ### 1. Shared State Store

@@ -1,6 +1,6 @@
 # Feature Gap Matrix
 
-Last updated: 2026-05-21
+Last updated: 2026-05-25
 
 This matrix turns open-source research into product decisions. A project can be
 valuable even when it is not a direct competitor.
@@ -27,6 +27,10 @@ Legend:
 | Integration record | Preserve why insights were kept or dropped. | Sourcegraph batch specs and changeset tracking, Renovate dashboard issues. | Schema/template |
 | Discussion-backed research loop | Keep exploratory leads out of implementation PRs. | GitHub Discussions, issue forms. | Implemented foundation |
 | Persistent manager plane | Store shared state for agents, leases, decisions, branch digests, and integration records. | Paperclip control plane, Prow status, Renovate dashboard. | Architecture hypothesis |
+| Agent runtime | CoProgrammer should consume outputs from coding agents rather than become the runtime. | Codex, GitHub Copilot Cloud Agent, OpenHands, SWE-agent. | Integrate, not replace |
+| Repository agent instructions | Keep stable agent guidance minimal and portable. | AGENTS.md, Codex AGENTS.md support, tool-specific context files. | Borrow, but keep live state structured |
+| Agent interoperability | Manager Plane may expose state through standard protocols. | MCP, Agent2Agent. | Future access layer |
+| Manager event log | Reconstruct leases, decisions, heartbeats, and status from append-only events. | Paperclip heartbeats, CAID structured integration, event sourcing patterns. | Local CLI prototype |
 
 ## Project-by-Project Fit
 
@@ -46,6 +50,13 @@ Legend:
 | MergePilot | partial | partial | partial | partial | partial | partial | Track closely as direct competitor candidate. |
 | Pullfrog | partial | partial | none | partial | partial | none | Borrow mention-triggered agent task UX. |
 | Paperclip | native | partial | none | none | partial | partial | Borrow persistent manager/control-plane model, but specialize it for software integration. |
+| OpenAI Codex | partial | partial | none | partial | partial | partial | Treat as upstream branch/task producer. |
+| GitHub Copilot Cloud Agent | partial | partial | none | partial | partial | partial | Consume GitHub-native agent branches and session logs. |
+| OpenHands | partial | partial | none | partial | partial | partial | Consider runtime interoperability, especially for self-hosted teams. |
+| SWE-agent | none | none | none | partial | none | none | Borrow agent-computer-interface thinking. |
+| AGENTS.md | native | none | none | none | partial | none | Use minimal stable instructions; do not store live coordination state here. |
+| MCP | none | none | none | none | none | none | Future protocol surface for Manager tools/resources. |
+| Agent2Agent | none | none | none | none | none | none | Future interop bridge, not a semantic integration model. |
 
 ## Research Decisions
 
@@ -64,6 +75,13 @@ Legend:
    broad AI-company operations.
 8. Research should be evaluated against `docs/FAILURE_TAXONOMY.md`; if a tool
    does not address a target failure mode, it should not drive roadmap priority.
+9. Codex, Copilot Cloud Agent, OpenHands, and SWE-agent should be treated as
+   upstream runtimes. CoProgrammer should coordinate their outputs rather than
+   duplicate them.
+10. `AGENTS.md` should remain minimal. Structured policy and live coordination
+    state belong in `.coprogrammer.json` and the Manager event log.
+11. MCP and Agent2Agent are future access/interoperability layers, not the core
+    semantic integration object model.
 
 ## Next Research Questions
 
@@ -78,3 +96,7 @@ Legend:
 - Which Manager Plane objects are essential for an MVP: leases, decisions,
   contract board, digest queue, or all four?
 - Which failure modes are most frequent in real team usage?
+- Can a minimal `AGENTS.md` plus `.coprogrammer.json` outperform a long
+  instruction-heavy context file?
+- Which coding-agent runtime should be the first Manager Plane integration:
+  Codex, Copilot Cloud Agent, OpenHands, or local CLI agents?

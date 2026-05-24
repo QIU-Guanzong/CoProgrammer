@@ -1,6 +1,6 @@
 # Research Landscape
 
-Last updated: 2026-05-21
+Last updated: 2026-05-25
 
 CoProgrammer sits between existing code review tools and merge automation. The
 current ecosystem can review, queue, test, and structurally merge code, but it
@@ -15,6 +15,7 @@ see `docs/OPEN_SOURCE_SCAN.md`. For a product-level comparison, see
 
 The market already has strong tools for:
 
+- autonomous coding agents and cloud task execution;
 - path ownership and protected review;
 - AI-assisted pull request review;
 - merge queues and merge trains;
@@ -27,10 +28,19 @@ The gap is the layer that asks:
 
 That is CoProgrammer's target layer.
 
+The 2026-05-25 update adds a stronger runtime/coordination distinction:
+Codex, GitHub Copilot Cloud Agent, OpenHands, and SWE-agent are upstream agent
+runtimes. MCP and A2A are interoperability layers. CoProgrammer's distinct
+scope is the software integration state that lives between those runtimes and
+the merge queue.
+
 ## Capability Map
 
 | Area | Existing Capability | Remaining Gap for CoProgrammer |
 | --- | --- | --- |
+| Coding-agent runtime | Codex, GitHub Copilot Cloud Agent, OpenHands, and SWE-agent can run coding tasks, create branches, execute tests, and provide session artifacts. | Coordinate multiple agent-produced branches, forecast collisions, digest intent, and record integration decisions. |
+| Agent instructions | AGENTS.md and tool-specific context files provide stable repository guidance. | Keep instructions minimal and move live coordination state into structured Manager objects. |
+| Agent protocols | MCP exposes tools/resources/context; A2A targets agent interoperability. | Define repository-native objects and semantics: lease, contract board, branch digest, decision record, integration record. |
 | Path ownership | GitHub CODEOWNERS maps files to owners and can require owner approval. GitHub also recommends protecting the CODEOWNERS file or `.github/` itself. | Convert ownership into machine-readable policy, digest risk, and integration rules instead of only review assignment. |
 | Merge ordering | GitHub Merge Queue validates queued PRs against the latest target branch and earlier queued PRs before merging. | Queue systems validate the final commit state, but they do not decide which insights from noisy AI branches should survive. |
 | Merge trains | GitLab Merge Trains provide queue order, pipeline status, and merge request train visibility. | They coordinate merge order and pipelines, not branch-intent extraction or semantic patch rebuilding. |
@@ -50,6 +60,10 @@ That is CoProgrammer's target layer.
 4. Collaboration telemetry should be captured during development, not invented
    after the PR is already large.
 5. Project policy must be machine-readable, versioned, and reviewed like code.
+6. Agent instructions should be deliberately small. The Manager event log and
+   `.coprogrammer.json` should carry structured state and policy.
+7. CoProgrammer should expose protocol surfaces later, but should first prove
+   its domain model through local CLI and GitHub-native workflows.
 
 ## Build vs. Integrate
 
@@ -63,6 +77,7 @@ Build inside CoProgrammer:
 - integration plan generation;
 - integration record history;
 - future minimal-patch regeneration.
+- future MCP/A2A access layer for Manager Plane state.
 
 Integrate with existing tools:
 
@@ -73,12 +88,21 @@ Integrate with existing tools:
 - Mergify or Graphite where teams already use them;
 - AI code reviewers such as GitHub Copilot Code Review or CodeRabbit;
 - existing CI, contract tests, security scanners, and linters.
+- upstream coding agents such as Codex, Copilot Cloud Agent, OpenHands, and
+  SWE-agent.
 
 ## Sources
 
 - [GitHub Docs: Merge Queue](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/merging-a-pull-request-with-a-merge-queue)
 - [GitHub Docs: CODEOWNERS](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
 - [GitHub Docs: Copilot Code Review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review)
+- [OpenAI: Introducing Codex](https://openai.com/index/introducing-codex/)
+- [GitHub Docs: Copilot Cloud Agent](https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent)
+- [OpenHands](https://github.com/OpenHands/OpenHands)
+- [SWE-agent](https://arxiv.org/abs/2405.15793)
+- [AGENTS.md](https://github.com/agentsmd/agents.md)
+- [Model Context Protocol](https://modelcontextprotocol.io/docs/learn/architecture)
+- [Linux Foundation: Agent2Agent Protocol](https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents)
 - [GitLab Docs: Merge Trains](https://docs.gitlab.com/ci/pipelines/merge_trains/)
 - [Mergify Docs: Merge Queue Setup](https://docs.mergify.com/merge-queue/setup/)
 - [Graphite Docs: Merge Queue Optimizations](https://graphite.com/docs/merge-queue-optimizations)
@@ -86,3 +110,6 @@ Integrate with existing tools:
 - [SemanticMerge Intro Guide](https://www.semanticmerge.com/documentation/intro-guide/semanticmerge-intro-guide)
 - [arXiv: How AI Coding Agents Modify Code](https://arxiv.org/abs/2601.17581)
 - [arXiv: How AI Coding Agents Communicate](https://arxiv.org/abs/2602.17084)
+- [arXiv: Failed Agentic Pull Requests](https://arxiv.org/abs/2601.15195)
+- [arXiv: Agentic PR Merge/Rejection Study](https://arxiv.org/abs/2605.22534)
+- [arXiv: Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988)

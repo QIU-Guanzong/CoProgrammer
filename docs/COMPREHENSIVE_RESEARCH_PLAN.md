@@ -1,6 +1,6 @@
 # Comprehensive Research Plan
 
-Last updated: 2026-05-24
+Last updated: 2026-05-25
 
 This document turns CoProgrammer research into an executable program. The goal
 is to decide whether CoProgrammer should become a software-specific Manager
@@ -17,6 +17,12 @@ CoProgrammer's thesis:
 > Multi-agent coding needs a persistent Manager Plane that stores shared
 > software state, manages leases and decisions, digests branches, and produces
 > safe integration artifacts.
+
+The 2026-05-25 research update strengthens this thesis. Current coding-agent
+runtimes are moving toward background parallel work in isolated environments,
+while recent empirical PR studies show that merge outcome alone hides reviewer
+interventions, workflow constraints, duplicate work, and missing decision
+rationale. See `docs/RESEARCH_UPDATE_2026-05-25.md`.
 
 This places CoProgrammer between:
 
@@ -110,6 +116,22 @@ The Manager Plane should recommend, route, and record decisions. It should not
 silently approve architecture, security, auth, payment, migration, or contract
 changes.
 
+### RQ6: How much instruction belongs in context files?
+
+Questions:
+
+- Which guidance belongs in `AGENTS.md`, `CLAUDE.md`, or repository
+  instructions?
+- Which guidance belongs in `.coprogrammer.json` or structured Manager state?
+- Can minimal instructions plus structured policy outperform long natural
+  language instruction files?
+
+Principle:
+
+Context files should describe stable working norms. Live coordination state
+should live in Manager events, leases, decisions, contracts, and integration
+records.
+
 ## Research Tracks
 
 ### Track A: Market and Prior Art
@@ -172,6 +194,8 @@ Sources:
 - Paperclip control-plane model;
 - DevNous and centralized/hierarchical multi-agent project-management research;
 - CAID-style centralized delegation and isolated workspaces;
+- Codex, GitHub Copilot Cloud Agent, OpenHands, and SWE-agent as upstream
+  coding-agent runtimes;
 - older multi-agent coordination literature.
 
 Questions:
@@ -352,6 +376,20 @@ Exit criteria:
 - MVP implementation roadmap;
 - prioritized issue backlog.
 
+## Current Roadmap Adjustment
+
+After the 2026-05-25 research update, the next MVP should be framed as two
+connected surfaces:
+
+1. Branch Digest Bot: PR diff ingestion, branch intent, risk extraction,
+   protected-path signals, and reviewer-facing integration plans.
+2. Manager Event Log: heartbeats, workspace leases, decision queue, status
+   reconstruction, then contract board and integration records.
+
+Integration Patch Bot remains the desired differentiator, but it should come
+after Manager Plane state is reliable enough to explain why a patch is being
+rebuilt.
+
 ## Evaluation Rubric
 
 Each candidate feature should be scored 1-5:
@@ -388,6 +426,13 @@ Core sources:
 - [Paperclip](https://paperclip.ing/)
 - [Paperclip Docs](https://docs.paperclip.ing/)
 - [paperclipai/paperclip](https://github.com/paperclipai/paperclip)
+- [OpenAI Codex](https://openai.com/index/introducing-codex/)
+- [GitHub Copilot Cloud Agent](https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent)
+- [OpenHands](https://github.com/OpenHands/OpenHands)
+- [SWE-agent](https://arxiv.org/abs/2405.15793)
+- [AGENTS.md](https://github.com/agentsmd/agents.md)
+- [Model Context Protocol](https://modelcontextprotocol.io/docs/learn/architecture)
+- [Agent2Agent Protocol](https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents)
 - [GitHub Merge Queue](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/merging-a-pull-request-with-a-merge-queue)
 - [GitHub CODEOWNERS](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
 - [GitHub Copilot Code Review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review)
@@ -402,6 +447,8 @@ Core sources:
 - [Grit](https://docs.grit.io/)
 - [arXiv: On the Use of Agentic Coding](https://arxiv.org/abs/2509.14745)
 - [arXiv: Failed Agentic Pull Requests](https://arxiv.org/abs/2601.15195)
+- [arXiv: Agentic PR Merge/Rejection Study](https://arxiv.org/abs/2605.22534)
+- [arXiv: Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988)
 - [arXiv: AI Coding Agents Communicate](https://arxiv.org/abs/2602.17084)
 - [Effective Strategies for Asynchronous Software Engineering Agents](https://huggingface.co/papers/2603.21489)
 
