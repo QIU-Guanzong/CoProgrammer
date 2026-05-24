@@ -407,8 +407,8 @@ Core sources:
 
 ## Immediate Next Steps
 
-1. Add at least 13 more structured leads to reach 20 total.
-2. Draft a Manager Plane API sketch.
-3. Add a failure taxonomy document.
-4. Add a first event-log prototype proposal.
+1. Review the expanded structured leads and keep the list above 20 entries.
+2. Review `docs/MANAGER_API_SKETCH.md`.
+3. Review `docs/EVENT_LOG_PROTOTYPE.md`.
+4. Convert the event-log prototype into an implementation issue.
 5. Open Research Leads discussions after GitHub Discussions are enabled.

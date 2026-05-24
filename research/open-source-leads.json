@@ -165,5 +165,345 @@
     "gap_vs_coprogrammer": "Paperclip manages broad AI labor and AI-run companies. CoProgrammer should specialize in repository state, branch digestion, semantic integration, contract risk, and integration records.",
     "status": "active",
     "notes": "Strongest current reference for Manager Plane direction. Track closely but keep CoProgrammer software-integration-specific."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "OpenReview",
+    "category": "adjacent_capability",
+    "links": [
+      "https://github.com/vercel-labs/openreview"
+    ],
+    "capabilities": [
+      "ai_pr_review",
+      "github_app",
+      "self_hosted_review_bot"
+    ],
+    "useful_ideas": [
+      "Self-hostable GitHub App model",
+      "Mention-triggered review",
+      "Review artifact generation"
+    ],
+    "gap_vs_coprogrammer": "Reviews submitted PRs but does not manage leases, branch digestion, or semantic patch reconstruction.",
+    "status": "watch",
+    "notes": "Reference for future GitHub App packaging."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "GitWand",
+    "category": "adjacent_capability",
+    "links": [
+      "https://gitwand.devlint.fr/"
+    ],
+    "capabilities": [
+      "merge_conflict_resolution",
+      "conflict_confidence",
+      "local_git_client"
+    ],
+    "useful_ideas": [
+      "Conflict taxonomy",
+      "Confidence scoring",
+      "MCP surface for agents"
+    ],
+    "gap_vs_coprogrammer": "Works after conflicts appear; does not preserve branch intent or manage integration decisions.",
+    "status": "watch",
+    "notes": "Borrow confidence taxonomy for integration risk."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Pullfrog",
+    "category": "adjacent_capability",
+    "links": [
+      "https://pullfrog.com/"
+    ],
+    "capabilities": [
+      "mention_triggered_agents",
+      "issue_triage",
+      "ci_fixing",
+      "merge_conflict_fixing"
+    ],
+    "useful_ideas": [
+      "Mention-triggered agent task UX",
+      "Repository instructions",
+      "GitHub Actions execution model"
+    ],
+    "gap_vs_coprogrammer": "General agent execution layer; CoProgrammer should specialize in Manager Plane state and integration artifacts.",
+    "status": "watch",
+    "notes": "Useful for command UX and GitHub-native workflow."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Renovate",
+    "category": "adjacent_capability",
+    "links": [
+      "https://github.com/renovatebot/renovate",
+      "https://docs.renovatebot.com/"
+    ],
+    "capabilities": [
+      "policy_config",
+      "automated_prs",
+      "dependency_dashboard",
+      "confidence_metadata"
+    ],
+    "useful_ideas": [
+      "Highly configurable repository policy",
+      "Generated PR bodies",
+      "Dashboard issue pattern",
+      "Automerge gated by policy"
+    ],
+    "gap_vs_coprogrammer": "Domain-specific dependency automation; does not manage multi-agent coding integration.",
+    "status": "watch",
+    "notes": "Borrow dashboard issue and policy configuration patterns."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Probot",
+    "category": "reusable_component",
+    "links": [
+      "https://github.com/probot/probot",
+      "https://probot.github.io/"
+    ],
+    "capabilities": [
+      "github_app_framework",
+      "webhook_routing",
+      "automation_runtime"
+    ],
+    "useful_ideas": [
+      "GitHub App event routing",
+      "App packaging model",
+      "Webhook-first automation"
+    ],
+    "gap_vs_coprogrammer": "Framework only; CoProgrammer still owns semantic integration protocol.",
+    "status": "watch",
+    "notes": "Candidate implementation framework if moving beyond GitHub Actions."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Grit",
+    "category": "reusable_component",
+    "links": [
+      "https://docs.grit.io/"
+    ],
+    "capabilities": [
+      "declarative_code_transform",
+      "code_migration",
+      "pr_generation"
+    ],
+    "useful_ideas": [
+      "Declarative migration language",
+      "Patch generation workflow",
+      "AI-assisted migration surface"
+    ],
+    "gap_vs_coprogrammer": "Transformation layer; not a Manager Plane or semantic integration governance system.",
+    "status": "watch",
+    "notes": "Candidate deterministic patch primitive."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "CodeRabbit",
+    "category": "adjacent_capability",
+    "links": [
+      "https://docs.coderabbit.ai/guides/code-review-overview"
+    ],
+    "capabilities": [
+      "ai_pr_review",
+      "review_summary",
+      "inline_comments"
+    ],
+    "useful_ideas": [
+      "Reviewer-facing summaries",
+      "Continuous PR feedback",
+      "Review UX"
+    ],
+    "gap_vs_coprogrammer": "Reviews PRs as submitted; does not own branch-intent digestion or integration records.",
+    "status": "watch",
+    "notes": "Commercial adjacent tool; integrate signals rather than replace."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "GitHub Copilot Code Review",
+    "category": "adjacent_capability",
+    "links": [
+      "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review"
+    ],
+    "capabilities": [
+      "native_github_review",
+      "ai_review",
+      "pull_request_comments"
+    ],
+    "useful_ideas": [
+      "Native GitHub review surface",
+      "User-requested review flow",
+      "Low-friction reviewer UX"
+    ],
+    "gap_vs_coprogrammer": "Not open source and not a Manager Plane; does not reconstruct minimal semantic patches.",
+    "status": "watch",
+    "notes": "Reference for native UX expectations."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "bors-ng",
+    "category": "adjacent_capability",
+    "links": [
+      "https://github.com/bors-ng/bors-ng"
+    ],
+    "capabilities": [
+      "merge_queue",
+      "staging_branch",
+      "pre_merge_testing"
+    ],
+    "useful_ideas": [
+      "Evergreen main branch principle",
+      "Staging branch before merge",
+      "Approval-to-merge queue"
+    ],
+    "gap_vs_coprogrammer": "Merge queue pattern only; does not digest branch intent or manage agent state.",
+    "status": "watch",
+    "notes": "Historical reference for integration branch discipline."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "GitHub Merge Queue",
+    "category": "adjacent_capability",
+    "links": [
+      "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/merging-a-pull-request-with-a-merge-queue"
+    ],
+    "capabilities": [
+      "merge_queue",
+      "branch_protection",
+      "pre_merge_validation"
+    ],
+    "useful_ideas": [
+      "Validate queued PRs against latest target branch",
+      "Use queue as final safety gate",
+      "Integrate with branch protection"
+    ],
+    "gap_vs_coprogrammer": "Validates final commit state but does not choose which parts of noisy AI branches should survive.",
+    "status": "active",
+    "notes": "CoProgrammer should delegate final merge ordering to it when available."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "GitLab Merge Trains",
+    "category": "adjacent_capability",
+    "links": [
+      "https://docs.gitlab.com/ci/pipelines/merge_trains/"
+    ],
+    "capabilities": [
+      "merge_train",
+      "pipeline_validation",
+      "merge_order_visibility"
+    ],
+    "useful_ideas": [
+      "Ordered merge train",
+      "Pipeline status before landing",
+      "Visibility into merge readiness"
+    ],
+    "gap_vs_coprogrammer": "Coordinates merge order and pipelines, not branch-intent extraction or semantic patch rebuilding.",
+    "status": "watch",
+    "notes": "Support as downstream merge gate in GitLab environments."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "SemanticMerge",
+    "category": "research_reference",
+    "links": [
+      "https://www.semanticmerge.com/documentation/intro-guide/semanticmerge-intro-guide"
+    ],
+    "capabilities": [
+      "syntax_aware_merge",
+      "structural_conflict_resolution"
+    ],
+    "useful_ideas": [
+      "Language-aware merge",
+      "Differentiate text conflict from structural conflict",
+      "Moved code handling"
+    ],
+    "gap_vs_coprogrammer": "Code-shape oriented; does not manage branch intent, human decisions, or integration records.",
+    "status": "watch",
+    "notes": "Useful conceptual reference for conflict classification."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Mergify",
+    "category": "adjacent_capability",
+    "links": [
+      "https://docs.mergify.com/merge-queue/setup/"
+    ],
+    "capabilities": [
+      "merge_queue",
+      "rules_engine",
+      "batching"
+    ],
+    "useful_ideas": [
+      "Rules-driven merge automation",
+      "Queue configuration",
+      "Batching and CI optimization"
+    ],
+    "gap_vs_coprogrammer": "Merge automation only; no Manager Plane or branch digest semantics.",
+    "status": "watch",
+    "notes": "Integrate as downstream queue where teams already use it."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Graphite Merge Queue",
+    "category": "adjacent_capability",
+    "links": [
+      "https://graphite.com/docs/merge-queue-optimizations"
+    ],
+    "capabilities": [
+      "merge_queue",
+      "stacked_prs",
+      "ci_optimization"
+    ],
+    "useful_ideas": [
+      "Stack-aware workflow",
+      "Queue optimization",
+      "Developer-facing merge readiness"
+    ],
+    "gap_vs_coprogrammer": "Optimizes PR flow but does not digest agent branches or rebuild minimal patches.",
+    "status": "watch",
+    "notes": "Reference for stacked PR teams."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "DevNous",
+    "category": "research_reference",
+    "links": [
+      "https://arxiv.org/abs/2603.21489"
+    ],
+    "capabilities": [
+      "asynchronous_agents",
+      "centralized_coordination",
+      "software_engineering_agents"
+    ],
+    "useful_ideas": [
+      "Asynchronous coordination",
+      "Centralized planning and status",
+      "Agent work decomposition"
+    ],
+    "gap_vs_coprogrammer": "Research reference; CoProgrammer must translate coordination ideas into repo and branch integration artifacts.",
+    "status": "needs_verification",
+    "notes": "Verify paper details during Track C."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Failed Agentic Pull Requests Study",
+    "category": "research_reference",
+    "links": [
+      "https://arxiv.org/abs/2601.15195"
+    ],
+    "capabilities": [
+      "empirical_pr_analysis",
+      "failure_taxonomy",
+      "agentic_coding_evidence"
+    ],
+    "useful_ideas": [
+      "Use failed PR data to validate taxonomy",
+      "Connect reviewer outcomes to digest fields",
+      "Ground product decisions in empirical evidence"
+    ],
+    "gap_vs_coprogrammer": "Evidence source only; not a product or component.",
+    "status": "needs_verification",
+    "notes": "Use in Track B to validate failure taxonomy."
   }
 ]

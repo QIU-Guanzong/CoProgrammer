@@ -173,6 +173,11 @@ The first state objects are intentionally small:
 These can back a local JSON event log first, then later move into SQLite,
 Postgres, or a hosted service.
 
+## Implementation Sketches
+
+- `docs/MANAGER_API_SKETCH.md`
+- `docs/EVENT_LOG_PROTOTYPE.md`
+
 ## Non-Goals
 
 - Do not become a generic chat room for agents.

@@ -58,6 +58,8 @@ Start with:
 - `docs/DISCUSSIONS.md` for discussion categories and research intake;
 - `docs/ARCHITECTURE.md` for the system architecture;
 - `docs/MANAGER_PLANE.md` for the cloud/self-hosted control plane hypothesis;
+- `docs/MANAGER_API_SKETCH.md` for the first Manager API surface;
+- `docs/EVENT_LOG_PROTOTYPE.md` for the local Manager Plane prototype;
 - `docs/FRAMEWORK.md` for the research framework.
 
 ## First MVP
