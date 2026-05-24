@@ -54,6 +54,8 @@ coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
 coprogrammer manager lease request --holder agent-b --pattern "src/api/auth.py"
 coprogrammer manager leases
 coprogrammer manager decisions
+coprogrammer manager decision record --id decision_123 --decision "serialize work" --decider maintainer
+coprogrammer manager status
 coprogrammer manager heartbeat --agent agent-a --task "Implement login"
 ```
 
@@ -66,7 +68,10 @@ Current prototype status:
 - `manager lease request` creates `decision.requested` for overlapping leases;
 - `manager lease release` appends `lease.released`;
 - `manager leases` reconstructs active leases by replaying events;
-- `manager decisions` reconstructs open decisions by replaying events.
+- `manager decisions` reconstructs open decisions by replaying events;
+- `manager decision record` appends `decision.recorded`;
+- `manager status` prints reconstructed event count, active leases, open
+  decisions, and latest heartbeats.
 
 ## Simulation
 
@@ -77,12 +82,14 @@ Scenario:
 3. Manager detects overlap.
 4. Manager emits `decision.requested`.
 5. Human decides whether to split scope, serialize work, or allow overlap.
+6. Manager records the decision and removes it from the open queue.
 
 Expected output:
 
 ```text
 conflict: agent-b overlaps active lease lease_agent_a
 decision requested: should agent-b proceed on src/api/auth.py?
+decision recorded: decision_123 [decided]
 ```
 
 ## Acceptance Criteria
@@ -91,6 +98,7 @@ decision requested: should agent-b proceed on src/api/auth.py?
 - JSON lines validate against `schemas/manager-event.schema.json` shape.
 - Active leases can be reconstructed from events.
 - Overlapping path leases produce a decision request.
+- Recorded decisions close the open decision item.
 - No Git branch mutation is required.
 
 Implemented first:
@@ -98,6 +106,8 @@ Implemented first:
 - active lease reconstruction;
 - overlap detection for path globs;
 - decision request creation on lease conflict;
+- decision recording;
+- status snapshot reconstruction;
 - local JSONL persistence.
 
 ## Later Storage Options

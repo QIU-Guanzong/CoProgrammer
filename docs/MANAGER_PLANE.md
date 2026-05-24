@@ -163,7 +163,8 @@ findings, because this directly addresses the "too fast and too slow" failure
 mode.
 
 The first local CLI prototype now focuses on the smaller slice before that:
-workspace leases and decision requests for overlapping work.
+workspace leases, decision requests for overlapping work, recorded decision
+outcomes, and a reconstructed status snapshot.
 
 ## Initial Schemas
 

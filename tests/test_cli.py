@@ -15,6 +15,7 @@ from coprogrammer.cli import (
     match_protected_paths,
     new_lease,
     new_heartbeat,
+    open_decisions,
     patterns_overlap,
     render_digest,
     resolve_language,
@@ -199,6 +200,88 @@ class ManagerPrototypeTest(unittest.TestCase):
         self.assertEqual(second, 0)
         self.assertIn("lease.granted", event_types)
         self.assertIn("decision.requested", event_types)
+
+    def test_manager_cli_records_decision_and_updates_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_dir = str(Path(tmp) / ".coprogrammer")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                main(
+                    [
+                        "manager",
+                        "lease",
+                        "request",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--holder",
+                        "agent-a",
+                        "--pattern",
+                        "src/api/**",
+                    ]
+                )
+                main(
+                    [
+                        "manager",
+                        "lease",
+                        "request",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--holder",
+                        "agent-b",
+                        "--pattern",
+                        "src/api/auth.py",
+                    ]
+                )
+
+            events = load_events(Path(state_dir) / "events.jsonl")
+            decision_id = next(
+                event["payload"]["decision"]["id"]
+                for event in events
+                if event["type"] == "decision.requested"
+            )
+
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                recorded = main(
+                    [
+                        "manager",
+                        "decision",
+                        "record",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--id",
+                        decision_id,
+                        "--decision",
+                        "serialize agent-b after agent-a",
+                        "--decider",
+                        "maintainer",
+                    ]
+                )
+                status = main(
+                    [
+                        "manager",
+                        "status",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                    ]
+                )
+
+            events = load_events(Path(state_dir) / "events.jsonl")
+            event_types = [event["type"] for event in events]
+
+        self.assertEqual(recorded, 0)
+        self.assertEqual(status, 0)
+        self.assertEqual(open_decisions(events), {})
+        self.assertIn("decision.recorded", event_types)
+        self.assertIn("open decisions: 0", output.getvalue())
 
 
 class GitHubCommentTest(unittest.TestCase):

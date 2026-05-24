@@ -86,6 +86,7 @@ python -m coprogrammer config validate
 python -m coprogrammer manifest validate templates/change-manifest.json
 python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
 python -m coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
+python -m coprogrammer manager status
 ```
 
 Language can also be controlled by `COPROGRAMMER_LANGUAGE=en|zh-CN`.

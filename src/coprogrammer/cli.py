@@ -46,6 +46,7 @@ EVENT_TYPES = (
     "integration.recorded",
 )
 LEASE_KINDS = ("path", "contract", "test_surface", "integration_branch")
+DECISION_RECORD_STATUSES = ("decided", "deferred", "rejected", "superseded")
 
 RISK_PATTERNS: dict[str, tuple[str, ...]] = {
     "contract": (
@@ -673,6 +674,18 @@ def open_decisions(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return decisions
 
 
+def latest_heartbeats(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    heartbeats: dict[str, dict[str, Any]] = {}
+    for event in events:
+        if event.get("type") != "agent.heartbeat":
+            continue
+        heartbeat = event.get("payload", {}).get("heartbeat", {})
+        agent = heartbeat.get("agent") or event.get("actor")
+        if agent:
+            heartbeats[str(agent)] = heartbeat
+    return heartbeats
+
+
 def find_lease_conflicts(
     requested_lease: dict[str, Any],
     leases: dict[str, dict[str, Any]],
@@ -1038,6 +1051,63 @@ def command_manager_decisions(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_manager_decision_record(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    path = event_log_path(cwd, args.state_dir)
+    events = load_events(path)
+    decisions = open_decisions(events)
+    if args.id not in decisions:
+        raise RuntimeError(f"open decision not found: {args.id}")
+
+    payload = {
+        "decision_id": args.id,
+        "decision": args.decision,
+        "decider": args.decider,
+        "status": args.status,
+        "note": args.note,
+        "recorded_at": utc_now(),
+    }
+    append_event(
+        path,
+        make_event(
+            "decision.recorded",
+            args.decider,
+            args.subject,
+            payload,
+        ),
+    )
+    print(f"decision recorded: {args.id} [{args.status}]")
+    return 0
+
+
+def command_manager_status(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    events = load_events(event_log_path(cwd, args.state_dir))
+    leases = list(active_leases(events).values())
+    decisions = list(open_decisions(events).values())
+    heartbeats = latest_heartbeats(events)
+    status = {
+        "event_count": len(events),
+        "active_leases": leases,
+        "open_decisions": decisions,
+        "latest_heartbeats": heartbeats,
+    }
+
+    if args.json:
+        print(json.dumps(status, indent=2, ensure_ascii=False))
+        return 0
+
+    print(f"events: {len(events)}")
+    print(f"active leases: {len(leases)}")
+    print(f"open decisions: {len(decisions)}")
+    print(f"latest heartbeats: {len(heartbeats)}")
+    for agent, heartbeat in sorted(heartbeats.items()):
+        task = heartbeat.get("task", "")
+        state = heartbeat.get("status", "unknown")
+        print(f"- {agent}: {state} {task}".rstrip())
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="coprogrammer",
@@ -1117,6 +1187,15 @@ def build_parser() -> argparse.ArgumentParser:
     manager_init.add_argument("--cwd", default=".")
     manager_init.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
     manager_init.set_defaults(func=command_manager_init)
+
+    manager_status = manager_subparsers.add_parser(
+        "status",
+        help="Show reconstructed Manager state.",
+    )
+    manager_status.add_argument("--cwd", default=".")
+    manager_status.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_status.add_argument("--json", action="store_true")
+    manager_status.set_defaults(func=command_manager_status)
 
     manager_heartbeat = manager_subparsers.add_parser(
         "heartbeat",
@@ -1198,6 +1277,32 @@ def build_parser() -> argparse.ArgumentParser:
     manager_decisions.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
     manager_decisions.add_argument("--json", action="store_true")
     manager_decisions.set_defaults(func=command_manager_decisions)
+
+    manager_decision = manager_subparsers.add_parser(
+        "decision",
+        help="Work with a single decision record.",
+    )
+    manager_decision_subparsers = manager_decision.add_subparsers(
+        dest="decision_command",
+        required=True,
+    )
+    manager_decision_record = manager_decision_subparsers.add_parser(
+        "record",
+        help="Record the outcome for an open decision.",
+    )
+    manager_decision_record.add_argument("--cwd", default=".")
+    manager_decision_record.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_decision_record.add_argument("--subject", default="repo:local")
+    manager_decision_record.add_argument("--id", required=True)
+    manager_decision_record.add_argument("--decision", required=True)
+    manager_decision_record.add_argument("--decider", required=True)
+    manager_decision_record.add_argument(
+        "--status",
+        default="decided",
+        choices=DECISION_RECORD_STATUSES,
+    )
+    manager_decision_record.add_argument("--note", default="")
+    manager_decision_record.set_defaults(func=command_manager_decision_record)
 
     return parser
 
