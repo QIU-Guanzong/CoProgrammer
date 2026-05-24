@@ -1,0 +1,67 @@
+[
+  {
+    "id": "rq-manager-plane",
+    "title": "Validate Manager Plane as the core abstraction",
+    "priority": "critical",
+    "questions": [
+      "Which shared state must be persistent?",
+      "Which decisions need human approval?",
+      "Which Manager Plane objects are required for MVP?"
+    ],
+    "methods": ["paperclip comparison", "two-agent simulation", "user interviews"],
+    "deliverables": ["Manager Plane API sketch", "MVP object model", "decision queue spec"],
+    "status": "active"
+  },
+  {
+    "id": "rq-failure-taxonomy",
+    "title": "Validate AI-agent coding failure taxonomy",
+    "priority": "critical",
+    "questions": [
+      "How often do stale shared state and contract drift appear?",
+      "Which failure modes are visible in PR data?",
+      "Which fields should branch digest require?"
+    ],
+    "methods": ["agent-authored PR sampling", "internal incident review", "paper review"],
+    "deliverables": ["validated failure taxonomy", "digest field changes", "risk scoring updates"],
+    "status": "active"
+  },
+  {
+    "id": "rq-oss-gap",
+    "title": "Expand open-source and commercial tool gap matrix",
+    "priority": "high",
+    "questions": [
+      "Does any tool already provide branch-intent digestion?",
+      "Which capabilities should CoProgrammer integrate instead of build?",
+      "Which tools are direct competitors?"
+    ],
+    "methods": ["source review", "docs review", "feature matrix scoring"],
+    "deliverables": ["20+ research leads", "updated gap matrix", "build-vs-integrate decisions"],
+    "status": "active"
+  },
+  {
+    "id": "rq-patch-primitives",
+    "title": "Evaluate deterministic patch primitives",
+    "priority": "medium",
+    "questions": [
+      "When can deterministic codemods replace LLM patch generation?",
+      "Which engines are useful for first implementation?",
+      "How should patch attempts be validated and recorded?"
+    ],
+    "methods": ["OpenRewrite/Comby/Grit spike", "source branch replay", "integration record review"],
+    "deliverables": ["patch primitive shortlist", "integration patch design", "validation loop spec"],
+    "status": "planned"
+  },
+  {
+    "id": "rq-ux-workflow",
+    "title": "Design reviewer and advisor workflow",
+    "priority": "high",
+    "questions": [
+      "Should the first surface be GitHub comments, dashboard, CLI, or all three?",
+      "What is the daily habit for maintainers?",
+      "How should Chinese and English teams use the same workflow?"
+    ],
+    "methods": ["workflow storyboard", "reviewer interviews", "prototype critique"],
+    "deliverables": ["decision queue UX", "GitHub command set", "bilingual terminology glossary"],
+    "status": "planned"
+  }
+]

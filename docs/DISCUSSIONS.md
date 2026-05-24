@@ -69,6 +69,9 @@ Structured research leads can also be stored as JSON using
 `schemas/research-lead.schema.json`; the current seed file is
 `research/open-source-leads.json`.
 
+Research discussions should map each lead to one or more failure modes from
+`docs/FAILURE_TAXONOMY.md`.
+
 ## Maintainer Checklist
 
 - [ ] Enable GitHub Discussions.

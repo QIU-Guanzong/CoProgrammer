@@ -62,6 +62,8 @@ Legend:
 7. Paperclip validates the Manager Plane direction, but CoProgrammer should
    narrow the domain to repository state and semantic integration rather than
    broad AI-company operations.
+8. Research should be evaluated against `docs/FAILURE_TAXONOMY.md`; if a tool
+   does not address a target failure mode, it should not drive roadmap priority.
 
 ## Next Research Questions
 
@@ -75,3 +77,4 @@ Legend:
 - How should agent heartbeats be stored without creating noisy repository churn?
 - Which Manager Plane objects are essential for an MVP: leases, decisions,
   contract board, digest queue, or all four?
+- Which failure modes are most frequent in real team usage?

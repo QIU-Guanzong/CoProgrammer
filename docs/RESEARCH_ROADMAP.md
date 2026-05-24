@@ -1,5 +1,9 @@
 # Research Roadmap
 
+For the executable research program, see
+`docs/COMPREHENSIVE_RESEARCH_PLAN.md`. For research intake rules, see
+`docs/RESEARCH_PROTOCOL.md`.
+
 ## Research Question
 
 How can a team coordinate many humans and AI agents so that parallel branches
@@ -59,6 +63,12 @@ Current implemented foundation:
 - `.coprogrammer.json` policy config;
 - protected-path risk scoring.
 
+Research dependency:
+
+- validate `docs/FAILURE_TAXONOMY.md` against real agent-authored PRs;
+- confirm whether branch digest fields cover stale shared state, contract
+  drift, and review compression failures.
+
 ## Phase 2: Integration Patch Bot
 
 Goal: rebuild useful changes from latest `main` instead of directly merging
@@ -81,7 +91,8 @@ Required before implementation:
 
 ## Phase 3: Multi-Agent Orchestrator
 
-Goal: prevent conflicts during development, not only at merge time.
+Goal: prevent conflicts during development, not only at merge time. This phase
+should now be framed as Manager Plane research rather than agent chat.
 
 Capabilities:
 
@@ -91,6 +102,12 @@ Capabilities:
 - shared contract board;
 - conflict forecast;
 - agent handoff records.
+
+Research dependency:
+
+- define Manager Plane MVP objects;
+- test lease board and decision queue with two-agent simulations;
+- decide local-first vs hosted control plane deployment.
 
 ## Phase 4: Semantic Integration Platform
 

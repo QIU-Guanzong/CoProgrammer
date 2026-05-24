@@ -49,6 +49,9 @@ CoProgrammer organizes collaboration as a continuous loop:
 
 Start with:
 
+- `docs/COMPREHENSIVE_RESEARCH_PLAN.md` for the research program and six-week sprint;
+- `docs/RESEARCH_PROTOCOL.md` for how to capture and evaluate research leads;
+- `docs/FAILURE_TAXONOMY.md` for the failure modes CoProgrammer targets;
 - `docs/RESEARCH_LANDSCAPE.md` for current tool landscape and gaps;
 - `docs/OPEN_SOURCE_SCAN.md` for adjacent open-source projects and reusable features;
 - `docs/FEATURE_GAP_MATRIX.md` for product-level comparison;
