@@ -50,10 +50,23 @@ This keeps the first implementation simple and auditable.
 ```bash
 coprogrammer manager init
 coprogrammer manager event append --type lease.requested --actor agent-a --payload payload.json
+coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
+coprogrammer manager lease request --holder agent-b --pattern "src/api/auth.py"
 coprogrammer manager leases
 coprogrammer manager decisions
 coprogrammer manager heartbeat --agent agent-a --task "Implement login"
 ```
+
+Current prototype status:
+
+- `manager init` creates `.coprogrammer/events.jsonl`;
+- `manager heartbeat` appends `agent.heartbeat`;
+- `manager event append` appends raw events;
+- `manager lease request` grants non-overlapping leases;
+- `manager lease request` creates `decision.requested` for overlapping leases;
+- `manager lease release` appends `lease.released`;
+- `manager leases` reconstructs active leases by replaying events;
+- `manager decisions` reconstructs open decisions by replaying events.
 
 ## Simulation
 
@@ -79,6 +92,13 @@ decision requested: should agent-b proceed on src/api/auth.py?
 - Active leases can be reconstructed from events.
 - Overlapping path leases produce a decision request.
 - No Git branch mutation is required.
+
+Implemented first:
+
+- active lease reconstruction;
+- overlap detection for path globs;
+- decision request creation on lease conflict;
+- local JSONL persistence.
 
 ## Later Storage Options
 

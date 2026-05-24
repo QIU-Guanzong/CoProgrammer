@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import tempfile
 import unittest
@@ -6,9 +8,14 @@ from pathlib import Path
 from coprogrammer.cli import (
     build_pr_comment_body,
     classify_risks,
+    find_lease_conflicts,
+    load_events,
     load_pull_request_number,
+    main,
     match_protected_paths,
+    new_lease,
     new_heartbeat,
+    patterns_overlap,
     render_digest,
     resolve_language,
     score_risk,
@@ -134,6 +141,64 @@ class HeartbeatTest(unittest.TestCase):
         self.assertEqual(heartbeat["agent"], "agent-a")
         self.assertEqual(heartbeat["status"], "working")
         self.assertEqual(heartbeat["currently_editing"], [])
+
+
+class ManagerPrototypeTest(unittest.TestCase):
+    def test_patterns_overlap_for_parent_glob_and_child_path(self) -> None:
+        self.assertTrue(patterns_overlap("src/api/**", "src/api/auth.py"))
+        self.assertFalse(patterns_overlap("src/api/**", "docs/**"))
+
+    def test_find_lease_conflicts(self) -> None:
+        existing = new_lease("agent-a", "path", ["src/api/**"], "API work")
+        requested = new_lease("agent-b", "path", ["src/api/auth.py"], "Auth work")
+
+        conflicts = find_lease_conflicts(requested, {existing["id"]: existing})
+
+        self.assertEqual(conflicts[0]["holder"], "agent-a")
+
+    def test_manager_cli_creates_decision_for_overlapping_lease(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_dir = str(Path(tmp) / ".coprogrammer")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                first = main(
+                    [
+                        "manager",
+                        "lease",
+                        "request",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--holder",
+                        "agent-a",
+                        "--pattern",
+                        "src/api/**",
+                    ]
+                )
+                second = main(
+                    [
+                        "manager",
+                        "lease",
+                        "request",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--holder",
+                        "agent-b",
+                        "--pattern",
+                        "src/api/auth.py",
+                    ]
+                )
+
+            events = load_events(Path(state_dir) / "events.jsonl")
+            event_types = [event["type"] for event in events]
+
+        self.assertEqual(first, 0)
+        self.assertEqual(second, 0)
+        self.assertIn("lease.granted", event_types)
+        self.assertIn("decision.requested", event_types)
 
 
 class GitHubCommentTest(unittest.TestCase):

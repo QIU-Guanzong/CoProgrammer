@@ -162,6 +162,9 @@ The first feature should be a **decision queue** for risky branch digest
 findings, because this directly addresses the "too fast and too slow" failure
 mode.
 
+The first local CLI prototype now focuses on the smaller slice before that:
+workspace leases and decision requests for overlapping work.
+
 ## Initial Schemas
 
 The first state objects are intentionally small:

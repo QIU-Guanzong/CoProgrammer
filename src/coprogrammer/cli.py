@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from uuid import uuid4
 
 
 REQUIRED_MANIFEST_FIELDS = {
@@ -28,7 +29,23 @@ DEFAULT_COMMENT_MARKER = "<!-- coprogrammer-branch-digest -->"
 GITHUB_COMMENT_LIMIT = 65000
 DEFAULT_LANGUAGE = "en"
 DEFAULT_CONFIG_FILE = ".coprogrammer.json"
+DEFAULT_MANAGER_DIR = ".coprogrammer"
+DEFAULT_EVENT_LOG = "events.jsonl"
 RISK_LEVELS = ("low", "medium", "high", "critical")
+EVENT_TYPES = (
+    "agent.heartbeat",
+    "agent.blocked",
+    "lease.requested",
+    "lease.granted",
+    "lease.released",
+    "contract.change.proposed",
+    "branch.digest.created",
+    "decision.requested",
+    "decision.recorded",
+    "integration.plan.created",
+    "integration.recorded",
+)
+LEASE_KINDS = ("path", "contract", "test_surface", "integration_branch")
 
 RISK_PATTERNS: dict[str, tuple[str, ...]] = {
     "contract": (
@@ -287,6 +304,10 @@ def validate_config(path: Path) -> tuple[bool, list[str]]:
     return validate_config_data(data)
 
 
+def utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
 def run_git(args: list[str], cwd: Path) -> str:
     result = subprocess.run(
         ["git", *args],
@@ -513,7 +534,7 @@ def validate_manifest(path: Path) -> tuple[bool, list[str]]:
 
 
 def new_heartbeat(agent: str, task: str) -> dict[str, Any]:
-    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    now = utc_now()
     return {
         "agent": agent,
         "task": task,
@@ -524,6 +545,180 @@ def new_heartbeat(agent: str, task: str) -> dict[str, Any]:
         "contracts_touched": [],
         "blockers": [],
         "insights": [],
+    }
+
+
+def manager_dir(cwd: Path, state_dir: str = DEFAULT_MANAGER_DIR) -> Path:
+    path = Path(state_dir)
+    if not path.is_absolute():
+        path = cwd / path
+    return path
+
+
+def event_log_path(cwd: Path, state_dir: str = DEFAULT_MANAGER_DIR) -> Path:
+    return manager_dir(cwd, state_dir) / DEFAULT_EVENT_LOG
+
+
+def make_event(
+    event_type: str,
+    actor: str,
+    subject: str,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return {
+        "id": f"evt_{uuid4().hex}",
+        "type": event_type,
+        "timestamp": utc_now(),
+        "actor": actor,
+        "subject": subject,
+        "payload": payload or {},
+    }
+
+
+def append_event(path: Path, event: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def load_events(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+
+    events: list[dict[str, Any]] = []
+    with path.open(encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                event = json.loads(stripped)
+            except json.JSONDecodeError as exc:
+                raise RuntimeError(
+                    f"invalid event log JSON at line {line_number}: {exc}"
+                ) from exc
+            if not isinstance(event, dict):
+                raise RuntimeError(
+                    f"invalid event log entry at line {line_number}: expected object"
+                )
+            events.append(event)
+    return events
+
+
+def pattern_static_prefix(pattern: str) -> str:
+    magic_positions = [
+        position
+        for token in ("*", "?", "[")
+        if (position := pattern.find(token)) != -1
+    ]
+    if not magic_positions:
+        return pattern.rstrip("/")
+    return pattern[: min(magic_positions)].rstrip("/")
+
+
+def patterns_overlap(left: str, right: str) -> bool:
+    if fnmatch.fnmatch(left, right) or fnmatch.fnmatch(right, left):
+        return True
+
+    left_prefix = pattern_static_prefix(left)
+    right_prefix = pattern_static_prefix(right)
+    if not left_prefix or not right_prefix:
+        return False
+    return (
+        left_prefix == right_prefix
+        or left_prefix.startswith(f"{right_prefix}/")
+        or right_prefix.startswith(f"{left_prefix}/")
+    )
+
+
+def lease_scopes_overlap(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    if left.get("kind") != right.get("kind"):
+        return False
+    for left_pattern in left.get("patterns", []):
+        for right_pattern in right.get("patterns", []):
+            if patterns_overlap(str(left_pattern), str(right_pattern)):
+                return True
+    return False
+
+
+def active_leases(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    leases: dict[str, dict[str, Any]] = {}
+    for event in events:
+        payload = event.get("payload", {})
+        if event.get("type") == "lease.granted":
+            lease = payload.get("lease", {})
+            lease_id = lease.get("id")
+            if lease_id:
+                leases[str(lease_id)] = lease
+        elif event.get("type") == "lease.released":
+            lease_id = payload.get("lease_id")
+            if lease_id:
+                leases.pop(str(lease_id), None)
+    return leases
+
+
+def open_decisions(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    decisions: dict[str, dict[str, Any]] = {}
+    for event in events:
+        payload = event.get("payload", {})
+        if event.get("type") == "decision.requested":
+            decision = payload.get("decision", {})
+            decision_id = decision.get("id")
+            if decision_id:
+                decisions[str(decision_id)] = decision
+        elif event.get("type") == "decision.recorded":
+            decision_id = payload.get("decision_id")
+            if decision_id:
+                decisions.pop(str(decision_id), None)
+    return decisions
+
+
+def find_lease_conflicts(
+    requested_lease: dict[str, Any],
+    leases: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    conflicts: list[dict[str, Any]] = []
+    requested_scope = requested_lease.get("scope", {})
+    for lease in leases.values():
+        if lease_scopes_overlap(requested_scope, lease.get("scope", {})):
+            conflicts.append(lease)
+    return conflicts
+
+
+def new_lease(
+    holder: str,
+    kind: str,
+    patterns: list[str],
+    task: str = "",
+) -> dict[str, Any]:
+    return {
+        "id": f"lease_{uuid4().hex}",
+        "holder": holder,
+        "task": task,
+        "scope": {"kind": kind, "patterns": patterns},
+        "status": "requested",
+        "created_at": utc_now(),
+        "reason": "",
+    }
+
+
+def new_decision(
+    question: str,
+    context: str,
+    related_artifacts: list[str] | None = None,
+    risk: str = "medium",
+) -> dict[str, Any]:
+    return {
+        "id": f"decision_{uuid4().hex}",
+        "question": question,
+        "context": context,
+        "options": [],
+        "decision": "",
+        "decider": "",
+        "status": "open",
+        "risk": risk,
+        "created_at": utc_now(),
+        "related_artifacts": related_artifacts or [],
     }
 
 
@@ -684,6 +879,165 @@ def command_heartbeat_new(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_manager_init(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    path = event_log_path(cwd, args.state_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch(exist_ok=True)
+    print(f"manager initialized: {path}")
+    return 0
+
+
+def command_manager_event_append(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    payload: dict[str, Any] = {}
+    if args.payload:
+        try:
+            payload = json.loads(Path(args.payload).read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"invalid payload JSON: {exc}") from exc
+    event = make_event(args.type, args.actor, args.subject, payload)
+    append_event(event_log_path(cwd, args.state_dir), event)
+    print(json.dumps(event, indent=2, ensure_ascii=False))
+    return 0
+
+
+def command_manager_heartbeat(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    heartbeat = new_heartbeat(args.agent, args.task)
+    event = make_event(
+        "agent.heartbeat",
+        args.agent,
+        args.subject,
+        {"heartbeat": heartbeat},
+    )
+    append_event(event_log_path(cwd, args.state_dir), event)
+    print(json.dumps(event, indent=2, ensure_ascii=False))
+    return 0
+
+
+def command_manager_lease_request(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    path = event_log_path(cwd, args.state_dir)
+    events = load_events(path)
+    lease = new_lease(args.holder, args.kind, args.pattern, args.task)
+
+    append_event(
+        path,
+        make_event(
+            "lease.requested",
+            args.holder,
+            args.subject,
+            {"lease": lease},
+        ),
+    )
+
+    conflicts = find_lease_conflicts(lease, active_leases(events))
+    if conflicts:
+        decision = new_decision(
+            question=(
+                f"Should {args.holder} proceed with {', '.join(args.pattern)} "
+                "despite active lease overlap?"
+            ),
+            context=json.dumps(
+                {
+                    "requested_lease": lease,
+                    "conflicting_leases": conflicts,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+            related_artifacts=[
+                lease["id"],
+                *[conflict["id"] for conflict in conflicts],
+            ],
+            risk="medium",
+        )
+        append_event(
+            path,
+            make_event(
+                "decision.requested",
+                "manager",
+                args.subject,
+                {"decision": decision},
+            ),
+        )
+        print(f"conflict: {args.holder} overlaps active lease(s)")
+        for conflict in conflicts:
+            patterns = ", ".join(conflict.get("scope", {}).get("patterns", []))
+            print(f"- {conflict['id']} held by {conflict['holder']}: {patterns}")
+        print(f"decision requested: {decision['id']}")
+        return 0
+
+    lease["status"] = "active"
+    append_event(
+        path,
+        make_event(
+            "lease.granted",
+            "manager",
+            args.subject,
+            {"lease": lease},
+        ),
+    )
+    print(f"lease granted: {lease['id']}")
+    return 0
+
+
+def command_manager_lease_release(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    path = event_log_path(cwd, args.state_dir)
+    append_event(
+        path,
+        make_event(
+            "lease.released",
+            args.actor,
+            args.subject,
+            {"lease_id": args.id},
+        ),
+    )
+    print(f"lease released: {args.id}")
+    return 0
+
+
+def command_manager_leases(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    leases = list(
+        active_leases(load_events(event_log_path(cwd, args.state_dir))).values()
+    )
+    if args.json:
+        print(json.dumps(leases, indent=2, ensure_ascii=False))
+        return 0
+    if not leases:
+        print("no active leases")
+        return 0
+    for lease in leases:
+        patterns = ", ".join(lease.get("scope", {}).get("patterns", []))
+        print(
+            f"{lease['id']} {lease['holder']} "
+            f"{lease.get('scope', {}).get('kind')}: {patterns}"
+        )
+    return 0
+
+
+def command_manager_decisions(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    decisions = list(
+        open_decisions(load_events(event_log_path(cwd, args.state_dir))).values()
+    )
+    if args.json:
+        print(json.dumps(decisions, indent=2, ensure_ascii=False))
+        return 0
+    if not decisions:
+        print("no open decisions")
+        return 0
+    for decision in decisions:
+        print(
+            f"{decision['id']} [{decision.get('risk', 'unknown')}] "
+            f"{decision['question']}"
+        )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="coprogrammer",
@@ -749,6 +1103,101 @@ def build_parser() -> argparse.ArgumentParser:
     heartbeat_new.add_argument("--task", required=True)
     heartbeat_new.add_argument("--output")
     heartbeat_new.set_defaults(func=command_heartbeat_new)
+
+    manager = subparsers.add_parser(
+        "manager",
+        help="Work with the local Manager Plane prototype.",
+    )
+    manager_subparsers = manager.add_subparsers(dest="manager_command", required=True)
+
+    manager_init = manager_subparsers.add_parser(
+        "init",
+        help="Initialize local Manager event log.",
+    )
+    manager_init.add_argument("--cwd", default=".")
+    manager_init.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_init.set_defaults(func=command_manager_init)
+
+    manager_heartbeat = manager_subparsers.add_parser(
+        "heartbeat",
+        help="Append an agent heartbeat event.",
+    )
+    manager_heartbeat.add_argument("--cwd", default=".")
+    manager_heartbeat.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_heartbeat.add_argument("--subject", default="repo:local")
+    manager_heartbeat.add_argument("--agent", required=True)
+    manager_heartbeat.add_argument("--task", required=True)
+    manager_heartbeat.set_defaults(func=command_manager_heartbeat)
+
+    manager_event = manager_subparsers.add_parser(
+        "event",
+        help="Work with raw manager events.",
+    )
+    manager_event_subparsers = manager_event.add_subparsers(
+        dest="event_command",
+        required=True,
+    )
+    manager_event_append = manager_event_subparsers.add_parser(
+        "append",
+        help="Append a raw manager event.",
+    )
+    manager_event_append.add_argument("--cwd", default=".")
+    manager_event_append.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_event_append.add_argument("--type", required=True, choices=EVENT_TYPES)
+    manager_event_append.add_argument("--actor", required=True)
+    manager_event_append.add_argument("--subject", default="repo:local")
+    manager_event_append.add_argument("--payload")
+    manager_event_append.set_defaults(func=command_manager_event_append)
+
+    manager_lease = manager_subparsers.add_parser(
+        "lease",
+        help="Work with workspace leases.",
+    )
+    manager_lease_subparsers = manager_lease.add_subparsers(
+        dest="lease_command",
+        required=True,
+    )
+    manager_lease_request = manager_lease_subparsers.add_parser(
+        "request",
+        help="Request a workspace lease.",
+    )
+    manager_lease_request.add_argument("--cwd", default=".")
+    manager_lease_request.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_lease_request.add_argument("--subject", default="repo:local")
+    manager_lease_request.add_argument("--holder", required=True)
+    manager_lease_request.add_argument("--kind", default="path", choices=LEASE_KINDS)
+    manager_lease_request.add_argument("--pattern", action="append", required=True)
+    manager_lease_request.add_argument("--task", default="")
+    manager_lease_request.set_defaults(func=command_manager_lease_request)
+
+    manager_lease_release = manager_lease_subparsers.add_parser(
+        "release",
+        help="Release a workspace lease.",
+    )
+    manager_lease_release.add_argument("--cwd", default=".")
+    manager_lease_release.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_lease_release.add_argument("--subject", default="repo:local")
+    manager_lease_release.add_argument("--actor", required=True)
+    manager_lease_release.add_argument("--id", required=True)
+    manager_lease_release.set_defaults(func=command_manager_lease_release)
+
+    manager_leases = manager_subparsers.add_parser(
+        "leases",
+        help="List active workspace leases.",
+    )
+    manager_leases.add_argument("--cwd", default=".")
+    manager_leases.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_leases.add_argument("--json", action="store_true")
+    manager_leases.set_defaults(func=command_manager_leases)
+
+    manager_decisions = manager_subparsers.add_parser(
+        "decisions",
+        help="List open decision records.",
+    )
+    manager_decisions.add_argument("--cwd", default=".")
+    manager_decisions.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_decisions.add_argument("--json", action="store_true")
+    manager_decisions.set_defaults(func=command_manager_decisions)
 
     return parser
 
