@@ -52,8 +52,10 @@ coprogrammer manager init
 coprogrammer manager event append --type lease.requested --actor agent-a --payload payload.json
 coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
 coprogrammer manager lease request --holder agent-b --pattern "src/api/auth.py"
+coprogrammer manager contract propose --proposer agent-a --kind api --name "POST /login" --summary "Change login response" --compatibility breaking
 coprogrammer manager leases
 coprogrammer manager decisions
+coprogrammer manager contracts
 coprogrammer manager decision record --id decision_123 --decision "serialize work" --decider maintainer
 coprogrammer manager status
 coprogrammer manager heartbeat --agent agent-a --task "Implement login"
@@ -67,11 +69,16 @@ Current prototype status:
 - `manager lease request` grants non-overlapping leases;
 - `manager lease request` creates `decision.requested` for overlapping leases;
 - `manager lease release` appends `lease.released`;
+- `manager contract propose` appends `contract.change.proposed`;
+- `manager contract propose --compatibility breaking` also creates
+  `decision.requested`;
 - `manager leases` reconstructs active leases by replaying events;
 - `manager decisions` reconstructs open decisions by replaying events;
+- `manager contracts` reconstructs proposed contract changes by replaying
+  events;
 - `manager decision record` appends `decision.recorded`;
 - `manager status` prints reconstructed event count, active leases, open
-  decisions, and latest heartbeats.
+  decisions, contract changes, and latest heartbeats.
 
 ## Simulation
 
@@ -107,6 +114,7 @@ Implemented first:
 - overlap detection for path globs;
 - decision request creation on lease conflict;
 - decision recording;
+- contract board proposal and listing;
 - status snapshot reconstruction;
 - local JSONL persistence.
 

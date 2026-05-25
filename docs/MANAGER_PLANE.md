@@ -180,7 +180,7 @@ mode.
 
 The first local CLI prototype now focuses on the smaller slice before that:
 workspace leases, decision requests for overlapping work, recorded decision
-outcomes, and a reconstructed status snapshot.
+outcomes, contract change proposals, and a reconstructed status snapshot.
 
 ## Initial Schemas
 
@@ -188,6 +188,7 @@ The first state objects are intentionally small:
 
 - `schemas/manager-event.schema.json`
 - `schemas/workspace-lease.schema.json`
+- `schemas/contract-change.schema.json`
 - `schemas/decision-record.schema.json`
 
 These can back a local JSON event log first, then later move into SQLite,

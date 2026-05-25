@@ -1,0 +1,12 @@
+{
+  "$schema": "../schemas/contract-change.schema.json",
+  "id": "contract_example",
+  "proposer": "agent-a",
+  "kind": "api",
+  "name": "POST /login",
+  "summary": "Add login endpoint that returns a session token.",
+  "compatibility": "unknown",
+  "status": "proposed",
+  "created_at": "2026-01-01T00:00:00Z",
+  "affected_artifacts": ["openapi.yaml", "src/api/auth.py"]
+}

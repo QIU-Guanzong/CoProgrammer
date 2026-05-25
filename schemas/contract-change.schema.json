@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/contract-change.schema.json",
+  "title": "CoProgrammer Contract Change",
+  "type": "object",
+  "required": [
+    "id",
+    "proposer",
+    "kind",
+    "name",
+    "summary",
+    "compatibility",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string" },
+    "proposer": { "type": "string" },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "api",
+        "schema",
+        "database",
+        "shared_type",
+        "auth",
+        "payment",
+        "deployment",
+        "config",
+        "other"
+      ]
+    },
+    "name": { "type": "string" },
+    "summary": { "type": "string" },
+    "compatibility": {
+      "type": "string",
+      "enum": ["compatible", "breaking", "unknown"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "accepted", "rejected", "superseded"]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "affected_artifacts": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

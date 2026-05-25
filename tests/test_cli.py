@@ -8,11 +8,13 @@ from pathlib import Path
 from coprogrammer.cli import (
     build_pr_comment_body,
     classify_risks,
+    contract_changes,
     find_lease_conflicts,
     load_events,
     load_pull_request_number,
     main,
     match_protected_paths,
+    new_contract_change,
     new_lease,
     new_heartbeat,
     open_decisions,
@@ -183,6 +185,23 @@ class HeartbeatTest(unittest.TestCase):
         self.assertEqual(heartbeat["currently_editing"], [])
 
 
+class ContractChangeTest(unittest.TestCase):
+    def test_new_contract_change_shape(self) -> None:
+        change = new_contract_change(
+            "agent-a",
+            "api",
+            "POST /login",
+            "Add login endpoint",
+            "unknown",
+            ["openapi.yaml"],
+        )
+
+        self.assertEqual(change["proposer"], "agent-a")
+        self.assertEqual(change["kind"], "api")
+        self.assertEqual(change["status"], "proposed")
+        self.assertEqual(change["affected_artifacts"], ["openapi.yaml"])
+
+
 class ManagerPrototypeTest(unittest.TestCase):
     def test_patterns_overlap_for_parent_glob_and_child_path(self) -> None:
         self.assertTrue(patterns_overlap("src/api/**", "src/api/auth.py"))
@@ -321,6 +340,56 @@ class ManagerPrototypeTest(unittest.TestCase):
         self.assertEqual(open_decisions(events), {})
         self.assertIn("decision.recorded", event_types)
         self.assertIn("open decisions: 0", output.getvalue())
+
+    def test_manager_cli_proposes_breaking_contract_change(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_dir = str(Path(tmp) / ".coprogrammer")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                proposed = main(
+                    [
+                        "manager",
+                        "contract",
+                        "propose",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--proposer",
+                        "agent-a",
+                        "--kind",
+                        "api",
+                        "--name",
+                        "POST /login",
+                        "--summary",
+                        "Change login response shape",
+                        "--compatibility",
+                        "breaking",
+                        "--artifact",
+                        "openapi.yaml",
+                    ]
+                )
+                listed = main(
+                    [
+                        "manager",
+                        "contracts",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                    ]
+                )
+
+            events = load_events(Path(state_dir) / "events.jsonl")
+            event_types = [event["type"] for event in events]
+            changes = contract_changes(events)
+
+        self.assertEqual(proposed, 0)
+        self.assertEqual(listed, 0)
+        self.assertEqual(len(changes), 1)
+        self.assertIn("contract.change.proposed", event_types)
+        self.assertIn("decision.requested", event_types)
+        self.assertIn("POST /login", output.getvalue())
 
 
 class GitHubCommentTest(unittest.TestCase):

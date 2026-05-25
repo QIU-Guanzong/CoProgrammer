@@ -52,6 +52,7 @@ The current local prototype already supports:
 ```bash
 coprogrammer manager heartbeat --agent agent-a --task "Implement login"
 coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
+coprogrammer manager contract propose --proposer agent-a --kind api --name "POST /login" --summary "Change login response"
 coprogrammer manager decisions
 coprogrammer manager decision record --id decision_123 --decision "serialize work" --decider maintainer
 coprogrammer manager status

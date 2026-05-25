@@ -47,6 +47,18 @@ EVENT_TYPES = (
 )
 LEASE_KINDS = ("path", "contract", "test_surface", "integration_branch")
 DECISION_RECORD_STATUSES = ("decided", "deferred", "rejected", "superseded")
+CONTRACT_KINDS = (
+    "api",
+    "schema",
+    "database",
+    "shared_type",
+    "auth",
+    "payment",
+    "deployment",
+    "config",
+    "other",
+)
+CONTRACT_COMPATIBILITY = ("compatible", "breaking", "unknown")
 AGENTS_FORBIDDEN_STATE_HEADINGS = {
     "# backlog",
     "## backlog",
@@ -726,6 +738,18 @@ def latest_heartbeats(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]
     return heartbeats
 
 
+def contract_changes(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    changes: dict[str, dict[str, Any]] = {}
+    for event in events:
+        if event.get("type") != "contract.change.proposed":
+            continue
+        change = event.get("payload", {}).get("contract_change", {})
+        change_id = change.get("id")
+        if change_id:
+            changes[str(change_id)] = change
+    return changes
+
+
 def find_lease_conflicts(
     requested_lease: dict[str, Any],
     leases: dict[str, dict[str, Any]],
@@ -772,6 +796,27 @@ def new_decision(
         "risk": risk,
         "created_at": utc_now(),
         "related_artifacts": related_artifacts or [],
+    }
+
+
+def new_contract_change(
+    proposer: str,
+    kind: str,
+    name: str,
+    summary: str,
+    compatibility: str = "unknown",
+    affected_artifacts: list[str] | None = None,
+) -> dict[str, Any]:
+    return {
+        "id": f"contract_{uuid4().hex}",
+        "proposer": proposer,
+        "kind": kind,
+        "name": name,
+        "summary": summary,
+        "compatibility": compatibility,
+        "status": "proposed",
+        "created_at": utc_now(),
+        "affected_artifacts": affected_artifacts or [],
     }
 
 
@@ -1101,6 +1146,70 @@ def command_manager_decisions(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_manager_contract_propose(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    path = event_log_path(cwd, args.state_dir)
+    change = new_contract_change(
+        proposer=args.proposer,
+        kind=args.kind,
+        name=args.name,
+        summary=args.summary,
+        compatibility=args.compatibility,
+        affected_artifacts=args.artifact,
+    )
+    append_event(
+        path,
+        make_event(
+            "contract.change.proposed",
+            args.proposer,
+            args.subject,
+            {"contract_change": change},
+        ),
+    )
+    print(f"contract change proposed: {change['id']}")
+
+    if args.compatibility == "breaking":
+        decision = new_decision(
+            question=f"Should breaking contract change proceed: {args.name}?",
+            context=json.dumps(change, ensure_ascii=False, sort_keys=True),
+            related_artifacts=[change["id"], *args.artifact],
+            risk="high",
+        )
+        append_event(
+            path,
+            make_event(
+                "decision.requested",
+                "manager",
+                args.subject,
+                {"decision": decision},
+            ),
+        )
+        print(f"decision requested: {decision['id']}")
+    return 0
+
+
+def command_manager_contracts(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    changes = list(
+        contract_changes(load_events(event_log_path(cwd, args.state_dir))).values()
+    )
+    if args.kind:
+        changes = [change for change in changes if change.get("kind") == args.kind]
+
+    if args.json:
+        print(json.dumps(changes, indent=2, ensure_ascii=False))
+        return 0
+    if not changes:
+        print("no contract changes")
+        return 0
+    for change in changes:
+        print(
+            f"{change['id']} [{change.get('compatibility', 'unknown')}] "
+            f"{change.get('kind')}: {change.get('name')}"
+        )
+    return 0
+
+
 def command_manager_decision_record(args: argparse.Namespace) -> int:
     cwd = Path(args.cwd).resolve()
     path = event_log_path(cwd, args.state_dir)
@@ -1140,6 +1249,7 @@ def command_manager_status(args: argparse.Namespace) -> int:
         "event_count": len(events),
         "active_leases": leases,
         "open_decisions": decisions,
+        "contract_changes": list(contract_changes(events).values()),
         "latest_heartbeats": heartbeats,
     }
 
@@ -1150,6 +1260,7 @@ def command_manager_status(args: argparse.Namespace) -> int:
     print(f"events: {len(events)}")
     print(f"active leases: {len(leases)}")
     print(f"open decisions: {len(decisions)}")
+    print(f"contract changes: {len(status['contract_changes'])}")
     print(f"latest heartbeats: {len(heartbeats)}")
     for agent, heartbeat in sorted(heartbeats.items()):
         task = heartbeat.get("task", "")
@@ -1340,6 +1451,47 @@ def build_parser() -> argparse.ArgumentParser:
     manager_decisions.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
     manager_decisions.add_argument("--json", action="store_true")
     manager_decisions.set_defaults(func=command_manager_decisions)
+
+    manager_contract = manager_subparsers.add_parser(
+        "contract",
+        help="Work with shared contract changes.",
+    )
+    manager_contract_subparsers = manager_contract.add_subparsers(
+        dest="contract_command",
+        required=True,
+    )
+    manager_contract_propose = manager_contract_subparsers.add_parser(
+        "propose",
+        help="Propose a shared contract change.",
+    )
+    manager_contract_propose.add_argument("--cwd", default=".")
+    manager_contract_propose.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_contract_propose.add_argument("--subject", default="repo:local")
+    manager_contract_propose.add_argument("--proposer", required=True)
+    manager_contract_propose.add_argument(
+        "--kind",
+        required=True,
+        choices=CONTRACT_KINDS,
+    )
+    manager_contract_propose.add_argument("--name", required=True)
+    manager_contract_propose.add_argument("--summary", required=True)
+    manager_contract_propose.add_argument(
+        "--compatibility",
+        default="unknown",
+        choices=CONTRACT_COMPATIBILITY,
+    )
+    manager_contract_propose.add_argument("--artifact", action="append", default=[])
+    manager_contract_propose.set_defaults(func=command_manager_contract_propose)
+
+    manager_contracts = manager_subparsers.add_parser(
+        "contracts",
+        help="List proposed shared contract changes.",
+    )
+    manager_contracts.add_argument("--cwd", default=".")
+    manager_contracts.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_contracts.add_argument("--kind", choices=CONTRACT_KINDS)
+    manager_contracts.add_argument("--json", action="store_true")
+    manager_contracts.set_defaults(func=command_manager_contracts)
 
     manager_decision = manager_subparsers.add_parser(
         "decision",

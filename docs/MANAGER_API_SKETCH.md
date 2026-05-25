@@ -134,6 +134,9 @@ Contract entries should capture:
 - affected consumers;
 - required owner review.
 
+Input should be compatible with `schemas/contract-change.schema.json`.
+Breaking contract proposals should create or reference an open decision record.
+
 ### Branch Digests
 
 ```http

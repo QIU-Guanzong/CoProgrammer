@@ -91,6 +91,7 @@ python -m coprogrammer agents check
 python -m coprogrammer manifest validate templates/change-manifest.json
 python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
 python -m coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
+python -m coprogrammer manager contract propose --proposer agent-a --kind api --name "POST /login" --summary "Add login endpoint"
 python -m coprogrammer manager status
 ```
 
