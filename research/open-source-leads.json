@@ -711,5 +711,170 @@
     "gap_vs_coprogrammer": "Evidence source only; reinforces need for decision records and integration history.",
     "status": "active",
     "notes": "Use to justify decision records and reviewer-interaction metrics in Track B."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Continue",
+    "category": "adjacent_capability",
+    "links": ["https://github.com/continuedev/continue"],
+    "capabilities": ["ai_checks", "ci_enforcement", "agent_runtime"],
+    "useful_ideas": [
+      "Source-controlled AI checks",
+      "CI-enforceable automation",
+      "Repository-native policy workflow"
+    ],
+    "gap_vs_coprogrammer": "Focuses on AI checks and coding assistance; CoProgrammer owns semantic integration state and decision records.",
+    "status": "active",
+    "notes": "High-priority reference for policy-as-code and CI gates."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Cline",
+    "category": "adjacent_capability",
+    "links": ["https://github.com/cline/cline"],
+    "capabilities": ["coding_agent", "human_approval", "tool_execution"],
+    "useful_ideas": [
+      "Approval-oriented tool execution",
+      "Plan/act coding workflow",
+      "Visible agent actions"
+    ],
+    "gap_vs_coprogrammer": "Agent runtime and UX; does not maintain cross-agent leases, contract board, or integration records.",
+    "status": "watch",
+    "notes": "Borrow human-in-the-loop execution UX."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "aider",
+    "category": "adjacent_capability",
+    "links": ["https://github.com/Aider-AI/aider"],
+    "capabilities": ["git_native_agent", "patch_loop", "test_loop"],
+    "useful_ideas": [
+      "Git-native pair programming",
+      "Repository map",
+      "Edit/test/commit loop"
+    ],
+    "gap_vs_coprogrammer": "Optimizes a single agent pair-programming loop; CoProgrammer coordinates multiple branch outputs and integration decisions.",
+    "status": "watch",
+    "notes": "Strong reference for patch ergonomics and Git workflow."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "opencode",
+    "category": "adjacent_capability",
+    "links": ["https://github.com/anomalyco/opencode"],
+    "capabilities": ["coding_agent", "cli_runtime", "sdk"],
+    "useful_ideas": [
+      "Open-source coding agent CLI",
+      "SDK/runtime packaging",
+      "Developer-facing agent experience"
+    ],
+    "gap_vs_coprogrammer": "Runtime layer; CoProgrammer should consume its branches and evidence rather than duplicate it.",
+    "status": "watch",
+    "notes": "High-star runtime reference for CLI ergonomics."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Gemini CLI",
+    "category": "adjacent_capability",
+    "links": ["https://github.com/google-gemini/gemini-cli"],
+    "capabilities": ["terminal_agent", "tool_execution", "runtime_logs"],
+    "useful_ideas": [
+      "Terminal-native agent workflow",
+      "Tool execution visibility",
+      "Runtime evidence patterns"
+    ],
+    "gap_vs_coprogrammer": "Agent runtime; does not define repository semantic integration policy.",
+    "status": "watch",
+    "notes": "Reference for task logs and terminal evidence."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "LangGraph",
+    "category": "reusable_component",
+    "links": ["https://github.com/langchain-ai/langgraph"],
+    "capabilities": ["durable_workflows", "state_graphs", "agent_orchestration"],
+    "useful_ideas": [
+      "Stateful workflow graphs",
+      "Durable execution",
+      "Explicit handoff states"
+    ],
+    "gap_vs_coprogrammer": "General workflow framework; CoProgrammer still defines software-specific objects and policies.",
+    "status": "watch",
+    "notes": "Potential future substrate for Manager workflows."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "LiteLLM",
+    "category": "reusable_component",
+    "links": ["https://github.com/BerriAI/litellm"],
+    "capabilities": ["model_gateway", "model_routing", "cost_controls"],
+    "useful_ideas": [
+      "Unified model gateway",
+      "Cost and routing controls",
+      "Provider abstraction"
+    ],
+    "gap_vs_coprogrammer": "Model infrastructure only; CoProgrammer defines risk-based routing policy and integration artifacts.",
+    "status": "watch",
+    "notes": "Relevant to model routing and simple-work model policy."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Semgrep",
+    "category": "reusable_component",
+    "links": ["https://github.com/semgrep/semgrep"],
+    "capabilities": ["static_analysis", "rule_based_checks", "security_scanning"],
+    "useful_ideas": [
+      "Rule-based invariant checks",
+      "Diff-friendly findings",
+      "Security and policy validation"
+    ],
+    "gap_vs_coprogrammer": "Validation engine; does not manage branch intent, leases, or integration records.",
+    "status": "watch",
+    "notes": "Candidate validation primitive."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "ast-grep",
+    "category": "reusable_component",
+    "links": ["https://github.com/ast-grep/ast-grep"],
+    "capabilities": ["structural_search", "linting", "code_rewrite"],
+    "useful_ideas": [
+      "AST-based search and rewrite",
+      "Fast multi-language transformations",
+      "Rule-driven codemods"
+    ],
+    "gap_vs_coprogrammer": "Patch primitive only; CoProgrammer decides when and why to apply it.",
+    "status": "active",
+    "notes": "High-priority deterministic patch primitive."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "tree-sitter",
+    "category": "reusable_component",
+    "links": ["https://github.com/tree-sitter/tree-sitter"],
+    "capabilities": ["incremental_parsing", "syntax_trees", "multi_language_analysis"],
+    "useful_ideas": [
+      "Multi-language syntax trees",
+      "Incremental parsing",
+      "Semantic diff foundation"
+    ],
+    "gap_vs_coprogrammer": "Parser infrastructure; CoProgrammer still needs integration semantics and policy.",
+    "status": "watch",
+    "notes": "Potential foundation for semantic diff and symbol-aware conflict forecast."
+  },
+  {
+    "$schema": "../schemas/research-lead.schema.json",
+    "name": "Coder",
+    "category": "adjacent_capability",
+    "links": ["https://github.com/coder/coder"],
+    "capabilities": ["cloud_workspaces", "agent_environments", "access_control"],
+    "useful_ideas": [
+      "Secure workspaces for developers and agents",
+      "Environment provisioning",
+      "Access-controlled execution"
+    ],
+    "gap_vs_coprogrammer": "Workspace platform; CoProgrammer coordinates software integration state above the workspace.",
+    "status": "watch",
+    "notes": "Reference for isolated agent workspace deployment."
   }
 ]

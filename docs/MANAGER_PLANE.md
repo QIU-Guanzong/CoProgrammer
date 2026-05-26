@@ -60,6 +60,9 @@ The latest research update strengthens the Manager Plane direction:
   records.
 - MCP and Agent2Agent are likely future access/interoperability layers, but
   they do not replace CoProgrammer's repository-state model.
+- Model routing should allow cheap/simple work on `codex-5.3`, while protected
+  paths, contract changes, and integration patch application require stronger
+  review.
 
 See `docs/RESEARCH_UPDATE_2026-05-25.md`.
 

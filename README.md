@@ -65,6 +65,8 @@ Start with:
 - `docs/AGENT_RUNTIME_INTEROP.md` for integrating with Codex, Copilot, OpenHands, and other runtimes;
 - `docs/CONTEXT_FILE_STRATEGY.md` for keeping `AGENTS.md` small and structured state separate;
 - `docs/INTEGRATION_PATCH_DESIGN.md` for the minimal-patch reconstruction design;
+- `docs/MODEL_ROUTING_POLICY.md` for routing simple work to `codex-5.3` and high-risk work to review;
+- `docs/HIGH_STAR_PROJECT_SCAN_2026-05-26.md` for high-star project patterns to borrow;
 - `docs/FRAMEWORK.md` for the research framework.
 
 ## First MVP

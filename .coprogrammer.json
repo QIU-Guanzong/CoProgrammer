@@ -8,6 +8,25 @@
     "build": "medium",
     "architecture": "medium"
   },
+  "model_routing": {
+    "simple_work_model": "codex-5.3",
+    "default_model": "codex-default",
+    "high_risk_model": "maintainer-approved",
+    "simple_work_allowed": [
+      "documentation polish",
+      "research lead triage",
+      "low-risk template updates",
+      "format-only changes",
+      "local validation and summaries"
+    ],
+    "requires_human_review": [
+      "schemas/**",
+      "protocols/**",
+      "security/auth/payment behavior",
+      "database migrations",
+      "integration patch application"
+    ]
+  },
   "protected_paths": [
     {
       "pattern": "AGENTS.md",

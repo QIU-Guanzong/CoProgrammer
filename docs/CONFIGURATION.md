@@ -19,6 +19,20 @@ free.
     "build": "medium",
     "architecture": "medium"
   },
+  "model_routing": {
+    "simple_work_model": "codex-5.3",
+    "default_model": "codex-default",
+    "high_risk_model": "maintainer-approved",
+    "simple_work_allowed": [
+      "documentation polish",
+      "research lead triage"
+    ],
+    "requires_human_review": [
+      "schemas/**",
+      "protocols/**",
+      "integration patch application"
+    ]
+  },
   "protected_paths": [
     {
       "pattern": "schemas/**",
@@ -55,3 +69,18 @@ Digest risk is the highest level detected from:
 
 Risk scoring does not block merges yet. It makes review pressure visible. Later
 versions can turn high-risk findings into required checks.
+
+## Model Routing
+
+`model_routing` documents which model tier can handle each class of work.
+
+- `simple_work_model`: low-risk work model label, configured here as
+  `codex-5.3`;
+- `default_model`: normal work label;
+- `high_risk_model`: high-risk routing label, usually meaning maintainer
+  approval or stronger review;
+- `simple_work_allowed`: examples safe for simple-work routing;
+- `requires_human_review`: patterns or work classes that must not be delegated
+  to simple-work routing.
+
+See `docs/MODEL_ROUTING_POLICY.md`.

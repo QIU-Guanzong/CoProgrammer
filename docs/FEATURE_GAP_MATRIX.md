@@ -31,6 +31,8 @@ Legend:
 | Repository agent instructions | Keep stable agent guidance minimal and portable. | AGENTS.md, Codex AGENTS.md support, tool-specific context files. | Borrow, but keep live state structured |
 | Agent interoperability | Manager Plane may expose state through standard protocols. | MCP, Agent2Agent. | Future access layer |
 | Manager event log | Reconstruct leases, decisions, heartbeats, and status from append-only events. | Paperclip heartbeats, CAID structured integration, event sourcing patterns. | Local CLI prototype |
+| Model routing | Route simple work to cheaper models and high-risk work to stronger review. | LiteLLM, Continue checks, repository policy configs. | Config foundation |
+| Deterministic patch primitives | Prefer structured transforms before LLM patch generation. | ast-grep, tree-sitter, Semgrep, jscodeshift, ts-morph. | Planned |
 
 ## Project-by-Project Fit
 
@@ -82,6 +84,10 @@ Legend:
     state belong in `.coprogrammer.json` and the Manager event log.
 11. MCP and Agent2Agent are future access/interoperability layers, not the core
     semantic integration object model.
+12. High-star coding agents are upstream runtimes. CoProgrammer should consume
+    their outputs, not duplicate their coding-agent UX.
+13. Simple work may route to `codex-5.3`, but protected paths, contracts, and
+    integration patch application require stronger review.
 
 ## Next Research Questions
 

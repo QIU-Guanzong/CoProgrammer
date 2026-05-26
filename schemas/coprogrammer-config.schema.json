@@ -33,6 +33,23 @@
         },
         "additionalProperties": false
       }
+    },
+    "model_routing": {
+      "type": "object",
+      "properties": {
+        "simple_work_model": { "type": "string", "minLength": 1 },
+        "default_model": { "type": "string" },
+        "high_risk_model": { "type": "string" },
+        "simple_work_allowed": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requires_human_review": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

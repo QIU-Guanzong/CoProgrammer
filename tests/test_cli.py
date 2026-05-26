@@ -107,6 +107,38 @@ class ConfigValidationTest(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("unknown config key: unknown", errors)
 
+    def test_accepts_model_routing_config(self) -> None:
+        ok, errors = validate_config_data(
+            {
+                "model_routing": {
+                    "simple_work_model": "codex-5.3",
+                    "simple_work_allowed": ["documentation polish"],
+                    "requires_human_review": ["schemas/**"],
+                }
+            }
+        )
+
+        self.assertTrue(ok)
+        self.assertEqual(errors, [])
+
+    def test_rejects_invalid_model_routing_config(self) -> None:
+        ok, errors = validate_config_data(
+            {
+                "model_routing": {
+                    "simple_work_model": 5,
+                    "simple_work_allowed": "docs",
+                }
+            }
+        )
+
+        self.assertFalse(ok)
+        self.assertTrue(
+            any("model_routing.simple_work_model" in error for error in errors)
+        )
+        self.assertTrue(
+            any("model_routing.simple_work_allowed" in error for error in errors)
+        )
+
 
 class ManifestValidationTest(unittest.TestCase):
     def test_accepts_minimal_valid_manifest(self) -> None:

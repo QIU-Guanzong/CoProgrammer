@@ -121,6 +121,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "language": DEFAULT_LANGUAGE,
     "risk_level_by_category": DEFAULT_RISK_LEVEL_BY_CATEGORY,
     "protected_paths": [],
+    "model_routing": {},
 }
 
 LANGUAGE_ALIASES = {
@@ -256,6 +257,7 @@ def merge_config(config: dict[str, Any] | None) -> dict[str, Any]:
         "language": DEFAULT_CONFIG["language"],
         "risk_level_by_category": dict(DEFAULT_RISK_LEVEL_BY_CATEGORY),
         "protected_paths": [],
+        "model_routing": {},
     }
     if not config:
         return merged
@@ -266,6 +268,8 @@ def merge_config(config: dict[str, Any] | None) -> dict[str, Any]:
         merged["risk_level_by_category"].update(config["risk_level_by_category"])
     if isinstance(config.get("protected_paths"), list):
         merged["protected_paths"] = config["protected_paths"]
+    if isinstance(config.get("model_routing"), dict):
+        merged["model_routing"] = config["model_routing"]
     return merged
 
 
@@ -288,7 +292,13 @@ def load_config(cwd: Path, config_path: str | None = None) -> dict[str, Any]:
 
 def validate_config_data(data: dict[str, Any]) -> tuple[bool, list[str]]:
     errors: list[str] = []
-    allowed_keys = {"$schema", "language", "risk_level_by_category", "protected_paths"}
+    allowed_keys = {
+        "$schema",
+        "language",
+        "risk_level_by_category",
+        "protected_paths",
+        "model_routing",
+    }
     for key in data:
         if key not in allowed_keys:
             errors.append(f"unknown config key: {key}")
@@ -329,6 +339,31 @@ def validate_config_data(data: dict[str, Any]) -> tuple[bool, list[str]]:
                 errors.append(f"protected_paths[{index}].risk must be one of {', '.join(RISK_LEVELS)}")
             if "owner_review" in rule and not isinstance(rule["owner_review"], bool):
                 errors.append(f"protected_paths[{index}].owner_review must be a boolean")
+
+    model_routing = data.get("model_routing", {})
+    if model_routing and not isinstance(model_routing, dict):
+        errors.append("model_routing must be an object")
+    elif isinstance(model_routing, dict):
+        allowed_model_keys = {
+            "simple_work_model",
+            "default_model",
+            "high_risk_model",
+            "simple_work_allowed",
+            "requires_human_review",
+        }
+        for key in model_routing:
+            if key not in allowed_model_keys:
+                errors.append(f"model_routing has unknown key: {key}")
+        for key in ("simple_work_model", "default_model", "high_risk_model"):
+            if key in model_routing and not isinstance(model_routing[key], str):
+                errors.append(f"model_routing.{key} must be a string")
+        for key in ("simple_work_allowed", "requires_human_review"):
+            if key in model_routing:
+                value = model_routing[key]
+                if not isinstance(value, list):
+                    errors.append(f"model_routing.{key} must be a list")
+                elif not all(isinstance(item, str) for item in value):
+                    errors.append(f"model_routing.{key} must contain strings")
 
     return not errors, errors
 

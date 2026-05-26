@@ -65,6 +65,19 @@
     "status": "planned"
   },
   {
+    "id": "rq-model-routing",
+    "title": "Validate risk-based model routing",
+    "priority": "medium",
+    "questions": [
+      "Which low-risk tasks can safely use codex-5.3?",
+      "Which protected paths should force high-risk routing?",
+      "How should routing decisions appear in branch digest and integration plan artifacts?"
+    ],
+    "methods": ["simple-work task sampling", "cost and failure comparison", "protected-path audit"],
+    "deliverables": ["model routing policy", "routing fields for future artifacts", "simple-work evaluation report"],
+    "status": "active"
+  },
+  {
     "id": "rq-patch-primitives",
     "title": "Evaluate deterministic patch primitives",
     "priority": "medium",
