@@ -1,0 +1,37 @@
+{
+  "$schema": "../schemas/integration-plan.schema.json",
+  "source_branch": "feature/login",
+  "source_head": "abc123",
+  "main_base": "main@def456",
+  "branch_digest": "branch-digest.md",
+  "objective": "Rebuild the login API change as the smallest safe patch.",
+  "changes_to_rebuild": [
+    "Add POST /login handler and tests."
+  ],
+  "changes_to_drop": [
+    "Drop unrelated formatting changes."
+  ],
+  "protected_areas": [
+    "openapi.yaml"
+  ],
+  "required_decisions": [
+    "decision_api_response_shape"
+  ],
+  "patch_primitives": [
+    {
+      "type": "manual",
+      "tool": "maintainer",
+      "rationale": "Small endpoint change with contract review.",
+      "files": ["src/api/auth.py", "tests/test_auth.py"]
+    }
+  ],
+  "validation": [
+    {
+      "name": "unit tests",
+      "command": "python -m unittest discover -s tests",
+      "required": true
+    }
+  ],
+  "rollback_plan": "Revert the integration PR and restore previous API contract.",
+  "status": "draft"
+}

@@ -89,6 +89,13 @@ Required before implementation:
 - validation command registry;
 - rollback plan format.
 
+Current implemented foundation:
+
+- `docs/INTEGRATION_PATCH_DESIGN.md`;
+- `schemas/integration-plan.schema.json`;
+- `templates/integration-plan.json`;
+- local `coprogrammer integration-plan validate`.
+
 ## Phase 3: Multi-Agent Orchestrator
 
 Goal: prevent conflicts during development, not only at merge time. This phase

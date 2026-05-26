@@ -64,6 +64,7 @@ Start with:
 - `docs/EVENT_LOG_PROTOTYPE.md` for the local Manager Plane prototype;
 - `docs/AGENT_RUNTIME_INTEROP.md` for integrating with Codex, Copilot, OpenHands, and other runtimes;
 - `docs/CONTEXT_FILE_STRATEGY.md` for keeping `AGENTS.md` small and structured state separate;
+- `docs/INTEGRATION_PATCH_DESIGN.md` for the minimal-patch reconstruction design;
 - `docs/FRAMEWORK.md` for the research framework.
 
 ## First MVP
@@ -89,6 +90,7 @@ python -m coprogrammer digest --base origin/main --working-tree
 python -m coprogrammer config validate
 python -m coprogrammer agents check
 python -m coprogrammer manifest validate templates/change-manifest.json
+python -m coprogrammer integration-plan validate templates/integration-plan.json
 python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
 python -m coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
 python -m coprogrammer manager contract propose --proposer agent-a --kind api --name "POST /login" --summary "Add login endpoint"

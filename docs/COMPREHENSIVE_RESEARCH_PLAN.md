@@ -360,6 +360,7 @@ Exit criteria:
 
 - Integration Patch Bot design has a clear first slice;
 - non-goals and safety constraints are explicit.
+- integration plan JSON schema can be validated locally.
 
 ### Week 6: Product Positioning and MVP Cut
 

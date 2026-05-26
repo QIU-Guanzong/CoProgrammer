@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coprogrammer.dev/schemas/integration-plan.schema.json",
+  "title": "CoProgrammer Integration Plan",
+  "type": "object",
+  "required": [
+    "source_branch",
+    "source_head",
+    "main_base",
+    "objective",
+    "changes_to_rebuild",
+    "changes_to_drop",
+    "patch_primitives",
+    "validation",
+    "rollback_plan",
+    "status"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "source_branch": { "type": "string" },
+    "source_head": { "type": "string" },
+    "main_base": { "type": "string" },
+    "branch_digest": { "type": "string" },
+    "objective": { "type": "string" },
+    "changes_to_rebuild": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "changes_to_drop": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "protected_areas": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_decisions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "patch_primitives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "rationale"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "codemod",
+              "structural_search_replace",
+              "recipe",
+              "llm_patch",
+              "cherry_pick",
+              "git_apply"
+            ]
+          },
+          "tool": { "type": "string" },
+          "rationale": { "type": "string" },
+          "files": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "command"],
+        "properties": {
+          "name": { "type": "string" },
+          "command": { "type": "string" },
+          "required": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rollback_plan": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "approved", "applied", "superseded"]
+    }
+  },
+  "additionalProperties": false
+}

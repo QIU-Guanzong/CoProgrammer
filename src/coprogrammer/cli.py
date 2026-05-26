@@ -23,6 +23,18 @@ REQUIRED_MANIFEST_FIELDS = {
     "tests",
     "risks",
 }
+REQUIRED_INTEGRATION_PLAN_FIELDS = {
+    "source_branch",
+    "source_head",
+    "main_base",
+    "objective",
+    "changes_to_rebuild",
+    "changes_to_drop",
+    "patch_primitives",
+    "validation",
+    "rollback_plan",
+    "status",
+}
 
 DEFAULT_GITHUB_API_URL = "https://api.github.com"
 DEFAULT_COMMENT_MARKER = "<!-- coprogrammer-branch-digest -->"
@@ -560,6 +572,41 @@ def validate_manifest(path: Path) -> tuple[bool, list[str]]:
     return not errors, errors
 
 
+def validate_integration_plan(path: Path) -> tuple[bool, list[str]]:
+    try:
+        payload: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return False, [f"invalid JSON: {exc}"]
+    except OSError as exc:
+        return False, [str(exc)]
+
+    missing = sorted(REQUIRED_INTEGRATION_PLAN_FIELDS - set(payload))
+    errors = [f"missing required field: {field}" for field in missing]
+
+    for field in (
+        "changes_to_rebuild",
+        "changes_to_drop",
+        "patch_primitives",
+        "validation",
+    ):
+        if field in payload and not isinstance(payload[field], list):
+            errors.append(f"{field} must be a list")
+
+    if "rollback_plan" in payload and not isinstance(payload["rollback_plan"], str):
+        errors.append("rollback_plan must be a string")
+
+    status = payload.get("status")
+    if status is not None and status not in {
+        "draft",
+        "approved",
+        "applied",
+        "superseded",
+    }:
+        errors.append("status must be one of draft, approved, applied, superseded")
+
+    return not errors, errors
+
+
 def validate_agents_file(path: Path, max_lines: int = 120) -> tuple[bool, list[str]]:
     errors: list[str] = []
     try:
@@ -967,6 +1014,16 @@ def command_manifest_validate(args: argparse.Namespace) -> int:
     return 1
 
 
+def command_integration_plan_validate(args: argparse.Namespace) -> int:
+    ok, errors = validate_integration_plan(Path(args.file))
+    if ok:
+        print("integration plan ok")
+        return 0
+    for error in errors:
+        print(error, file=sys.stderr)
+    return 1
+
+
 def command_agents_check(args: argparse.Namespace) -> int:
     ok, errors = validate_agents_file(Path(args.file), args.max_lines)
     if ok:
@@ -1326,6 +1383,21 @@ def build_parser() -> argparse.ArgumentParser:
     validate = manifest_subparsers.add_parser("validate", help="Validate a manifest.")
     validate.add_argument("file")
     validate.set_defaults(func=command_manifest_validate)
+
+    integration_plan = subparsers.add_parser(
+        "integration-plan",
+        help="Work with integration plan artifacts.",
+    )
+    integration_plan_subparsers = integration_plan.add_subparsers(
+        dest="integration_plan_command",
+        required=True,
+    )
+    integration_plan_validate = integration_plan_subparsers.add_parser(
+        "validate",
+        help="Validate an integration plan JSON artifact.",
+    )
+    integration_plan_validate.add_argument("file")
+    integration_plan_validate.set_defaults(func=command_integration_plan_validate)
 
     agents = subparsers.add_parser(
         "agents",

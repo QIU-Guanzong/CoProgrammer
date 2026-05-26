@@ -24,6 +24,7 @@ from coprogrammer.cli import (
     score_risk,
     validate_agents_file,
     validate_config_data,
+    validate_integration_plan,
     validate_manifest,
 )
 
@@ -174,6 +175,52 @@ class AgentsFileValidationTest(unittest.TestCase):
 
         self.assertFalse(ok)
         self.assertTrue(any("too long" in error for error in errors))
+
+
+class IntegrationPlanValidationTest(unittest.TestCase):
+    def test_accepts_minimal_integration_plan(self) -> None:
+        payload = {
+            "source_branch": "feature/login",
+            "source_head": "abc123",
+            "main_base": "main@def456",
+            "objective": "Rebuild login endpoint with minimal API change.",
+            "changes_to_rebuild": [],
+            "changes_to_drop": [],
+            "patch_primitives": [],
+            "validation": [],
+            "rollback_plan": "Revert the integration PR.",
+            "status": "draft",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "integration-plan.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+
+            ok, errors = validate_integration_plan(path)
+
+        self.assertTrue(ok)
+        self.assertEqual(errors, [])
+
+    def test_rejects_invalid_integration_plan_status(self) -> None:
+        payload = {
+            "source_branch": "feature/login",
+            "source_head": "abc123",
+            "main_base": "main@def456",
+            "objective": "Rebuild login endpoint with minimal API change.",
+            "changes_to_rebuild": [],
+            "changes_to_drop": [],
+            "patch_primitives": [],
+            "validation": [],
+            "rollback_plan": "Revert the integration PR.",
+            "status": "merged",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "integration-plan.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+
+            ok, errors = validate_integration_plan(path)
+
+        self.assertFalse(ok)
+        self.assertTrue(any("status" in error for error in errors))
 
 
 class HeartbeatTest(unittest.TestCase):
