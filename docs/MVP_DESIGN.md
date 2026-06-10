@@ -17,6 +17,11 @@ change first.
 
 ## Scope
 
+This MVP is the first PR-facing slice of the broader lifecycle described in
+`docs/COORDINATION_LIFECYCLE.md`. It should connect backward to project
+covenants and Manager Plane telemetry, and forward to integration plans and
+integration records.
+
 The MVP should:
 
 - read changed files and commits;

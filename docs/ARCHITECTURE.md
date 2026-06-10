@@ -8,6 +8,8 @@ the missing layer between "many agents produced branches" and "main branch
 should receive a small, reviewed, validated patch."
 
 For the persistent control-plane hypothesis, see `docs/MANAGER_PLANE.md`.
+For the before/during/after collaboration lifecycle, see
+`docs/COORDINATION_LIFECYCLE.md`.
 
 ## System Boundary
 
@@ -28,6 +30,20 @@ CoProgrammer delegates:
 - final merge ordering to merge queues or merge trains;
 - correctness checks to CI and test suites;
 - final architectural decisions to human maintainers.
+
+## Lifecycle View
+
+The architecture should support one continuous collaboration lifecycle:
+
+| Stage | Main question | Primary plane |
+| --- | --- | --- |
+| Before coding | What is this project allowed to become, and what may this task touch? | Protocol Plane |
+| During coding | What are agents editing, and which shared contracts are under pressure? | Collaboration Telemetry Plane |
+| After coding | What should be preserved, dropped, rebuilt, or deferred before merge? | Branch Intelligence and Semantic Integration Planes |
+
+This framing keeps the project from becoming only a PR summarizer. The PR
+digest is the first review-facing wedge, but project covenants, live Manager
+state, integration plans, and integration records should form one loop.
 
 ## Planes
 

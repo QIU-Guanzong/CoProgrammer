@@ -2,7 +2,9 @@
 
 For the executable research program, see
 `docs/COMPREHENSIVE_RESEARCH_PLAN.md`. For research intake rules, see
-`docs/RESEARCH_PROTOCOL.md`.
+`docs/RESEARCH_PROTOCOL.md`. For the current ecosystem extension strategy,
+including MCP, skills, plugins, GitHub automation, and open-source libraries,
+see `docs/ECOSYSTEM_EXTENSION_STRATEGY.md`.
 
 ## Research Question
 
