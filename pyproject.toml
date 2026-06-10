@@ -21,6 +21,11 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
 ]
 
+[project.urls]
+Homepage = "https://github.com/QIU-Guanzong/CoProgrammer"
+Repository = "https://github.com/QIU-Guanzong/CoProgrammer"
+Issues = "https://github.com/QIU-Guanzong/CoProgrammer/issues"
+
 [project.scripts]
 coprogrammer = "coprogrammer.cli:main"
 
