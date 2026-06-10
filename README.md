@@ -16,6 +16,32 @@ choosing one side of a merge conflict. The hard part is understanding what each
 branch learned, preserving the useful insight, discarding noise, and rebuilding
 the smallest safe patch on top of the current main branch.
 
+## Where CoProgrammer Sits
+
+CoProgrammer is **not** another parallel-agent orchestrator. It is the missing
+layer between orchestrators and the merge queue:
+
+```text
+UPSTREAM      agent runtimes & orchestrators
+              (Conductor, Sculptor, Vibe Kanban, Claude Squad,
+               Codex, Copilot Cloud Agent, OpenHands, ...)
+              → produce parallel branches
+                      │
+COPROGRAMMER  integration & governance layer
+              protocol → telemetry → conflict forecast →
+              branch digest → integration plan →
+              minimal patch → integration record → policy update
+                      │
+DOWNSTREAM    landing infrastructure
+              (Merge Queue / Merge Trains / Mergify / Graphite,
+               CI, CODEOWNERS, branch protection)
+```
+
+Orchestrators solve "run N agents in parallel without stepping on each other."
+CoProgrammer solves "when N branches come back, decide what deserves to reach
+`main`, and rebuild it safely under main-branch constraints." See
+`docs/ORCHESTRATOR_INTEGRATION.md` for concrete hookup recipes.
+
 ## Core Loop
 
 CoProgrammer organizes collaboration as a continuous loop:
@@ -50,6 +76,13 @@ CoProgrammer organizes collaboration as a continuous loop:
 
 Start with:
 
+- `docs/COORDINATION_LIFECYCLE.md` for the before/during/after collaboration
+  loop: project covenant, Manager Plane synchronization, and post-PR semantic
+  integration;
+- `docs/ECOSYSTEM_EXTENSION_STRATEGY.md` for the research method and MCP,
+  skill, plugin, GitHub automation, and open-source library integration plan;
+- `docs/PLUGIN_QUICKSTART.md` for installing and using the repo-local
+  CoProgrammer Codex plugin;
 - `docs/COMPREHENSIVE_RESEARCH_PLAN.md` for the research program and six-week sprint;
 - `docs/RESEARCH_UPDATE_2026-05-25.md` for the latest Manager Plane evidence update;
 - `docs/RESEARCH_PROTOCOL.md` for how to capture and evaluate research leads;
@@ -67,7 +100,47 @@ Start with:
 - `docs/INTEGRATION_PATCH_DESIGN.md` for the minimal-patch reconstruction design;
 - `docs/MODEL_ROUTING_POLICY.md` for routing simple work to `codex-5.3` and high-risk work to review;
 - `docs/HIGH_STAR_PROJECT_SCAN_2026-05-26.md` for high-star project patterns to borrow;
-- `docs/FRAMEWORK.md` for the research framework.
+- `docs/FRAMEWORK.md` for the research framework;
+- `docs/ORCHESTRATOR_INTEGRATION.md` for feeding Conductor, Sculptor, Vibe
+  Kanban, and cloud-agent branches into CoProgrammer;
+- `docs/STRATEGY_MEMO_2026-06-10.md` for the latest positioning and priority
+  decisions;
+- `docs/EVAL_PLAN.md` for the AgenticFlict-based evaluation plan;
+- `ACKNOWLEDGMENTS.md` for the projects we learn from and how we credit them.
+
+## Install (pick your surface)
+
+CoProgrammer ships one core through several thin wrappers — use whichever
+your stack already speaks (details: `docs/DISTRIBUTION_STRATEGY.md`):
+
+**MCP server** (Claude Code, Codex, Cursor, any MCP client):
+
+```json
+{ "mcpServers": { "coprogrammer": {
+    "command": "uvx", "args": ["coprogrammer", "mcp", "serve"] } } }
+```
+
+Tools exposed: `digest_branch`, `manager_status`, `manager_forecast`,
+`lease_request`, `heartbeat`, `contract_propose`.
+
+**Agent Skills** (SKILL.md open standard — Claude Code, Codex CLI, Gemini
+CLI, Copilot, Cursor, 35+ tools): copy `plugins/coprogrammer/skills/*` into
+your agent's skills directory.
+
+**GitHub Action** (PR branch digest, zero setup):
+
+```yaml
+- uses: actions/checkout@v4
+  with: { fetch-depth: 0 }
+- uses: QIU-Guanzong/CoProgrammer@v0
+  with: { language: zh-CN }
+```
+
+**CLI**: `pipx install coprogrammer` (or from source:
+`python -m pip install -e .`).
+
+**Codex plugin**: `codex plugin marketplace add <this repo>` — see
+`docs/PLUGIN_QUICKSTART.md`.
 
 ## First MVP
 
@@ -96,6 +169,7 @@ python -m coprogrammer integration-plan validate templates/integration-plan.json
 python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
 python -m coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
 python -m coprogrammer manager contract propose --proposer agent-a --kind api --name "POST /login" --summary "Add login endpoint"
+python -m coprogrammer manager forecast --base origin/main --fail-on-conflict
 python -m coprogrammer manager status
 ```
 

@@ -1,6 +1,6 @@
 # Research Landscape
 
-Last updated: 2026-05-25
+Last updated: 2026-06-10
 
 CoProgrammer sits between existing code review tools and merge automation. The
 current ecosystem can review, queue, test, and structurally merge code, but it
@@ -33,6 +33,32 @@ Codex, GitHub Copilot Cloud Agent, OpenHands, and SWE-agent are upstream agent
 runtimes. MCP and A2A are interoperability layers. CoProgrammer's distinct
 scope is the software integration state that lives between those runtimes and
 the merge queue.
+
+### 2026-06-10 Update
+
+Four developments since the last scan:
+
+1. **Orchestration is commoditizing and consolidating.** Conductor (Microsoft,
+   MIT), Sculptor (Imbue, container isolation), Composio agent-orchestrator,
+   Claude Squad, Emdash, and Baton all ship worktree/container-isolated
+   parallel agents. Vibe Kanban is sunsetting to community maintenance;
+   Terragon shut down 2026-01. Conclusion: do **not** build orchestration;
+   integrate with it (`docs/ORCHESTRATOR_INTEGRATION.md`).
+2. **The semantic-integration layer got empirical validation.** AgentSpawn's
+   Coherence Manager reports a triage distribution of auto-merge 15%, semantic
+   merge 73%, escalation 12% — the 73% band is exactly CoProgrammer's target
+   layer. AgenticFlict (arXiv:2604.03551) publishes a large-scale dataset of
+   merge conflicts in AI-agent PRs, which becomes our primary evaluation set
+   (`docs/EVAL_PLAN.md`).
+3. **Direct competitors emerged.** Intent (shared-spec single source of truth
+   for multi-agent workspaces) overlaps our Protocol Plane and contract board;
+   MergeLoom markets "governed AI coding." Track both closely.
+4. **The gap statement is now industry consensus.** 2026 reviews repeatedly
+   note that orchestrators "leave task alignment, conflict resolution, and
+   merge decisions on the developer's plate," and that nothing coordinates
+   agents "against a shared evolving plan." That remains CoProgrammer's moat:
+   Branch Intelligence + Semantic Integration planes, plus pre-PR conflict
+   forecasting (`coprogrammer manager forecast`).
 
 ## Capability Map
 
@@ -113,3 +139,13 @@ Integrate with existing tools:
 - [arXiv: Failed Agentic Pull Requests](https://arxiv.org/abs/2601.15195)
 - [arXiv: Agentic PR Merge/Rejection Study](https://arxiv.org/abs/2605.22534)
 - [arXiv: Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988)
+- [arXiv: AgenticFlict — Merge Conflicts in AI Coding Agent PRs](https://arxiv.org/abs/2604.03551)
+- [arXiv: CodeCRDT — Observation-Driven Multi-Agent Coordination](https://arxiv.org/abs/2510.18893)
+- [arXiv: Multi-agent Collaboration with State Management](https://arxiv.org/abs/2605.20563)
+- [Microsoft Conductor](https://opensource.microsoft.com/blog/2026/05/14/conductor-deterministic-orchestration-for-multi-agent-ai-workflows/)
+- [Imbue Sculptor](https://imbue.com/blog/sculptor-announce)
+- [Vibe Kanban](https://github.com/BloopAI/vibe-kanban)
+- [Composio agent-orchestrator](https://github.com/ComposioHQ/agent-orchestrator)
+- [Open-Source Agent Orchestrators review (Augment Code, 2026)](https://www.augmentcode.com/tools/open-source-agent-orchestrators)
+- [The Code Agent Orchestra (Addy Osmani)](https://addyosmani.com/blog/code-agent-orchestra/)
+- [MergeLoom](https://mergeloom.ai/)
