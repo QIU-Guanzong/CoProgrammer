@@ -11,3 +11,6 @@ dist/
 *.egg-info/
 /branch-digest.md
 .DS_Store
+
+eval/results/
+.agents/
