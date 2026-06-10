@@ -10,7 +10,10 @@ from coprogrammer.cli import (
     classify_risks,
     contract_changes,
     find_lease_conflicts,
+    forecast_report,
+    lease_overlap_pairs,
     load_events,
+    make_event,
     load_pull_request_number,
     main,
     match_protected_paths,
@@ -469,6 +472,261 @@ class ManagerPrototypeTest(unittest.TestCase):
         self.assertIn("contract.change.proposed", event_types)
         self.assertIn("decision.requested", event_types)
         self.assertIn("POST /login", output.getvalue())
+
+
+class ForecastTest(unittest.TestCase):
+    @staticmethod
+    def _granted(lease: dict) -> dict:
+        lease = {**lease, "status": "active"}
+        return make_event("lease.granted", "manager", "repo:test", {"lease": lease})
+
+    def test_forecast_detects_overlapping_active_leases(self) -> None:
+        events = [
+            self._granted(new_lease("agent-a", "path", ["src/api/**"], "API")),
+            self._granted(new_lease("agent-b", "path", ["src/api/auth.py"], "Auth")),
+        ]
+
+        report = forecast_report(events)
+
+        self.assertEqual(len(report["path_conflicts"]), 1)
+        conflict = report["path_conflicts"][0]
+        self.assertEqual(
+            {conflict["left_holder"], conflict["right_holder"]},
+            {"agent-a", "agent-b"},
+        )
+        self.assertEqual(report["risk_level"], "medium")
+
+    def test_forecast_ignores_same_holder_and_disjoint_leases(self) -> None:
+        events = [
+            self._granted(new_lease("agent-a", "path", ["src/api/**"], "API")),
+            self._granted(new_lease("agent-a", "path", ["src/api/auth.py"], "Auth")),
+            self._granted(new_lease("agent-b", "path", ["docs/**"], "Docs")),
+        ]
+
+        report = forecast_report(events)
+
+        self.assertEqual(report["path_conflicts"], [])
+        self.assertEqual(report["risk_level"], "low")
+
+    def test_forecast_flags_breaking_contract_and_protected_lease(self) -> None:
+        change = new_contract_change(
+            "agent-a", "api", "POST /login", "Change response", "breaking"
+        )
+        events = [
+            make_event(
+                "contract.change.proposed",
+                "agent-a",
+                "repo:test",
+                {"contract_change": change},
+            ),
+            self._granted(
+                new_lease("agent-b", "path", ["db/migrations/**"], "Migration")
+            ),
+        ]
+        config = {
+            "protected_paths": [
+                {
+                    "pattern": "db/migrations/**",
+                    "risk": "critical",
+                    "reason": "schema migrations",
+                }
+            ]
+        }
+
+        report = forecast_report(events, config)
+
+        self.assertEqual(len(report["contract_pressure"]), 1)
+        self.assertEqual(report["contract_pressure"][0]["severity"], "high")
+        self.assertEqual(len(report["protected_pressure"]), 1)
+        self.assertEqual(report["protected_pressure"][0]["risk"], "critical")
+        self.assertEqual(report["risk_level"], "critical")
+
+    def test_forecast_changed_files_match_leases_and_protected_paths(self) -> None:
+        events = [
+            self._granted(new_lease("agent-a", "path", ["src/api/**"], "API")),
+            self._granted(new_lease("agent-b", "path", ["src/**"], "Refactor")),
+        ]
+        config = {
+            "protected_paths": [
+                {"pattern": "src/api/auth.py", "risk": "high", "reason": "auth"}
+            ]
+        }
+
+        report = forecast_report(
+            events, config, changed_files=["src/api/auth.py", "README.md"]
+        )
+
+        self.assertEqual(len(report["changed_file_findings"]), 1)
+        finding = report["changed_file_findings"][0]
+        self.assertEqual(finding["path"], "src/api/auth.py")
+        self.assertEqual(len(finding["overlapping_leases"]), 2)
+        self.assertEqual(len(finding["protected_matches"]), 1)
+        self.assertEqual(report["risk_level"], "high")
+
+    def test_lease_overlap_pairs_empty_for_no_leases(self) -> None:
+        self.assertEqual(lease_overlap_pairs({}), [])
+
+    def test_manager_forecast_cli_runs_on_empty_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_dir = str(Path(tmp) / ".coprogrammer")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = main(
+                    [
+                        "manager",
+                        "forecast",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--json",
+                    ]
+                )
+
+        self.assertEqual(code, 0)
+        report = json.loads(output.getvalue())
+        self.assertEqual(report["risk_level"], "low")
+        self.assertEqual(report["path_conflicts"], [])
+
+    def test_manager_forecast_cli_fail_on_conflict(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_dir = str(Path(tmp) / ".coprogrammer")
+            config_path = Path(tmp) / ".coprogrammer.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "protected_paths": [
+                            {
+                                "pattern": "db/**",
+                                "risk": "critical",
+                                "reason": "database",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                main(
+                    [
+                        "manager",
+                        "lease",
+                        "request",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--holder",
+                        "agent-a",
+                        "--pattern",
+                        "db/migrations/**",
+                    ]
+                )
+                code = main(
+                    [
+                        "manager",
+                        "forecast",
+                        "--cwd",
+                        tmp,
+                        "--state-dir",
+                        state_dir,
+                        "--fail-on-conflict",
+                    ]
+                )
+
+        self.assertEqual(code, 1)
+        self.assertIn("risk level: critical", output.getvalue())
+
+
+class McpServerTest(unittest.TestCase):
+    def _serve(self, tmp: str, requests: list[dict]) -> list[dict]:
+        from coprogrammer import mcp_server
+
+        stdin = io.StringIO(
+            "".join(json.dumps(request) + "\n" for request in requests)
+        )
+        stdout = io.StringIO()
+        mcp_server.serve(Path(tmp), str(Path(tmp) / ".coprogrammer"), stdin, stdout)
+        return [
+            json.loads(line)
+            for line in stdout.getvalue().splitlines()
+            if line.strip()
+        ]
+
+    def test_initialize_and_tools_list(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            responses = self._serve(
+                tmp,
+                [
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+                    {"jsonrpc": "2.0", "method": "notifications/initialized"},
+                    {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+                ],
+            )
+
+        self.assertEqual(len(responses), 2)
+        self.assertEqual(
+            responses[0]["result"]["serverInfo"]["name"], "coprogrammer"
+        )
+        tool_names = {tool["name"] for tool in responses[1]["result"]["tools"]}
+        self.assertIn("manager_forecast", tool_names)
+        self.assertIn("lease_request", tool_names)
+        self.assertIn("digest_branch", tool_names)
+
+    def test_lease_request_then_forecast_roundtrip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            responses = self._serve(
+                tmp,
+                [
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 2,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "lease_request",
+                            "arguments": {
+                                "holder": "agent-a",
+                                "patterns": ["src/api/**"],
+                            },
+                        },
+                    },
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 3,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "manager_forecast",
+                            "arguments": {"changed_files": ["src/api/auth.py"]},
+                        },
+                    },
+                ],
+            )
+
+        lease_result = json.loads(responses[1]["result"]["content"][0]["text"])
+        self.assertTrue(lease_result["granted"])
+        forecast = json.loads(responses[2]["result"]["content"][0]["text"])
+        self.assertEqual(forecast["active_lease_count"], 1)
+        self.assertEqual(len(forecast["changed_file_findings"]), 1)
+
+    def test_unknown_tool_and_method(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            responses = self._serve(
+                tmp,
+                [
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "tools/call",
+                        "params": {"name": "nope", "arguments": {}},
+                    },
+                    {"jsonrpc": "2.0", "id": 2, "method": "bogus/method"},
+                ],
+            )
+
+        self.assertEqual(responses[0]["error"]["code"], -32602)
+        self.assertEqual(responses[1]["error"]["code"], -32601)
 
 
 class GitHubCommentTest(unittest.TestCase):

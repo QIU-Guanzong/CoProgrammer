@@ -1,0 +1,55 @@
+name: "CoProgrammer Branch Digest"
+description: >
+  Generate a CoProgrammer branch digest for a pull request: changed files,
+  commits, contract/architecture risk signals, protected-path matches, and a
+  risk level. Use it from any repository without installing anything.
+author: "CoProgrammer"
+branding:
+  icon: "git-merge"
+  color: "purple"
+
+inputs:
+  base:
+    description: "Base ref to diff against."
+    default: "origin/main"
+  head:
+    description: "Head ref to digest."
+    default: "HEAD"
+  language:
+    description: "Digest language: en or zh-CN."
+    default: "en"
+  output:
+    description: "Output file path."
+    default: "branch-digest.md"
+
+outputs:
+  digest-path:
+    description: "Path to the generated digest file."
+    value: ${{ steps.digest.outputs.digest-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Generate branch digest
+      id: digest
+      shell: bash
+      env:
+        COPROGRAMMER_LANGUAGE: ${{ inputs.language }}
+      run: |
+        python -m pip install --quiet "${{ github.action_path }}"
+        coprogrammer digest \
+          --base "${{ inputs.base }}" \
+          --head "${{ inputs.head }}" \
+          --output "${{ inputs.output }}"
+        echo "digest-path=${{ inputs.output }}" >> "$GITHUB_OUTPUT"
+
+    - name: Upload digest artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coprogrammer-branch-digest
+        path: ${{ inputs.output }}

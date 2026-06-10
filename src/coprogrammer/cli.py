@@ -832,6 +832,127 @@ def contract_changes(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return changes
 
 
+def lease_overlap_pairs(
+    leases: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Find pairs of active leases held by different agents whose scopes overlap."""
+    items = list(leases.values())
+    pairs: list[dict[str, Any]] = []
+    for index, left in enumerate(items):
+        for right in items[index + 1 :]:
+            if left.get("holder") == right.get("holder"):
+                continue
+            if lease_scopes_overlap(left.get("scope", {}), right.get("scope", {})):
+                pairs.append(
+                    {
+                        "left_lease": left.get("id"),
+                        "left_holder": left.get("holder"),
+                        "left_patterns": left.get("scope", {}).get("patterns", []),
+                        "right_lease": right.get("id"),
+                        "right_holder": right.get("holder"),
+                        "right_patterns": right.get("scope", {}).get("patterns", []),
+                        "kind": left.get("scope", {}).get("kind"),
+                        "severity": "medium",
+                    }
+                )
+    return pairs
+
+
+def forecast_report(
+    events: list[dict[str, Any]],
+    config: dict[str, Any] | None = None,
+    changed_files: list[str] | None = None,
+) -> dict[str, Any]:
+    """Forecast path, contract, and protected-path conflicts before PR time.
+
+    The goal is to move conflict discovery from merge time to coding time:
+    overlapping leases predict path conflicts, proposed contract changes with
+    breaking/unknown compatibility predict semantic conflicts, and leases that
+    overlap protected paths predict owner-review pressure.
+    """
+    config = merge_config(config)
+    leases = active_leases(events)
+    severity_levels: list[str] = []
+
+    path_conflicts = lease_overlap_pairs(leases)
+    severity_levels.extend(item["severity"] for item in path_conflicts)
+
+    contract_pressure: list[dict[str, Any]] = []
+    for change in contract_changes(events).values():
+        compatibility = change.get("compatibility", "unknown")
+        if compatibility == "compatible":
+            continue
+        severity = "high" if compatibility == "breaking" else "medium"
+        contract_pressure.append(
+            {
+                "id": change.get("id"),
+                "proposer": change.get("proposer"),
+                "kind": change.get("kind"),
+                "name": change.get("name"),
+                "compatibility": compatibility,
+                "severity": severity,
+            }
+        )
+        severity_levels.append(severity)
+
+    protected_pressure: list[dict[str, Any]] = []
+    for lease in leases.values():
+        for pattern in lease.get("scope", {}).get("patterns", []):
+            for rule in config["protected_paths"]:
+                if patterns_overlap(str(pattern), str(rule["pattern"])):
+                    risk = rule.get("risk", "high")
+                    protected_pressure.append(
+                        {
+                            "lease": lease.get("id"),
+                            "holder": lease.get("holder"),
+                            "lease_pattern": pattern,
+                            "protected_pattern": rule["pattern"],
+                            "risk": risk,
+                            "owner_review": rule.get("owner_review", True),
+                            "reason": rule.get("reason", ""),
+                        }
+                    )
+                    severity_levels.append(risk)
+
+    changed_file_findings: list[dict[str, Any]] = []
+    for path in changed_files or []:
+        overlapping = [
+            {
+                "lease": lease.get("id"),
+                "holder": lease.get("holder"),
+                "patterns": lease.get("scope", {}).get("patterns", []),
+            }
+            for lease in leases.values()
+            if lease.get("scope", {}).get("kind") == "path"
+            and any(
+                patterns_overlap(path, str(pattern))
+                for pattern in lease.get("scope", {}).get("patterns", [])
+            )
+        ]
+        protected = match_protected_paths([path], config)
+        if overlapping or protected:
+            changed_file_findings.append(
+                {
+                    "path": path,
+                    "overlapping_leases": overlapping,
+                    "protected_matches": protected,
+                }
+            )
+            if len(overlapping) > 1:
+                severity_levels.append("medium")
+            severity_levels.extend(match["risk"] for match in protected)
+
+    return {
+        "generated_at": utc_now(),
+        "active_lease_count": len(leases),
+        "path_conflicts": path_conflicts,
+        "contract_pressure": contract_pressure,
+        "protected_pressure": protected_pressure,
+        "changed_file_findings": changed_file_findings,
+        "risk_level": highest_risk_level(severity_levels),
+    }
+
+
 def find_lease_conflicts(
     requested_lease: dict[str, Any],
     leases: dict[str, dict[str, Any]],
@@ -1361,6 +1482,75 @@ def command_manager_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_manager_forecast(args: argparse.Namespace) -> int:
+    cwd = Path(args.cwd).resolve()
+    events = load_events(event_log_path(cwd, args.state_dir))
+    config = load_config(cwd, args.config)
+
+    changed_files: list[str] = list(args.changed_file or [])
+    if args.base:
+        head = args.head or "HEAD"
+        changed_files.extend(
+            entry["path"] for entry in get_changed_files(args.base, head, cwd)
+        )
+
+    report = forecast_report(events, config, changed_files or None)
+
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(f"risk level: {report['risk_level']}")
+        print(f"active leases: {report['active_lease_count']}")
+
+        conflicts = report["path_conflicts"]
+        print(f"path conflicts: {len(conflicts)}")
+        for item in conflicts:
+            print(
+                f"- [{item['severity']}] {item['left_holder']} "
+                f"({', '.join(item['left_patterns'])}) overlaps "
+                f"{item['right_holder']} ({', '.join(item['right_patterns'])})"
+            )
+
+        pressure = report["contract_pressure"]
+        print(f"contract pressure: {len(pressure)}")
+        for item in pressure:
+            print(
+                f"- [{item['severity']}] {item['kind']}: {item['name']} "
+                f"({item['compatibility']}) by {item['proposer']}"
+            )
+
+        protected = report["protected_pressure"]
+        print(f"protected-path pressure: {len(protected)}")
+        for item in protected:
+            print(
+                f"- [{item['risk']}] {item['holder']} lease {item['lease_pattern']} "
+                f"overlaps protected {item['protected_pattern']}"
+            )
+
+        findings = report["changed_file_findings"]
+        print(f"changed-file findings: {len(findings)}")
+        for item in findings:
+            holders = ", ".join(
+                str(entry["holder"]) for entry in item["overlapping_leases"]
+            )
+            flags = []
+            if holders:
+                flags.append(f"leases: {holders}")
+            if item["protected_matches"]:
+                flags.append("protected")
+            print(f"- {item['path']} ({'; '.join(flags)})")
+
+    if args.fail_on_conflict and report["risk_level"] in ("high", "critical"):
+        return 1
+    return 0
+
+
+def command_mcp_serve(args: argparse.Namespace) -> int:
+    from . import mcp_server
+
+    return mcp_server.serve(Path(args.cwd).resolve(), args.state_dir)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="coprogrammer",
@@ -1599,6 +1789,48 @@ def build_parser() -> argparse.ArgumentParser:
     manager_contracts.add_argument("--kind", choices=CONTRACT_KINDS)
     manager_contracts.add_argument("--json", action="store_true")
     manager_contracts.set_defaults(func=command_manager_contracts)
+
+    mcp = subparsers.add_parser(
+        "mcp",
+        help="Model Context Protocol server for MCP clients.",
+    )
+    mcp_subparsers = mcp.add_subparsers(dest="mcp_command", required=True)
+    mcp_serve = mcp_subparsers.add_parser(
+        "serve",
+        help="Serve CoProgrammer tools over stdio (newline-delimited JSON-RPC).",
+    )
+    mcp_serve.add_argument("--cwd", default=".")
+    mcp_serve.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    mcp_serve.set_defaults(func=command_mcp_serve)
+
+    manager_forecast = manager_subparsers.add_parser(
+        "forecast",
+        help="Forecast path, contract, and protected-path conflicts before PR time.",
+    )
+    manager_forecast.add_argument("--cwd", default=".")
+    manager_forecast.add_argument("--state-dir", default=DEFAULT_MANAGER_DIR)
+    manager_forecast.add_argument(
+        "--config",
+        default=DEFAULT_CONFIG_FILE,
+        help=f"Project policy config path. Default: {DEFAULT_CONFIG_FILE}.",
+    )
+    manager_forecast.add_argument(
+        "--changed-file",
+        action="append",
+        help="Explicit changed file to check against leases and protected paths.",
+    )
+    manager_forecast.add_argument(
+        "--base",
+        help="Optional git base ref; changed files vs --head are added to the check.",
+    )
+    manager_forecast.add_argument("--head", default="HEAD")
+    manager_forecast.add_argument("--json", action="store_true")
+    manager_forecast.add_argument(
+        "--fail-on-conflict",
+        action="store_true",
+        help="Exit 1 when forecast risk level is high or critical.",
+    )
+    manager_forecast.set_defaults(func=command_manager_forecast)
 
     manager_decision = manager_subparsers.add_parser(
         "decision",
