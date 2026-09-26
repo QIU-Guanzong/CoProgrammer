@@ -221,6 +221,15 @@ def integration_plan(review: dict[str, Any], cwd: Path, review_path: str = "") -
     if (not isinstance(review, dict) or review.get("format") != "coprogrammer.review.v1"
             or review.get("status") != "advisory"):
         raise RuntimeError("A completed advisory review is required to create an integration plan")
+    # These are self-reported artifact fields. Checking their consistency does
+    # not authenticate a provider, model, reviewer, or an actual network call.
+    for field in ("provider", "model"):
+        if not isinstance(review.get(field), str) or not review[field].strip():
+            raise RuntimeError(f"Advisory review {field} must be a nonempty string")
+    if review.get("requires_human_review") is not True or review.get("network_used") is not True:
+        raise RuntimeError("Advisory review must declare network_used and requires_human_review as true")
+    if review.get("finish_reason") not in ("stop", "end_turn", "stop_sequence"):
+        raise RuntimeError("Advisory review must record a normal finish_reason")
     evidence = review.get("evidence")
     if not isinstance(evidence, dict):
         raise RuntimeError("Review evidence is missing")
@@ -236,8 +245,13 @@ def integration_plan(review: dict[str, Any], cwd: Path, review_path: str = "") -
     diff_bytes = evidence.get("diff_bytes")
     if type(diff_bytes) is not int or not 0 <= diff_bytes <= 1_000_000:
         raise RuntimeError("Review diff size is invalid")
+    if (not isinstance(evidence.get("diff"), str)
+            or type(evidence.get("diff_truncated")) is not bool
+            or evidence.get("coverage") not in ("collected", "partial")):
+        raise RuntimeError("Review diff or coverage metadata is invalid")
     fresh = collect_evidence(cwd, evidence["base_sha"], evidence["head_sha"], max(1024, diff_bytes))
-    for key in ("base_sha", "head_sha", "files", "excluded_paths", "diff_sha256", "merge_base_sha"):
+    for key in ("base_sha", "head_sha", "files", "excluded_paths", "diff_sha256", "merge_base_sha",
+                "diff", "diff_bytes", "diff_truncated", "coverage"):
         if fresh[key] != evidence.get(key):
             raise RuntimeError("Review evidence does not match the selected commits")
     for ref_key, sha_key in (("base_ref", "base_sha"), ("head_ref", "head_sha")):

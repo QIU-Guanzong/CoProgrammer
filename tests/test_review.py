@@ -48,6 +48,9 @@ class ReviewTest(unittest.TestCase):
     def artifact(self):
         evidence = collect_evidence(self.root, "main", "feature")
         return {"format": "coprogrammer.review.v1", "status": "advisory", "evidence": evidence,
+                "created_at": "2026-09-26T00:00:00+00:00", "provider": "glm",
+                "model": "explicit-model", "requires_human_review": True,
+                "network_used": True, "finish_reason": "stop", "usage": None,
                 "advice": self.advice(evidence)}
 
     def test_evidence_binds_commits_and_loads_root_policy_from_subdirectory(self):
@@ -202,6 +205,101 @@ class ReviewTest(unittest.TestCase):
         self.git("commit", "--allow-empty", "-m", "head advanced")
         with self.assertRaisesRegex(RuntimeError, "stale"):
             integration_plan(artifact, self.root)
+
+    def test_plan_rejects_tampered_diff_and_coverage_fields(self):
+        artifact = self.artifact()
+        mutations = (
+            ("diff", "The saved body no longer matches its Git evidence hash."),
+            ("diff_bytes", artifact["evidence"]["diff_bytes"] + 1),
+            ("diff_truncated", True),
+            ("coverage", "partial"),
+        )
+        for field, value in mutations:
+            with self.subTest(field=field):
+                tampered = json.loads(json.dumps(artifact))
+                tampered["evidence"][field] = value
+                with self.assertRaisesRegex(RuntimeError, "does not match"):
+                    integration_plan(tampered, self.root)
+        for field, value in (("diff", None), ("diff_bytes", True),
+                             ("diff_truncated", 0), ("coverage", "complete")):
+            with self.subTest(field=field, value=value):
+                tampered = json.loads(json.dumps(artifact))
+                tampered["evidence"][field] = value
+                with self.assertRaisesRegex(RuntimeError, "invalid"):
+                    integration_plan(tampered, self.root)
+        for field in ("diff", "diff_bytes", "diff_truncated", "coverage"):
+            with self.subTest(missing=field):
+                tampered = json.loads(json.dumps(artifact))
+                del tampered["evidence"][field]
+                with self.assertRaisesRegex(RuntimeError, "invalid"):
+                    integration_plan(tampered, self.root)
+
+    def test_plan_rejects_incomplete_or_inconsistent_advisory_metadata(self):
+        artifact = self.artifact()
+        invalid_values = {
+            "provider": (None, "", " ", 1),
+            "model": (None, "", "\t", []),
+            "requires_human_review": (None, False, 1, "true"),
+            "network_used": (None, False, 1, "true"),
+            "finish_reason": (None, "length", "content_filter", "refusal", []),
+        }
+        for field, values in invalid_values.items():
+            for value in values:
+                with self.subTest(field=field, value=value):
+                    tampered = json.loads(json.dumps(artifact))
+                    tampered[field] = value
+                    with self.assertRaisesRegex(RuntimeError, "Advisory review"):
+                        integration_plan(tampered, self.root)
+            with self.subTest(missing=field):
+                tampered = json.loads(json.dumps(artifact))
+                del tampered[field]
+                with self.assertRaisesRegex(RuntimeError, "Advisory review"):
+                    integration_plan(tampered, self.root)
+
+    def test_completed_review_creates_only_a_draft_plan_without_another_call(self):
+        evidence = collect_evidence(self.root, "main", "feature")
+        response = {"text": json.dumps(self.advice(evidence)), "truncated": False,
+                    "finish_reason": "stop", "usage": {"total_tokens": 10}}
+        with patch("coprogrammer.providers.complete", return_value=response) as complete:
+            review = create_review(self.root, "main", "feature", "glm", "explicit-model", send=True)
+            plan = integration_plan(review, self.root)
+        complete.assert_called_once()
+        self.assertEqual(plan["status"], "draft")
+        self.assertTrue(plan["changes_to_rebuild"])
+        self.assertIn("Maintainer must review every model recommendation before integration.",
+                      plan["required_decisions"])
+        self.assertNotIn("authenticated", plan)
+        self.assertFalse(any(check["command"] for check in plan["validation"]))
+
+    def test_partial_completed_review_remains_deferred_in_draft_plan(self):
+        (self.root / "large.txt").write_text("evidence line\n" * 500)
+        self.git("add", ".")
+        self.git("commit", "-m", "large change")
+        evidence = collect_evidence(self.root, "main", "feature", 1024)
+        response = {"text": json.dumps(self.advice(evidence)), "truncated": False,
+                    "finish_reason": "end_turn"}
+        with patch("coprogrammer.providers.complete", return_value=response) as complete:
+            review = create_review(self.root, "main", "feature", "anthropic", "explicit-model",
+                                   send=True, max_diff_bytes=1024)
+            plan = integration_plan(review, self.root)
+        complete.assert_called_once()
+        self.assertEqual(plan["status"], "draft")
+        self.assertEqual(plan["patch_primitives"], [])
+        self.assertEqual(plan["changes_to_rebuild"], [])
+        self.assertIn("Evidence is incomplete; inspect omitted content before approval.",
+                      plan["required_decisions"])
+
+    def test_consistent_metadata_does_not_authenticate_declared_provider(self):
+        artifact = self.artifact()
+        artifact.update(provider="self-reported-provider", model="self-reported-model",
+                        finish_reason="stop_sequence")
+        with patch("coprogrammer.providers.complete") as complete:
+            plan = integration_plan(artifact, self.root)
+        complete.assert_not_called()
+        self.assertEqual(plan["status"], "draft")
+        self.assertIn("Maintainer must review every model recommendation before integration.",
+                      plan["required_decisions"])
+        self.assertNotIn("authenticated", plan)
 
     def test_reference_move_during_recollection_is_rejected(self):
         artifact = self.artifact()
