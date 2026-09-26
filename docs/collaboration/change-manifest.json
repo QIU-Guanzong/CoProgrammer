@@ -1,0 +1,18 @@
+{
+  "task": "Cross-window and cross-client collaboration",
+  "intent": "Let independent coding windows discover work, exchange durable task messages and resume synchronization through one local Manager.",
+  "scope": "backend | tooling | docs | tests",
+  "core_changes": [
+    "Register window sessions separately from client, provider and model; report explicit pulse freshness.",
+    "Persist task messages, reply links, idempotency keys and recipient acknowledgements.",
+    "Expose paginated incremental sync and inboxes through CLI and MCP.",
+    "Document research, executable multi-worktree workflows and truthful limitations."
+  ],
+  "contracts": ["Additive Manager events and MCP tools; maintainer review required before merge."],
+  "tests": ["Session, mailbox, cursor and malformed-log regressions", "Concurrent writes and two MCP processes in linked worktrees", "Full unittest suite, schema/config/manifest validation and installed-wheel smoke"],
+  "risks": [
+    "Local cooperating clients share filesystem trust; labels are not authenticated identities.",
+    "Polling and explicit pulses do not establish terminal/process liveness or automatic message delivery.",
+    "Existing event storage reads and rewrites the log; large or hosted deployments need a separate storage design."
+  ]
+}

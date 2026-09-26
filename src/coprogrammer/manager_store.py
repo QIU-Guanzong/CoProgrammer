@@ -44,6 +44,12 @@ def _validate_event(event: Any, line_number: int) -> None:
     payload = event.get("payload", {})
     if not isinstance(payload, dict):
         raise RuntimeError(f"{label}: expected object payload")
+    if event["type"] in ("session.registered", "session.updated", "message.sent", "message.acknowledged"):
+        from .collaboration import validate_event
+        try:
+            validate_event(event)
+        except RuntimeError as exc:
+            raise RuntimeError(f"{label}: {exc}") from exc
     record_field = {
         "agent.heartbeat": "heartbeat",
         "decision.requested": "decision",

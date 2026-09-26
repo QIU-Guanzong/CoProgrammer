@@ -20,7 +20,11 @@
         "decision.requested",
         "decision.recorded",
         "integration.plan.created",
-        "integration.recorded"
+        "integration.recorded",
+        "session.registered",
+        "session.updated",
+        "message.sent",
+        "message.acknowledged"
       ]
     },
     "timestamp": { "type": "string", "format": "date-time" },

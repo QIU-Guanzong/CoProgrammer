@@ -1,16 +1,18 @@
 # CoProgrammer
 
-**Coordinate coding agents. Make each branch easier to review.**
+**Keep coding windows in sync. Make each branch easier to review.**
 
 CoProgrammer is an open-source protocol and toolkit for teams working with
-multiple coding agents. It records who is changing what, surfaces overlapping
-work, and turns branch changes into reviewable digests and integration plans.
+multiple coding agents. Register each window, share task messages and handoffs,
+track overlapping work, and turn branch changes into reviewable digests and
+integration plans through one local CLI and MCP server.
 
 Use **Codex, Claude Code, or GitHub Copilot** for development, **GitHub** for PR
 review, and optionally **Claude, GLM, or DeepSeek** for a second opinion on a
 specific set of commits. Maintainers decide what reaches `main`.
 
-中文：让多个编程助手共享任务边界和协作状态，把分支改动整理为可审阅的摘要与集成计划。
+中文：让多个窗口、不同品牌的编程助手共享会话、任务消息和交接回执，并把分支改动整理为可审阅的摘要与集成计划。
+[多窗口协作指南](docs/collaboration/README.md) ·
 [中文接入指南](docs/MULTI_PLATFORM_QUICKSTART.md) ·
 [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
 
@@ -30,6 +32,8 @@ CoProgrammer gives the team a shared record:
 | During the work | What reviewers can inspect |
 | --- | --- |
 | Define a task and its allowed paths | Intent, scope and shared contracts |
+| Register each coding window | Client, task, worktree, branch and pulse freshness |
+| Exchange task messages and acknowledge receipt | Durable handoffs, replies and pending inboxes across restarts |
 | Request an advisory lease and publish heartbeats | Current ownership, overlap and blockers |
 | Generate a branch digest | Changed files, commits, protected paths and risk signals |
 | Request optional model review | Suggestions tied to exact commits and captured diff evidence |
@@ -97,8 +101,51 @@ coprogrammer manager status
 
 Configuration is printed for you to add to the client; existing settings are
 not overwritten. The local MCP server exposes branch digests, status, conflict
-forecasts, leases, heartbeats and contract proposals. Git worktrees share the
-repository's local coordination log by default.
+forecasts, leases, heartbeats, contract proposals, window sessions and task
+messages. Git worktrees share the repository's local coordination log by default.
+
+## Coordinate two coding windows
+
+After installing the preview, run each block in that window's existing Git
+worktree. Each window gets a unique session ID, even if both use the same client.
+
+```sh
+# Window A: Codex, API worktree
+coprogrammer manager session register --session codex-api --client codex --task API-42
+
+# Window B: Claude Code, UI worktree
+coprogrammer manager session register --session claude-ui --client claude --task API-42
+```
+
+From window A, save a handoff; from window B, read it:
+
+```sh
+# Window A
+coprogrammer manager message send --from codex-api --to claude-ui \
+  --task API-42 --kind handoff --key api-handoff-v1 \
+  --body 'API changes are ready for review. Check the caller and report the checks you ran.'
+
+# Window B
+coprogrammer manager sync --session claude-ui
+coprogrammer manager message inbox --session claude-ui --task API-42
+# Replace msg_... with the returned message ID.
+coprogrammer manager message ack --session claude-ui --id msg_...
+```
+
+Use `session pulse` to report progress or blockers, and `manager sync --after
+evt_...` to resume from the previous `next_cursor`. Unacknowledged messages remain
+in the inbox after restart. Identical sends with the same sender and `--key`
+return the original message. Replies use `--reply-to msg_...`.
+
+All six operations also have MCP tools. Sessions carry optional provider/model
+labels, so an OpenCode or other MCP-capable client using GLM or DeepSeek can use
+the same workflow. Labels do not verify a provider connection. Freshness measures
+explicit pulses, not whether a process is alive. Messages are local and pulled
+by clients; they do not wake or inject text into another window. Receipt never
+approves code or transfers a lease. See the [full workflow and limits](docs/collaboration/README.md)
+and [comparison with Agent Mail, agent-deck, Overstory and Claude Teams](docs/collaboration/research.md).
+
+## Request and compare model reviews
 
 To preview an optional review request locally:
 
@@ -146,6 +193,8 @@ and [contributor handoff checklist](CONTRIBUTING.md#handoff-and-review).
 | --- | --- |
 | [Multi-platform quickstart](docs/MULTI_PLATFORM_QUICKSTART.md) | Codex, Claude, Copilot, GitHub and model-provider setup |
 | [Coordination lifecycle](docs/COORDINATION_LIFECYCLE.md) | Before, during and after coding |
+| [Multi-window collaboration](docs/collaboration/README.md) | Sessions, task inboxes, acknowledgements and resumable CLI/MCP sync |
+| [Collaboration research](docs/collaboration/research.md) | Current open-source approaches and the implementation choices they informed |
 | [Configuration](docs/CONFIGURATION.md) | Protected paths, language and project policy |
 | [GitHub Actions](docs/GITHUB_ACTIONS.md) | PR digests and workflow setup |
 | [Agent Plugins and Claude Code](docs/PLUGIN_QUICKSTART.md) | Installable package for Codex-compatible clients and Claude Code |

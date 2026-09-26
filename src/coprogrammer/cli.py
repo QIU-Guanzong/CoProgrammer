@@ -59,6 +59,10 @@ EVENT_TYPES = (
     "decision.recorded",
     "integration.plan.created",
     "integration.recorded",
+    "session.registered",
+    "session.updated",
+    "message.sent",
+    "message.acknowledged",
 )
 LEASE_KINDS = ("path", "contract", "test_surface", "integration_branch")
 DECISION_RECORD_STATUSES = ("decided", "deferred", "rejected", "superseded")
@@ -1341,8 +1345,8 @@ def command_manager_init(args: argparse.Namespace) -> int:
 
 
 def command_manager_event_append(args: argparse.Namespace) -> int:
-    if args.type.startswith("lease.") or args.type == "decision.recorded":
-        raise RuntimeError("Use the dedicated lease or decision command so state checks run atomically")
+    if args.type.startswith(("lease.", "session.", "message.")) or args.type == "decision.recorded":
+        raise RuntimeError("Use the dedicated state command so state checks run atomically")
     cwd = Path(args.cwd).resolve()
     payload: dict[str, Any] = {}
     if args.payload:
@@ -1523,6 +1527,7 @@ def command_manager_decision_record(args: argparse.Namespace) -> int:
 
 
 def command_manager_status(args: argparse.Namespace) -> int:
+    from .collaboration import directory
     cwd = Path(args.cwd).resolve()
     events = load_events(event_log_path(cwd, args.state_dir))
     leases = list(active_leases(events).values())
@@ -1534,6 +1539,7 @@ def command_manager_status(args: argparse.Namespace) -> int:
         "open_decisions": decisions,
         "contract_changes": list(contract_changes(events).values()),
         "latest_heartbeats": heartbeats,
+        **directory(events),
     }
 
     if args.json:
@@ -1545,6 +1551,9 @@ def command_manager_status(args: argparse.Namespace) -> int:
     print(f"open decisions: {len(decisions)}")
     print(f"contract changes: {len(status['contract_changes'])}")
     print(f"latest heartbeats: {len(heartbeats)}")
+    print(f"coding windows: {len(status['sessions'])}; pending messages: {status['pending_messages']}")
+    for session in status["sessions"]:
+        print(f"- {session['id']} ({session['client']}): {session['status']} / {session['freshness']} {session['task']}")
     for agent, heartbeat in sorted(heartbeats.items()):
         task = heartbeat.get("task", "")
         state = heartbeat.get("status", "unknown")
@@ -1875,6 +1884,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Work with the local Manager Plane prototype.",
     )
     manager_subparsers = manager.add_subparsers(dest="manager_command", required=True)
+    from .collaboration_cli import add_parsers
+    add_parsers(manager_subparsers)
 
     manager_init = manager_subparsers.add_parser(
         "init",
