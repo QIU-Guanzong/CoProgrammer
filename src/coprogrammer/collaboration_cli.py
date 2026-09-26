@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from . import collaboration as core
+from . import channels
 
 
 def command(args: argparse.Namespace) -> int:
@@ -32,6 +33,10 @@ def command(args: argparse.Namespace) -> int:
         result = core.acknowledge(path, cwd, args.session, args.id)
     elif action == "inbox":
         result = core.inbox(path, args.session, args.task, args.include_acked, args.after, args.limit)
+    elif action == "thread":
+        result = channels.thread(path, args.session, args.task, args.after, args.limit)
+    elif action == "wait":
+        result = channels.wait(path, args.session, args.after, args.timeout_seconds, args.limit)
     else:
         result = core.sync(path, args.session, args.after, args.limit)
     print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -82,7 +87,19 @@ def add_parsers(manager) -> None:
     ack.add_argument("--session", required=True)
     ack.add_argument("--id", required=True)
 
+    thread = options(message_sub.add_parser("thread", help="Read sent and received task messages without ACK."), "thread")
+    thread.add_argument("--session", required=True)
+    thread.add_argument("--task", required=True)
+    thread.add_argument("--after", default="")
+    thread.add_argument("--limit", type=int, default=50)
+
     sync = options(manager.add_parser("sync", help="Read sessions, unread messages and resumable Manager changes."), "sync")
     sync.add_argument("--session", default="")
     sync.add_argument("--after", default="")
     sync.add_argument("--limit", type=int, default=50)
+
+    wait = options(manager.add_parser("wait", help="Wait up to 25 seconds for visible changes or pending messages."), "wait")
+    wait.add_argument("--session", required=True)
+    wait.add_argument("--after", required=True)
+    wait.add_argument("--timeout-seconds", type=int, default=25)
+    wait.add_argument("--limit", type=int, default=50)

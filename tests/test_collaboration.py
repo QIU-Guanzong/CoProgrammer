@@ -38,6 +38,42 @@ class CollaborationTest(unittest.TestCase):
         self.assertEqual(before, self.path.read_bytes())
         self.assertEqual(len(co.sync(self.path)["sessions"]), 3)
 
+    def test_nested_operations_see_pending_state_and_remain_recoverable(self):
+        from coprogrammer.manager_store import transaction
+        with transaction(self.path):
+            co.register(self.path, self.cwd, "nested", "codex", "api-42")
+            co.pulse(self.path, self.cwd, "nested", status="blocked", task="waiting")
+            co.pulse(self.path, self.cwd, "nested", status="working")
+            first = co.send(self.path, self.cwd, "nested", "claude-1", "api-42", "Nested message", key="nested-key")
+            second = co.send(self.path, self.cwd, "nested", "claude-1", "api-42", "Nested message", key="nested-key")
+            self.assertTrue(second["duplicate"])
+            ack = co.acknowledge(self.path, self.cwd, "claude-1", first["message"]["id"])
+            duplicate_ack = co.acknowledge(self.path, self.cwd, "claude-1", first["message"]["id"])
+            self.assertEqual(ack["acknowledged_at"], duplicate_ack["acknowledged_at"])
+            self.assertTrue(duplicate_ack["duplicate"])
+        sessions, messages = co.reconstruct(cli.load_events(self.path))
+        self.assertEqual(sessions["nested"]["task"], "waiting")
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(co.sync(self.path, "claude-1")["pending_total"], 0)
+
+    def test_nested_duplicate_registration_aborts_entire_transaction(self):
+        from coprogrammer.manager_store import transaction
+        before = self.path.read_bytes()
+        with self.assertRaisesRegex(RuntimeError, "already exists"):
+            with transaction(self.path):
+                co.register(self.path, self.cwd, "duplicate", "codex", "one")
+                co.register(self.path, self.cwd, "duplicate", "codex", "two")
+        self.assertEqual(self.path.read_bytes(), before)
+
+    def test_legacy_same_label_lease_conflicts_remain_visible(self):
+        leases = {}
+        for pattern in ("src/**", "src/api/**"):
+            lease = cli.new_lease("codex", "path", [pattern])
+            leases[lease["id"]] = lease
+        conflicts = cli.lease_overlap_pairs(leases)
+        self.assertEqual(len(conflicts), 1)
+        self.assertEqual(conflicts[0]["left_holder"], conflicts[0]["right_holder"])
+
     def test_freshness_is_not_the_reported_work_status(self):
         seen = co.timestamp(self.a["last_seen"])
         self.assertEqual(co.freshness(self.a, seen + timedelta(seconds=299)), "fresh")

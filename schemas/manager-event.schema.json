@@ -24,7 +24,13 @@
         "session.registered",
         "session.updated",
         "message.sent",
-        "message.acknowledged"
+        "message.acknowledged",
+        "task.created",
+        "task.claimed",
+        "task.renewed",
+        "task.finished",
+        "task.released",
+        "task.reclaimed"
       ]
     },
     "timestamp": { "type": "string", "format": "date-time" },

@@ -63,6 +63,12 @@ EVENT_TYPES = (
     "session.updated",
     "message.sent",
     "message.acknowledged",
+    "task.created",
+    "task.claimed",
+    "task.renewed",
+    "task.finished",
+    "task.released",
+    "task.reclaimed",
 )
 LEASE_KINDS = ("path", "contract", "test_surface", "integration_branch")
 DECISION_RECORD_STATUSES = ("decided", "deferred", "rejected", "superseded")
@@ -874,13 +880,11 @@ def contract_changes(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 def lease_overlap_pairs(
     leases: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Find pairs of active leases held by different agents whose scopes overlap."""
+    """Find overlapping leases, including legacy windows sharing a holder label."""
     items = list(leases.values())
     pairs: list[dict[str, Any]] = []
     for index, left in enumerate(items):
         for right in items[index + 1 :]:
-            if left.get("holder") == right.get("holder"):
-                continue
             if lease_scopes_overlap(left.get("scope", {}), right.get("scope", {})):
                 pairs.append(
                     {
@@ -1345,7 +1349,7 @@ def command_manager_init(args: argparse.Namespace) -> int:
 
 
 def command_manager_event_append(args: argparse.Namespace) -> int:
-    if args.type.startswith(("lease.", "session.", "message.")) or args.type == "decision.recorded":
+    if args.type.startswith(("lease.", "session.", "message.", "task.")) or args.type == "decision.recorded":
         raise RuntimeError("Use the dedicated state command so state checks run atomically")
     cwd = Path(args.cwd).resolve()
     payload: dict[str, Any] = {}
@@ -1552,6 +1556,7 @@ def command_manager_status(args: argparse.Namespace) -> int:
     print(f"contract changes: {len(status['contract_changes'])}")
     print(f"latest heartbeats: {len(heartbeats)}")
     print(f"coding windows: {len(status['sessions'])}; pending messages: {status['pending_messages']}")
+    print(f"tasks: {status['task_counts']}")
     for session in status["sessions"]:
         print(f"- {session['id']} ({session['client']}): {session['status']} / {session['freshness']} {session['task']}")
     for agent, heartbeat in sorted(heartbeats.items()):
@@ -1886,6 +1891,8 @@ def build_parser() -> argparse.ArgumentParser:
     manager_subparsers = manager.add_subparsers(dest="manager_command", required=True)
     from .collaboration_cli import add_parsers
     add_parsers(manager_subparsers)
+    from .scheduler_cli import add_parsers as add_task_parsers
+    add_task_parsers(manager_subparsers)
 
     manager_init = manager_subparsers.add_parser(
         "init",

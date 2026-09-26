@@ -1,17 +1,18 @@
 # CoProgrammer
 
-**Keep coding windows in sync. Make each branch easier to review.**
+**Coordinate coding agents across windows, from task claim to review.**
 
 CoProgrammer is an open-source protocol and toolkit for teams working with
-multiple coding agents. Register each window, share task messages and handoffs,
-track overlapping work, and turn branch changes into reviewable digests and
+multiple coding agents. Queue scoped tasks, claim work with conflict checks,
+share task discussions and handoffs, and turn branch changes into reviewable digests and
 integration plans through one local CLI and MCP server.
 
 Use **Codex, Claude Code, or GitHub Copilot** for development, **GitHub** for PR
 review, and optionally **Claude, GLM, or DeepSeek** for a second opinion on a
 specific set of commits. Maintainers decide what reaches `main`.
 
-中文：让多个窗口、不同品牌的编程助手共享会话、任务消息和交接回执，并把分支改动整理为可审阅的摘要与集成计划。
+中文：让不同平台的编程助手按依赖领取任务、协调多个开发窗口、交流进展与交接，并把分支改动整理为可审阅的摘要与集成计划。
+[任务调度与冲突防护](docs/scheduling/README.md) ·
 [多窗口协作指南](docs/collaboration/README.md) ·
 [中文接入指南](docs/MULTI_PLATFORM_QUICKSTART.md) ·
 [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
@@ -33,6 +34,8 @@ CoProgrammer gives the team a shared record:
 | --- | --- |
 | Define a task and its allowed paths | Intent, scope and shared contracts |
 | Register each coding window | Client, task, worktree, branch and pulse freshness |
+| Claim ready work and its path lease together | One owner per task and worktree, dependency and client checks |
+| Check the claim before edits and commit | Current token, branch, lease and permitted paths |
 | Exchange task messages and acknowledge receipt | Durable handoffs, replies and pending inboxes across restarts |
 | Request an advisory lease and publish heartbeats | Current ownership, overlap and blockers |
 | Generate a branch digest | Changed files, commits, protected paths and risk signals |
@@ -101,8 +104,9 @@ coprogrammer manager status
 
 Configuration is printed for you to add to the client; existing settings are
 not overwritten. The local MCP server exposes branch digests, status, conflict
-forecasts, leases, heartbeats, contract proposals, window sessions and task
-messages. Git worktrees share the repository's local coordination log by default.
+forecasts, leases, heartbeats, contract proposals, window sessions, task dispatch,
+discussions and bounded change waiting. Git worktrees share the repository's
+local coordination log by default.
 
 ## Coordinate two coding windows
 
@@ -137,13 +141,44 @@ evt_...` to resume from the previous `next_cursor`. Unacknowledged messages rema
 in the inbox after restart. Identical sends with the same sender and `--key`
 return the original message. Replies use `--reply-to msg_...`.
 
-All six operations also have MCP tools. Sessions carry optional provider/model
+These operations also have MCP tools. Sessions carry optional provider/model
 labels, so an OpenCode or other MCP-capable client using GLM or DeepSeek can use
 the same workflow. Labels do not verify a provider connection. Freshness measures
 explicit pulses, not whether a process is alive. Messages are local and pulled
 by clients; they do not wake or inject text into another window. Receipt never
 approves code or transfers a lease. See the [full workflow and limits](docs/collaboration/README.md)
 and [comparison with Agent Mail, agent-deck, Overstory and Claude Teams](docs/collaboration/research.md).
+
+## Dispatch work without conflicting owners
+
+In a registered window, create a task with its allowed paths and optional
+dependencies or client labels. A worker claims a compatible ready task:
+
+```sh
+coprogrammer manager task create --session codex-api --id api-v2 \
+  --title 'Update the API response' --pattern 'src/api/**' --client codex
+coprogrammer manager task claim --session codex-api --id api-v2
+# Save the returned claim_id and substitute it below.
+coprogrammer manager task guard --session codex-api --id api-v2 \
+  --claim claim_... --file src/api/routes.py
+coprogrammer manager task board
+```
+
+Claiming atomically reserves the paths. Competing tasks, unfinished dependencies,
+stale windows and another task in the same worktree block the claim. Use separate
+worktrees for parallel development. Before committing, run the guard with
+`--working-tree` to check staged, unstaged and untracked nonignored paths,
+including both sides of renames. Renew long-running claims with `task renew`.
+
+Use `task finish` with an accurate work summary to release the lease, or
+`task release` to requeue. An expired claim needs explicit creator recovery;
+it never silently moves to a new owner. Guards are cooperative checks and do
+not intercept arbitrary writes. Completion does not certify tests or approval.
+
+After draining `manager sync`, use `manager wait --session claude-ui --after
+evt_...` for a bounded wait, and `manager message thread --session claude-ui
+--task api-v2` for the task conversation. See the
+[complete CLI/MCP workflow, recovery and platform limits](docs/scheduling/README.md).
 
 ## Request and compare model reviews
 
@@ -194,6 +229,7 @@ and [contributor handoff checklist](CONTRIBUTING.md#handoff-and-review).
 | [Multi-platform quickstart](docs/MULTI_PLATFORM_QUICKSTART.md) | Codex, Claude, Copilot, GitHub and model-provider setup |
 | [Coordination lifecycle](docs/COORDINATION_LIFECYCLE.md) | Before, during and after coding |
 | [Multi-window collaboration](docs/collaboration/README.md) | Sessions, task inboxes, acknowledgements and resumable CLI/MCP sync |
+| [Task scheduling and communication](docs/scheduling/README.md) | Atomic claims, dependency routing, edit guards, recovery, waits and discussions |
 | [Collaboration research](docs/collaboration/research.md) | Current open-source approaches and the implementation choices they informed |
 | [Configuration](docs/CONFIGURATION.md) | Protected paths, language and project policy |
 | [GitHub Actions](docs/GITHUB_ACTIONS.md) | PR digests and workflow setup |

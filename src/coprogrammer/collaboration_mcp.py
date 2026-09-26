@@ -1,5 +1,6 @@
 """MCP declarations and adapter sharing the exact CLI coordination operations."""
 from . import collaboration as core
+from . import channels
 
 
 def declarations(string_schema):
@@ -37,6 +38,13 @@ def declarations(string_schema):
         tool("manager_sync", "Read shared sessions, freshness, leases, decisions, pending inbox and an incremental event page. Read-only; no auto-ACK or pulse.", {
             "session": identity, "after": cursor, "limit": limit,
         }),
+        tool("manager_wait", "Wait up to 25 seconds for visible Manager changes or pending inbox. First sync and drain pages, then pass next_cursor. No client wakeup, auto-ACK or pulse.", {
+            "session": identity, "after": string_schema(256), "limit": limit,
+            "timeout_seconds": {"type": "integer", "minimum": 0, "maximum": 25, "default": 25},
+        }, ("session", "after")),
+        tool("message_thread", "Read your sent and received messages for one task in chronological order. Reading does not acknowledge messages.", {
+            "session": identity, "task": string_schema(256), "after": cursor, "limit": limit,
+        }, ("session", "task")),
     ]
 
 
@@ -51,4 +59,8 @@ def dispatch(name, ctx, args):
         return core.inbox(ctx.log_path, **args)
     if name == "message_ack":
         return core.acknowledge(ctx.log_path, ctx.cwd, **args)
+    if name == "manager_wait":
+        return channels.wait(ctx.log_path, **args)
+    if name == "message_thread":
+        return channels.thread(ctx.log_path, **args)
     return core.sync(ctx.log_path, **args)

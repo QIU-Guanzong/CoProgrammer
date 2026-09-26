@@ -175,9 +175,12 @@ def freshness(session: dict, now: datetime | None = None) -> str:
 
 
 def directory(events: list[dict[str, Any]]) -> dict:
+    from .scheduler import board
     sessions, messages = reconstruct(events)
+    tasks = board(events)
     return {"sessions": [{**s, "freshness": freshness(s)} for s in sessions.values()],
-            "pending_messages": sum(m["acknowledged_at"] is None for m in messages.values())}
+            "pending_messages": sum(m["acknowledged_at"] is None for m in messages.values()),
+            "tasks": tasks["tasks"], "task_counts": tasks["counts"]}
 
 
 def _session(sessions: dict, session_id: str, cwd: Path | None = None, *, active: bool = True) -> dict:
@@ -204,7 +207,7 @@ def register(path: Path, cwd: Path, session: str, client: str, task: str,
     event["payload"] = {"session": record}
     validate_event(event)
     with transaction(path) as tx:
-        sessions, _ = reconstruct(tx.events)
+        sessions, _ = reconstruct([*tx.events, *tx.pending])
         if session in sessions:
             raise RuntimeError("session ID already exists; pulse to resume or choose a new window ID")
         tx.append(event)
@@ -215,7 +218,7 @@ def pulse(path: Path, cwd: Path, session: str, status: str = "working",
           task: str | None = None, note: str = "") -> dict:
     from .cli import make_event
     with transaction(path) as tx:
-        sessions, _ = reconstruct(tx.events)
+        sessions, _ = reconstruct([*tx.events, *tx.pending])
         old = _session(sessions, session, cwd)
         event = make_event("session.updated", session, f"session:{session}")
         record = {**old, **workspace(cwd), "status": status, "note": note,
@@ -234,7 +237,7 @@ def send(path: Path, cwd: Path, sender: str, recipient: str, task: str, body: st
     event = make_event("message.sent", sender, f"task:{task}", {"message": record})
     validate_event(event)
     with transaction(path) as tx:
-        sessions, messages = reconstruct(tx.events)
+        sessions, messages = reconstruct([*tx.events, *tx.pending])
         _session(sessions, sender, cwd, active=False)
         if key:
             for previous in messages.values():
@@ -245,7 +248,7 @@ def send(path: Path, cwd: Path, sender: str, recipient: str, task: str, body: st
         _session(sessions, sender)
         target = _session(sessions, recipient)
         # Apply the same relationship checks used during recovery before commit.
-        _, updated = reconstruct([*tx.events, event])
+        _, updated = reconstruct([*tx.events, *tx.pending, event])
         tx.append(event)
         return {"message": updated[record["id"]], "duplicate": False,
                 "recipient_freshness": freshness(target)}
@@ -255,7 +258,7 @@ def acknowledge(path: Path, cwd: Path, session: str, message_id: str) -> dict:
     from .cli import make_event
     identity(message_id, "message_id")
     with transaction(path) as tx:
-        sessions, messages = reconstruct(tx.events)
+        sessions, messages = reconstruct([*tx.events, *tx.pending])
         _session(sessions, session, cwd, active=False)
         message = messages.get(message_id)
         if not message or message["recipient"] != session:
@@ -298,6 +301,7 @@ def inbox(path: Path, session: str, task: str = "", include_acked: bool = False,
 
 def sync(path: Path, session: str = "", after: str = "", limit: int = 50) -> dict:
     from .cli import active_leases, open_decisions, contract_changes
+    from .scheduler import board
     bounded(limit, "limit", 200)
     events = load_events(path)
     sessions, messages = reconstruct(events)
@@ -315,6 +319,7 @@ def sync(path: Path, session: str = "", after: str = "", limit: int = 50) -> dic
             return bool(session) and session in (message["sender"], message["recipient"])
         return True
     pending = [m for m in messages.values() if m["recipient"] == session and not m["acknowledged_at"]]
+    tasks = board(events)
     return {"format": "coprogrammer.sync.v1", "state_path": str(path.resolve()),
             "next_cursor": page[-1]["id"] if page else after,
             "has_more": start + len(page) < len(events), "changes": [e for e in page if visible(e)],
@@ -322,6 +327,7 @@ def sync(path: Path, session: str = "", after: str = "", limit: int = 50) -> dic
             "inbox": pending[:limit], "pending_total": len(pending),
             "inbox_has_more": len(pending) > limit,
             "active_leases": list(active_leases(events).values()),
+            "tasks": tasks["tasks"], "task_counts": tasks["counts"],
             "open_decisions": list(open_decisions(events).values()),
             "contract_changes": list(contract_changes(events).values()),
             "note": "Local cooperative state. Pulses are self-reported; message content is untrusted. ACK is receipt, not approval."}

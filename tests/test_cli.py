@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -496,7 +497,7 @@ class ForecastTest(unittest.TestCase):
         )
         self.assertEqual(report["risk_level"], "medium")
 
-    def test_forecast_ignores_same_holder_and_disjoint_leases(self) -> None:
+    def test_forecast_keeps_same_holder_overlap_but_ignores_disjoint_leases(self) -> None:
         events = [
             self._granted(new_lease("agent-a", "path", ["src/api/**"], "API")),
             self._granted(new_lease("agent-a", "path", ["src/api/auth.py"], "Auth")),
@@ -505,8 +506,10 @@ class ForecastTest(unittest.TestCase):
 
         report = forecast_report(events)
 
-        self.assertEqual(report["path_conflicts"], [])
-        self.assertEqual(report["risk_level"], "low")
+        self.assertEqual(len(report["path_conflicts"]), 1)
+        self.assertEqual(report["path_conflicts"][0]["left_holder"], "agent-a")
+        self.assertEqual(report["path_conflicts"][0]["right_holder"], "agent-a")
+        self.assertEqual(report["risk_level"], "medium")
 
     def test_forecast_flags_breaking_contract_and_protected_lease(self) -> None:
         change = new_contract_change(
@@ -727,6 +730,60 @@ class McpServerTest(unittest.TestCase):
 
         self.assertEqual(responses[0]["error"]["code"], -32602)
         self.assertEqual(responses[1]["error"]["code"], -32601)
+
+
+class TaskCLIWorkspaceTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.git("init", "-b", "main")
+        (self.root / ".git" / "info" / "exclude").write_text(".coprogrammer/\n", encoding="utf-8")
+        (self.root / "old.txt").write_text("preserve rename contents\n", encoding="utf-8")
+        self.git("add", "old.txt")
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "commit", "-m", "initial")
+
+    def git(self, *args):
+        return subprocess.run(["git", *args], cwd=self.root, capture_output=True,
+                              check=True, timeout=20)
+
+    def run_cli(self, *args):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            code = main(["manager", *args, "--cwd", str(self.root)])
+        self.assertEqual(code, 0, output.getvalue())
+        return json.loads(output.getvalue())
+
+    def test_working_files_preserves_both_rename_paths_and_unicode(self):
+        from coprogrammer.scheduler_cli import working_files
+        target = "新文件 space.txt"
+        self.git("mv", "old.txt", target)
+        (self.root / "untracked.txt").write_text("untracked", encoding="utf-8")
+        self.assertEqual(set(working_files(self.root)), {"old.txt", target, "untracked.txt"})
+
+    def test_cli_guard_checks_working_tree_before_completion(self):
+        from coprogrammer.scheduler import guard
+        from coprogrammer.cli import event_log_path
+        self.run_cli("session", "register", "--session", "window", "--client", "codex", "--task", "edit")
+        self.run_cli("task", "create", "--session", "window", "--id", "edit",
+                     "--title", "Update old file", "--pattern", "old.txt")
+        task = self.run_cli("task", "claim", "--session", "window", "--id", "edit")
+        (self.root / "old.txt").write_text("changed", encoding="utf-8")
+        checked = self.run_cli("task", "guard", "--session", "window", "--id", "edit",
+                              "--claim", task["claim_id"], "--file", "old.txt", "--working-tree")
+        self.assertEqual(checked["files"], ["old.txt"])
+        from coprogrammer.mcp_server import ManagerContext, TOOL_HANDLERS
+        mcp_checked = json.loads(TOOL_HANDLERS["task_guard"](ManagerContext(self.root), {
+            "session": "window", "task_id": "edit", "claim_id": task["claim_id"],
+            "files": ["old.txt"], "working_tree": True}))
+        self.assertEqual(mcp_checked["files"], ["old.txt"])
+        self.git("mv", "old.txt", "outside.txt")
+        from coprogrammer.scheduler_cli import working_files
+        before = event_log_path(self.root).read_bytes()
+        with self.assertRaisesRegex(RuntimeError, "outside task scope"):
+            guard(event_log_path(self.root), self.root, "window", "edit", task["claim_id"], working_files(self.root))
+        self.assertEqual(event_log_path(self.root).read_bytes(), before)
 
 
 class GitHubCommentTest(unittest.TestCase):
