@@ -197,8 +197,14 @@ def create_review(cwd: Path, base: str, head: str, provider: str, model: str,
         return artifact
     if not evidence["files"]:
         raise RuntimeError("No committed changes to review; model request was not sent")
+    for ref_key, sha_key in (("base_ref", "base_sha"), ("head_ref", "head_sha")):
+        if _commit(cwd, evidence[ref_key]) != evidence[sha_key]:
+            raise RuntimeError("Review is stale: base or head changed; regenerate the review")
     result = providers.complete(provider, model, prompt, base_url=base_url,
                                 max_tokens=max_tokens)
+    for ref_key, sha_key in (("base_ref", "base_sha"), ("head_ref", "head_sha")):
+        if _commit(cwd, evidence[ref_key]) != evidence[sha_key]:
+            raise RuntimeError("Review is stale: base or head changed; regenerate the review")
     if result.get("truncated"):
         raise RuntimeError("Model output was truncated; no review or plan was accepted")
     if result.get("finish_reason") not in ("stop", "end_turn", "stop_sequence"):

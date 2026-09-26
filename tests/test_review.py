@@ -35,6 +35,11 @@ class ReviewTest(unittest.TestCase):
         return subprocess.run(["git", *args], cwd=self.root, capture_output=True,
                               text=True, check=True).stdout.strip()
 
+    def advance_ref(self, ref):
+        commit = self.git("commit-tree", f"{ref}^{{tree}}", "-p", ref,
+                          "-m", "concurrent reference advance")
+        self.git("update-ref", f"refs/heads/{ref}", commit)
+
     def advice(self, evidence, decision="preserve"):
         return {"summary": "Update value", "changes": [
             {"path": item["path"], "decision": decision, "reason": "Value diff is present."}
@@ -104,6 +109,52 @@ class ReviewTest(unittest.TestCase):
         self.assertEqual(result["status"], "advisory")
         self.assertTrue(result["requires_human_review"])
         self.assertNotIn("request", result)
+
+    def test_reference_move_before_send_does_not_call_provider(self):
+        for ref in ("main", "feature"):
+            with self.subTest(ref=ref):
+                def collect_and_advance(*args, **kwargs):
+                    evidence = collect_evidence(*args, **kwargs)
+                    self.advance_ref(ref)
+                    return evidence
+
+                with patch("coprogrammer.review.collect_evidence", side_effect=collect_and_advance), \
+                        patch("coprogrammer.providers.complete") as complete:
+                    with self.assertRaisesRegex(RuntimeError, "Review is stale"):
+                        create_review(self.root, "main", "feature", "glm", "explicit-model", send=True)
+                complete.assert_not_called()
+
+    def test_reference_move_during_send_rejects_advice_without_retry(self):
+        for ref in ("main", "feature"):
+            with self.subTest(ref=ref):
+                evidence = collect_evidence(self.root, "main", "feature")
+
+                def respond_after_advance(*args, **kwargs):
+                    self.advance_ref(ref)
+                    return {"text": json.dumps(self.advice(evidence)), "truncated": False,
+                            "finish_reason": "stop"}
+
+                with patch("coprogrammer.providers.complete", side_effect=respond_after_advance) as complete:
+                    with self.assertRaisesRegex(RuntimeError, "Review is stale"):
+                        create_review(self.root, "main", "feature", "glm", "explicit-model", send=True)
+                complete.assert_called_once()
+
+    def test_fixed_commits_remain_reviewable_when_branches_advance(self):
+        evidence = collect_evidence(self.root, "main", "feature")
+
+        def respond_after_advance(*args, **kwargs):
+            self.advance_ref("main")
+            self.advance_ref("feature")
+            return {"text": json.dumps(self.advice(evidence)), "truncated": False,
+                    "finish_reason": "stop"}
+
+        with patch("coprogrammer.providers.complete", side_effect=respond_after_advance) as complete:
+            result = create_review(self.root, evidence["base_sha"], evidence["head_sha"],
+                                   "glm", "explicit-model", send=True)
+        complete.assert_called_once()
+        self.assertEqual(result["status"], "advisory")
+        self.assertEqual(result["evidence"]["base_sha"], evidence["base_sha"])
+        self.assertEqual(result["evidence"]["head_sha"], evidence["head_sha"])
 
     def test_invented_files_rejected_and_omitted_decisions_deferred(self):
         evidence = collect_evidence(self.root, "main", "feature")
