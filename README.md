@@ -108,6 +108,32 @@ Start with:
 - `docs/EVAL_PLAN.md` for the AgenticFlict-based evaluation plan;
 - `ACKNOWLEDGMENTS.md` for the projects we learn from and how we credit them.
 
+## Multi-platform upgrade preview (0.2.0a1)
+
+The source branch now includes shared-worktree Manager state, atomic leases
+with expiry/renewal, hardened MCP input handling, and native configuration
+generators for **Codex, Claude Code, and GitHub Copilot**. **Claude API, GLM,
+and DeepSeek** can analyze the same commit-bound evidence through explicit,
+opt-in provider calls. A read-only GitHub PR handoff records base/head SHAs;
+validated model advice can produce a draft integration plan.
+
+Start with [the multi-platform quickstart](docs/MULTI_PLATFORM_QUICKSTART.md).
+Use a source install of this branch until this preview is published. Generated
+configs, detected executables, and mocked provider tests do not establish a
+live connection. Plan generation does not apply patches or approve a merge.
+
+```bash
+coprogrammer integrations doctor
+coprogrammer integrations config --client codex
+coprogrammer integrations config --client claude
+coprogrammer integrations config --client copilot
+coprogrammer review --provider deepseek --model YOUR_MODEL_ID --base origin/main --head HEAD
+```
+
+The review command previews the request locally by default; only `--send`
+contacts the selected provider. Model identifiers and credentials are not
+hardcoded. See the guide for upgrade compatibility notes and verification scope.
+
 ## Install (pick your surface)
 
 CoProgrammer ships one core through several thin wrappers — use whichever
@@ -121,7 +147,7 @@ your stack already speaks (details: `docs/DISTRIBUTION_STRATEGY.md`):
 ```
 
 Tools exposed: `digest_branch`, `manager_status`, `manager_forecast`,
-`lease_request`, `heartbeat`, `contract_propose`.
+`lease_request`, `lease_renew`, `lease_release`, `heartbeat`, `contract_propose`.
 
 **Agent Skills** (SKILL.md open standard — Claude Code, Codex CLI, Gemini
 CLI, Copilot, Cursor, 35+ tools): copy `plugins/coprogrammer/skills/*` into

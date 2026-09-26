@@ -1,0 +1,36 @@
+{
+  "task": "Multi-platform coordination upgrade for Codex, Claude, GitHub, GLM and DeepSeek",
+  "intent": "Make local coordination reliable and connect agent clients and model review providers through evidence-bound, reviewable artifacts.",
+  "scope": "tooling",
+  "core_changes": [
+    "Atomic shared-worktree Manager state, normalized advisory leases, expiry, renewal and holder checks",
+    "Robust synchronous stdio MCP requests with eight tools and explicit legacy protocol compatibility",
+    "Native isolated-launch configuration generation for Codex, Claude Code and GitHub Copilot",
+    "Read-only GitHub PR metadata handoff with complete base/head commit IDs",
+    "Claude Messages, GLM and DeepSeek adapters with explicit models and opt-in network requests",
+    "Committed diff evidence, validated advisory results and draft integration plans with stale-reference checks"
+  ],
+  "contracts": [
+    {"name": "Default Manager state", "change_type": "unknown", "compatibility": "Shared at primary worktree; explicit --state-dir remains caller-controlled. Competing legacy logs require reconciliation."},
+    {"name": "Raw lease and decision events", "change_type": "breaking", "compatibility": "These mutations now require dedicated commands; legacy raw event scripts must migrate."},
+    {"name": "Lease lifecycle", "change_type": "additive", "compatibility": "Conservative path normalization, expiry and renewal; legacy leases without expiry retained."},
+    {"name": "Review and GitHub context artifacts", "change_type": "additive", "compatibility": "Preview formats; model advice never authorizes integration."},
+    {"name": "Existing JSON schemas", "change_type": "none", "compatibility": "Retained; new integration plans conform to current integration-plan schema."}
+  ],
+  "tests": [
+    "Full unittest suite, including concurrent processes and real temporary Git worktrees",
+    "MCP malformed input isolation, protocol versions and multi-client lease lifecycle",
+    "Provider protocol/error tests with mocked HTTP only",
+    "Generated client configuration parsing and actual subprocess stdio handshake",
+    "Evidence path exclusion, draft safety, output preservation and stale/tampered review rejection",
+    "Config, manifest, artifact JSON/YAML and package build validation; see validation.md for final results"
+  ],
+  "risks": [
+    "Protected CLI, package and CI changes require maintainer review before merge/release",
+    "External model service authentication, model availability and billing not tested with live calls",
+    "Local advisory coordination is not an identity boundary or a distributed lock service",
+    "Glob comparison is conservative and may produce false positives",
+    "Filename-based sensitive-content exclusion does not detect every secret inside source code",
+    "Draft integration plans still require human decisions and trusted validation commands"
+  ]
+}
