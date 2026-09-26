@@ -57,7 +57,7 @@ coprogrammer integrations config --client copilot --output .coprogrammer/clients
 
 启动客户端后，通过客户端的 MCP 管理界面检查工具是否出现。服务提供：
 `manager_status`、`lease_request`、`lease_renew`、`lease_release`、`heartbeat`、
-`contract_propose`、`manager_forecast`、`digest_branch`。
+`contract_propose`、`manager_forecast`、`digest_branch`、`review_summary`。
 
 仅声明同步 stdio tools 子集，协商支持 `2024-11-05`、`2025-03-26`、
 `2025-06-18`、`2025-11-25`；不声明支持 2026 协议、远程 HTTP 或分布式锁。
@@ -146,6 +146,24 @@ base/head SHA，不发布评论、不修改 PR、不执行 PR 文本。缺少对
 现有 `github-comment` 仍是独立的显式发布命令；模型分析不会自动调用它。
 现有 GitHub Action 继续生成确定性分支摘要，不自动发送代码到模型服务。
 
+## 汇总多份审核结果
+
+将已保存的审核工件对照同一组目标提交，未提供的审核继续显示为缺失：
+
+```sh
+coprogrammer review-summary --base origin/main --head HEAD \
+  --review claude=.coprogrammer/claude-review.json \
+  --review glm=.coprogrammer/glm-review.json \
+  --expect deepseek --format markdown \
+  --output .coprogrammer/review-summary.md
+```
+
+该命令完全离线，不会重新调用服务商。它保留缺失、预览、过期、无效和重复状态，
+分别显示部分证据、待判断项、风险提示和文件建议分歧；身份与审核独立性未经认证。
+可使用 `--fail-on-attention`，在报告生成后针对缺口或分歧返回退出码 1。
+没有缺口也不代表批准合并。状态、路径规则和 MCP 示例见
+[审核汇总指南](review-summary/README.md)。
+
 ## 生成待审核集成计划
 
 ```sh
@@ -154,7 +172,9 @@ coprogrammer integration-plan create --review .coprogrammer/deepseek-review.json
 coprogrammer integration-plan validate .coprogrammer/integration-plan.json
 ```
 
-计划重新核对提交、文件列表与 diff 摘要；分支移动或证据被修改时必须重新分析。
+计划重新核对提交、文件列表、diff 正文与摘要、覆盖范围和完成字段；分支移动或
+证据被修改时必须重新分析。缺少正常完成元数据的旧手工工件会被拒绝，不能靠手动
+补填字段证明服务商真的执行过审核。
 它保留模型的保留、舍弃、重建、暂缓建议，列明受保护路径和人工决策，状态始终为
 `draft`。验证命令保持空白，维护者填写可信项目检查后再执行；模型生成的文字只作为
 验证名称保存。此版本不自动应用补丁、执行检查文字、创建集成 PR 或合并。

@@ -33,6 +33,7 @@ CoProgrammer gives the team a shared record:
 | Request an advisory lease and publish heartbeats | Current ownership, overlap and blockers |
 | Generate a branch digest | Changed files, commits, protected paths and risk signals |
 | Request optional model review | Suggestions tied to exact commits and captured diff evidence |
+| Compare named review artifacts | Missing, stale, duplicate or partial reviews, risk notes and file-level disagreements |
 | Prepare an integration plan | What to preserve, drop, rebuild or defer, plus required human decisions |
 
 ```text
@@ -111,6 +112,21 @@ commands contact the provider only when you add `--send`; this sends the
 captured diff and may incur provider charges. Model advice is distinct from a
 maintainer approval. See the [multi-platform guide](docs/MULTI_PLATFORM_QUICKSTART.md)
 for credentials, request limits, client setup and draft plan generation.
+
+After saving review artifacts, compare them locally against the same commits:
+
+```sh
+coprogrammer review-summary --base origin/main --head HEAD \
+  --review claude=.coprogrammer/claude-review.json \
+  --review glm=.coprogrammer/glm-review.json \
+  --expect deepseek --format markdown
+```
+
+Missing files and expected reviewers stay visible. The summary checks recorded
+evidence, preserves risks and conflicting recommendations, and never calls a
+provider or selects a winning review. Reviewer identity and independence are
+not authenticated. The same read-only operation is available through the
+`review_summary` MCP tool. See the [review summary guide](docs/review-summary/README.md).
 
 ## Build a shared workflow
 

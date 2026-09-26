@@ -49,8 +49,39 @@ REF_SCHEMA = {
     **string_schema(512),
     "pattern": r"^(?!-)[^\x00\r\n]+$",
 }
+REVIEW_LABEL_SCHEMA = {
+    "type": "string", "minLength": 1, "maxLength": 64,
+    "pattern": r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+}
 
 TOOLS: list[dict[str, Any]] = [
+    {
+        "name": "review_summary",
+        "description": (
+            "Compare named local review artifacts against one base/head pair. "
+            "Report missing, stale, partial and conflicting evidence in a draft; "
+            "no provider calls, file writes, identity certification or merge approval."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "base": {**REF_SCHEMA, "default": "origin/main"},
+                "head": {**REF_SCHEMA, "default": "HEAD"},
+                "reviews": {
+                    "type": "array", "maxItems": 16,
+                    "items": {
+                        "type": "object", "additionalProperties": False,
+                        "properties": {
+                            "label": REVIEW_LABEL_SCHEMA,
+                            "path": {**string_schema(4096), "description": "Local JSON artifact; relative to the server project directory."},
+                        },
+                        "required": ["label", "path"],
+                    },
+                },
+                "expected": {"type": "array", "items": REVIEW_LABEL_SCHEMA, "maxItems": 16},
+            },
+        },
+    },
     {
         "name": "digest_branch",
         "description": (
@@ -178,7 +209,7 @@ TOOLS: list[dict[str, Any]] = [
     },
 ]
 
-READ_ONLY_TOOLS = {"digest_branch", "manager_status", "manager_forecast"}
+READ_ONLY_TOOLS = {"digest_branch", "manager_status", "manager_forecast", "review_summary"}
 for _tool in TOOLS:
     _tool["inputSchema"]["additionalProperties"] = False
     _tool["annotations"] = {
@@ -228,6 +259,20 @@ def tool_digest_branch(ctx: ManagerContext, args: dict[str, Any]) -> str:
         language=language,
         config=config,
     )
+
+
+def tool_review_summary(ctx: ManagerContext, args: dict[str, Any]) -> str:
+    from .review_summary import build_summary
+
+    cwd = ctx.cwd.resolve()
+    reviews = {}
+    for item in args.get("reviews", []):
+        if item["label"] in reviews:
+            raise RuntimeError("Duplicate reviewer label")
+        reviews[item["label"]] = cwd / item["path"]
+    report = build_summary(cwd, args.get("base", "origin/main"),
+                           args.get("head", "HEAD"), reviews, args.get("expected", []))
+    return json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False)
 
 
 def tool_manager_status(ctx: ManagerContext, args: dict[str, Any]) -> str:
@@ -329,6 +374,7 @@ def tool_contract_propose(ctx: ManagerContext, args: dict[str, Any]) -> str:
 
 
 TOOL_HANDLERS = {
+    "review_summary": tool_review_summary,
     "digest_branch": tool_digest_branch,
     "manager_status": tool_manager_status,
     "manager_forecast": tool_manager_forecast,
@@ -485,7 +531,9 @@ def handle_request(ctx: ManagerContext, request: Any) -> dict[str, Any] | None:
                     "Renew leases during work and release them when done. Publish heartbeats and "
                     "propose shared contract changes early. Leases coordinate cooperating clients; "
                     "they are not access controls. Digest findings and model advice do not approve "
-                    "integration. Protected contracts, architecture and final integration need human review."
+                    "integration. Use review_summary to compare named artifacts on the chosen commits; "
+                    "missing and conflicting evidence stays visible. Protected contracts, architecture "
+                    "and final integration need human review."
                 ),
             },
         }

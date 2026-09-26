@@ -1699,6 +1699,28 @@ def command_integration_plan_create(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_review_summary(args: argparse.Namespace) -> int:
+    from .review_summary import build_summary, render_markdown
+
+    _check_output(args.output)
+    cwd = Path(args.cwd).resolve()
+    reviews = {}
+    for item in args.review or []:
+        label, separator, path = item.partition("=")
+        if not separator or not path.strip():
+            raise RuntimeError("Use --review LABEL=FILE for each review artifact")
+        if label in reviews:
+            raise RuntimeError(f"Duplicate reviewer label: {label}")
+        reviews[label] = cwd / path
+    result = build_summary(cwd, args.base, args.head, reviews, args.expect or [])
+    if args.format == "markdown":
+        language = resolve_language(args.language or load_config(cwd).get("language"))
+        _emit_artifact(render_markdown(result, language), args.output)
+    else:
+        _emit_artifact(result, args.output)
+    return 1 if args.fail_on_attention and result["attention_required"] else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="coprogrammer",
@@ -1810,6 +1832,22 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--send", action="store_true", help="Send committed diff evidence to the selected provider (may incur charges).")
     review.add_argument("--output")
     review.set_defaults(func=command_review)
+
+    review_summary = subparsers.add_parser(
+        "review-summary", help="Compare local review artifacts on one commit pair; never call a provider or approve changes.")
+    review_summary.add_argument("--review", action="append", metavar="LABEL=FILE",
+                                help="Named artifact, repeatable; relative file paths use --cwd.")
+    review_summary.add_argument("--expect", action="append", metavar="LABEL",
+                                help="Expected reviewer, repeatable; absent artifacts stay missing.")
+    review_summary.add_argument("--base", default="origin/main")
+    review_summary.add_argument("--head", default="HEAD")
+    review_summary.add_argument("--cwd", default=".")
+    review_summary.add_argument("--format", choices=("json", "markdown"), default="json")
+    review_summary.add_argument("--language", choices=("en", "zh-CN"))
+    review_summary.add_argument("--output", help="New output file; existing artifacts are preserved.")
+    review_summary.add_argument("--fail-on-attention", action="store_true",
+                                help="Exit 1 after writing when coverage or disagreements need attention; this is not merge approval.")
+    review_summary.set_defaults(func=command_review_summary)
 
     agents = subparsers.add_parser(
         "agents",

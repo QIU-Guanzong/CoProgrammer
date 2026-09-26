@@ -1,0 +1,30 @@
+{
+  "task": "Add offline multi-review comparison and evidence handoff",
+  "intent": "Make missing, outdated, repeated and conflicting reviews visible against one committed target without treating model agreement as approval.",
+  "scope": "tooling, tests and documentation",
+  "core_changes": [
+    "Add bounded local review-summary collection with per-artifact validation and raw SHA-256 provenance.",
+    "Expose the shared operation through CLI JSON/Markdown output and a read-only MCP tool.",
+    "Preserve reviewer risk notes, planned checks, coverage gaps and file-level disagreements; mark declarations as unauthenticated.",
+    "Reject altered diff bodies or inconsistent completion/coverage metadata when importing individual integration plans.",
+    "Document input limits, exit statuses, workflow boundaries and a clearly identified synthetic example."
+  ],
+  "contracts": [
+    {
+      "name": "review-summary CLI, review_summary MCP and coprogrammer.review-summary.v1",
+      "change_type": "additive",
+      "compatibility": "New draft output only. Existing review and plan artifact formats are unchanged; invalid or incomplete hand-authored review files are now rejected on plan import. Subject to maintainer review."
+    }
+  ],
+  "tests": [
+    "162 unit tests passed locally, including 23 summary core tests and 8 CLI/MCP surface tests.",
+    "Config validation and git diff --check passed.",
+    "Synthetic fixture exercise produced 2 current inputs, 1 missing reviewer, 1 disagreement and 1 risk without provider calls."
+  ],
+  "risks": [
+    "current means evidence matches the selected committed target, not that the review is complete or authenticated.",
+    "The summary is an offline snapshot; remote GitHub PR freshness, identity and reviewer independence are not verified.",
+    "Existing hand-authored artifacts lacking normal completion metadata must be regenerated, not treated as proof of an actual model call.",
+    "No network model call, automatic patch application, approval, merge or release is performed."
+  ]
+}
