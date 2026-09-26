@@ -5,6 +5,11 @@ description: "Turn an approved branch digest into a minimal CoProgrammer integra
 
 # CoProgrammer Integration Plan
 
+Prerequisite for validating a plan: install the CoProgrammer CLI and make
+`coprogrammer` available on `PATH`. Do not assume the target repository
+contains CoProgrammer's Python source tree. If the CLI is unavailable, leave
+the plan as an unvalidated draft and state that the check could not run.
+
 Use this workflow after a branch digest has been reviewed and the team needs a
 safe plan for integrating useful work.
 
@@ -27,7 +32,7 @@ safe plan for integrating useful work.
 4. Validate the JSON plan:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer integration-plan validate <plan.json>
+coprogrammer integration-plan validate <plan.json>
 ```
 
 5. Recommend deterministic patch primitives before LLM patching:

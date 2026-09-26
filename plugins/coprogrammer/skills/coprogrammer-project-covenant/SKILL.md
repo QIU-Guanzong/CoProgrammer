@@ -5,6 +5,12 @@ description: "Audit or create the before-coding CoProgrammer covenant pack for a
 
 # CoProgrammer Project Covenant
 
+Prerequisite for CoProgrammer checks: install the CLI and make `coprogrammer`
+available on `PATH`. The plugin may be used outside CoProgrammer's own source
+repository, so do not assume the target contains a `src/` package. If the CLI
+is unavailable, complete the file-based audit and label command checks as
+unavailable.
+
 Use this workflow when a user wants a repository prepared for AI-assisted
 multi-agent development before implementation begins.
 
@@ -21,8 +27,8 @@ multi-agent development before implementation begins.
 3. Run available checks from the repo root:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer config validate
-PYTHONPATH=src python -m coprogrammer agents check
+coprogrammer config validate
+coprogrammer agents check
 ```
 
 4. Report missing or weak covenant pieces in three groups:

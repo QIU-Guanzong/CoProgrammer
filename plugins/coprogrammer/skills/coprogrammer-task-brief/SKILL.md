@@ -5,6 +5,11 @@ description: "Convert a human request into a scoped CoProgrammer task brief with
 
 # CoProgrammer Task Brief
 
+Prerequisite for Manager operations: install the CoProgrammer CLI and make
+`coprogrammer` available on `PATH`. Do not assume the target repository
+contains CoProgrammer's Python source tree. If the CLI is unavailable, produce
+the brief but state that lease acquisition could not be verified.
+
 Use this workflow before assigning coding work to a human or AI agent.
 
 ## Workflow
@@ -23,7 +28,7 @@ Use this workflow before assigning coding work to a human or AI agent.
 5. If implementation should begin immediately, request a workspace lease first:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer manager lease request \
+coprogrammer manager lease request \
   --holder <agent-or-user> \
   --pattern "<path-or-glob>"
 ```

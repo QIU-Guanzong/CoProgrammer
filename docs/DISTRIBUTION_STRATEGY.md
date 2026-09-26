@@ -1,95 +1,114 @@
 # Distribution Strategy
 
-Last updated: 2026-06-10
+Last updated: 2026-09-27
 
-Goal: a developer should be able to adopt CoProgrammer in **under five
-minutes** through whichever surface their stack already uses. We ship the same
-core (CLI + Manager event log + schemas) through six thin wrappers instead of
-building six products.
+CoProgrammer coordinates work products across coding runtimes. It should not
+become another coding runtime or a universal model gateway. Keep the shared
+protocol and artifacts small, and adapt installation to each client.
 
-## Channel Matrix
+## Current channels
 
-| Channel | Audience | Status | Install Story |
+| Channel | Current state | What it provides | Boundary |
 | --- | --- | --- | --- |
-| **Agent Skills (SKILL.md)** | Users of Claude Code, Codex CLI, Gemini CLI, Copilot, Cursor, 35+ tools | ✅ 5 skills exist in `plugins/coprogrammer/skills/` | Copy skill folder, or install via skills.sh / openai/skills-style catalogs |
-| **MCP server** | Any MCP client (Claude Code/Cowork, Codex, Cursor, custom agents) | ✅ `coprogrammer mcp serve` (zero-dep stdio); `server.json` ready | `uvx coprogrammer mcp serve` once on PyPI; publish via mcp-publisher |
-| **PyPI / uvx CLI** | Terminal users, CI scripts, orchestrator hooks | ✅ entry point exists; ⏳ not yet published | `pipx install coprogrammer` / `uvx coprogrammer` |
-| **GitHub Action (reusable)** | Any repo wanting PR digests without setup | ✅ `action.yml` at repo root | `uses: QIU-Guanzong/CoProgrammer@v0` |
-| **Codex plugin** | Codex teams wanting shared install | ✅ `plugins/coprogrammer/.codex-plugin/` | `codex plugin marketplace add <repo>` |
-| **Claude Code plugin** | Claude Code teams | ⏳ wrap same skills + MCP in plugin manifest | `/plugin install` from a marketplace repo |
+| Agent Skills | Five skills in an Agent Plugins 1.0 package at `plugins/coprogrammer/` | Portable instructions for readiness, task scoping, coordination, review and integration planning | CLI commands require the separately installed `coprogrammer` executable |
+| Claude Code plugin | Native plugin manifest plus a repository marketplace entry | Install the same five skills as one named plugin | Third-party marketplace; no hooks or MCP server are bundled |
+| Codex plugin | Agent Plugins package, `.codex-plugin/plugin.json` compatibility manifest and `.agents/plugins/marketplace.json` repo catalog | Install the five skills from the Codex Plugins Directory | CLI registers the catalog; the client UI performs installation |
+| GitHub Copilot | The portable package can be used on Agent Plugins-compatible Copilot surfaces | Shared Skills package; GitHub remains the PR and review system | Copilot surface support and setup differ; use GitHub's current client docs |
+| PyPI CLI and MCP | PyPI `0.1.0` is published; this branch uses `0.2.0a1` | Stable CLI and stdio MCP exist; the current branch adds newer Manager, integration and review-summary commands | The published version does not contain every command used by these skills; install the matching checkout for this branch. No hosted MCP endpoint is verified |
+| GitHub Action | Root `action.yml` and PR digest workflow | Reviewable digest artifact and same-repository PR comment | Pin a reviewed full commit SHA when consuming it; fork jobs must retain least privilege |
+| Claude API, GLM, DeepSeek | Optional provider adapters exist | Explicit second-opinion review of selected evidence | Tests use mocked HTTP; live credentials, provider availability and billing are unverified |
 
-Key research facts behind this matrix (2026-06):
+## Architecture decision
 
-- **SKILL.md became an open cross-vendor standard** (spec at agentskills.io,
-  published 2025-12; adopted within weeks by Codex CLI, VS Code Copilot,
-  Gemini CLI, Antigravity, Cursor; Vercel's skills.sh acts as a package
-  manager/directory; OpenAI maintains a curated catalog at openai/skills).
-  Our existing five skills are already in the right format — distribution is
-  now a listing problem, not a build problem.
-- **The official MCP Registry is live** (registry.modelcontextprotocol.io).
-  Publishing = ship package to PyPI → `mcp-publisher init` (creates
-  `server.json`) → `mcp-publisher login github` → `mcp-publisher publish`.
-  Namespace `io.github.qiu-guanzong/*` is verified via the GitHub account.
-- MCP clients then discover the server with a one-line config; `uvx` makes
-  install-on-first-run free for users.
+Keep five layers distinct:
 
-## What Each Wrapper Exposes
+1. **Coding runtimes** create branches and edits: Codex, Claude Code, Copilot,
+   and other local or hosted coding agents.
+2. **Skills** teach repeatable workflows without owning state or authority.
+3. **CLI and MCP** expose local coordination state and controlled commands.
+4. **Model providers** supply optional analysis; Claude API, GLM and DeepSeek are
+   providers, not substitutes for the coding runtimes.
+5. **GitHub** remains the canonical place for pull requests, checks, reviews
+   and maintainer decisions.
 
-```text
-                ┌────────────── SKILL.md skills ──────────────┐
-                │  workflows: covenant / task brief / sync /  │
-                │  digest review / integration plan           │
-                └──────────────────┬──────────────────────────┘
-                                   │ call CLI or MCP tools
-┌──────────── CLI (PyPI) ──────────┴───────────┐
-│ digest · manager (lease/heartbeat/contract/  │
-│ forecast/status) · manifest · plan validate  │
-└──────────────────┬───────────────────────────┘
-                   │ same internals
-┌────────── MCP server (stdio) ────────────────┐   ┌── GitHub Action ──┐
-│ tools: digest_branch, manager_status,        │   │ PR digest comment │
-│ manager_forecast, lease_request, heartbeat,  │   │ + artifact        │
-│ contract_propose                             │   └───────────────────┘
-└──────────────────────────────────────────────┘
-```
+The portable Agent Plugins 1.0 package carries only the Skills component. The
+same package includes client metadata for Codex, while Claude Code uses its own
+native manifest and marketplace catalog. This avoids duplicating the workflow
+instructions while respecting client-specific installation formats. MCP is
+kept separate until the current CLI feature set has a stable distributable
+package and the connection can be validated in supported clients. PyPI has a
+stable `0.1.0`, but it predates commands added by the current `0.2.0a1` branch.
 
-Design rule: **skills describe workflows, tools execute state changes.**
-Skills tell the agent *when and why* to request a lease or digest a branch;
-the MCP tools / CLI are the only things that write Manager events. This keeps
-behavior identical across Claude Code, Codex, and Cursor.
+## Design lessons from open-source projects
 
-## Five-Minute Quickstarts (to put in README)
+The current gstack project ties review receipts and test evidence to a content
+fingerprint of the working tree, rather than relying only on a commit SHA. That
+can keep evidence current through amend, rebase and squash operations. Its
+documented review receipt still relies on a reviewer's reported completion; a
+fingerprint establishes which content the receipt names, not that a reviewer
+independently understood it. CoProgrammer should adopt the content-identity and
+freshness idea while keeping review claims appropriately limited.
 
-1. **MCP (any client):**
+The Agent Plugins standard shows a useful open-source boundary: standardize
+only the component formats with cross-client convergence (Skills and MCP), and
+leave hooks and other runtime behavior in client-owned extensions. Claude's
+marketplace further separates a plugin catalog from the plugin package itself.
+We follow that split instead of forcing Claude's manifest into the portable
+manifest.
 
-   ```json
-   { "mcpServers": { "coprogrammer": {
-       "command": "uvx", "args": ["coprogrammer", "mcp", "serve"] } } }
-   ```
+For GitHub automation, keep permissions minimal and treat fork content as
+untrusted input. A digest or review summary should be generated without a
+write-capable token where possible. Do not run code from an untrusted pull
+request in a privileged `pull_request_target` or `workflow_run` path.
 
-2. **Skills:** copy `plugins/coprogrammer/skills/*` into your agent's skills
-   directory (`.claude/skills/`, `.codex/skills/`, etc.).
-3. **CI:** `uses: QIU-Guanzong/CoProgrammer@v0` in a PR workflow.
-4. **Terminal:** `pipx install coprogrammer && coprogrammer manager init`.
+## Prioritized roadmap
 
-## Release Checklist (v0.1.0)
+### Done in this increment
 
-1. `python -m build` + publish `coprogrammer` to PyPI (enables uvx/pipx and is
-   a prerequisite for the MCP registry).
-2. Tag `v0` / `v0.1.0` so the GitHub Action ref is stable.
-3. `mcp-publisher login github && mcp-publisher publish` (server.json is
-   ready; verify the namespace matches the GitHub org).
-4. Submit skills to skills.sh and the openai/skills catalog; keep
-   `plugins/coprogrammer/skills/` as the source of truth.
-5. Add a Claude Code plugin manifest reusing the same skills + MCP server;
-   list in a public marketplace repo.
-6. README "Install" section linking all channels (done).
+- Add a portable Agent Plugins 1.0 manifest and retain the Codex compatibility
+  manifest.
+- Add a Claude Code plugin manifest and repository marketplace listing.
+- Make packaged skills stop assuming that the consumer repository contains
+  CoProgrammer's `src/` tree.
+- Document the separate CLI prerequisite and the research boundaries.
 
-## Maintenance Rules
+### Next: stable local distribution
 
-- One version number across pyproject.toml, server.json, plugin.json; bump
-  together (add a CI check later).
-- Wrappers must stay thin: no logic in skills/action that is not in the CLI.
-- Every new Manager capability ships in this order: CLI → MCP tool → skill
-  mention → docs. If it cannot be expressed as a CLI command, it does not
-  ship.
+- Publish and verify the current `0.2.0a1` feature set before recommending
+  `uvx` or `pipx` for the new Manager and review-summary commands. The existing
+  PyPI `0.1.0` remains an older stable install path.
+- Add a packaged MCP configuration only after the CLI launch command is
+  deterministic on supported platforms and has been exercised in each client.
+- Consider MCP Registry publication only after the package and namespace are
+  independently verified. Do not use a preview branch as a distribution ref.
+
+### Then: evidence freshness
+
+- Propose a content fingerprint over the exact files reviewed and tested.
+- Record command, tool version, timestamp, content identity and result in a
+  reviewable receipt.
+- Report evidence as fresh, stale or unverifiable; do not turn a receipt into
+  approval or merge authority.
+- Keep this schema/protocol change behind maintainer review and a pilot across
+  real rebases, amendments, untracked files and ignored scratch files.
+
+### Later: GitHub and provider evaluation
+
+- Surface review summaries in GitHub Actions job summaries and downloadable
+  artifacts before adding PR writes or an App.
+- Keep fork-triggered jobs free of model credentials and write tokens.
+- Compare provider adapters on the same bounded input and rubric; report
+  mocked, live and unavailable states separately.
+- Add opt-in adoption telemetry only if users can inspect, disable and delete
+  what is collected. Default behavior remains local and quiet.
+
+## Sources
+
+- [Agent Plugins Specification 1.0.0](https://github.com/agentplugins/agent-plugins-spec/blob/main/spec/1.0.0.md)
+- [OpenAI: Package your plugin](https://developers.openai.com/plugins/build/plugins)
+- [GitHub Copilot: About plugins](https://docs.github.com/en/copilot/concepts/agents/about-plugins)
+- [Claude Code: Plugins overview](https://code.claude.com/docs/en/plugins)
+- [Claude Code: Create a marketplace](https://code.claude.com/docs/en/plugin-marketplaces)
+- [GitHub Actions: Secure use reference](https://docs.github.com/en/actions/reference/security/secure-use)
+- [gstack README](https://github.com/garrytan/gstack)
+- [gstack ship workflow and verification gate](https://github.com/garrytan/gstack/blob/main/ship/SKILL.md)

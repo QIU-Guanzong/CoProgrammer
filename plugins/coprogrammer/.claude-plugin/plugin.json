@@ -1,0 +1,19 @@
+{
+  "name": "coprogrammer",
+  "displayName": "CoProgrammer",
+  "version": "0.2.0-alpha.1",
+  "description": "Coordinate AI coding work with shared state, scoped tasks, branch digests, and reviewable integration plans.",
+  "author": {
+    "name": "CoProgrammer",
+    "url": "https://github.com/QIU-Guanzong/CoProgrammer"
+  },
+  "homepage": "https://github.com/QIU-Guanzong/CoProgrammer",
+  "repository": "https://github.com/QIU-Guanzong/CoProgrammer",
+  "license": "MIT",
+  "keywords": [
+    "coding-agents",
+    "multi-agent",
+    "code-review",
+    "integration"
+  ]
+}

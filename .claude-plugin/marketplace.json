@@ -1,0 +1,15 @@
+{
+  "name": "coprogrammer-claude",
+  "description": "Open-source workflows for coordinating coding agents and integrating their branches.",
+  "owner": {
+    "name": "Qiu Guanzong",
+    "url": "https://github.com/QIU-Guanzong"
+  },
+  "plugins": [
+    {
+      "name": "coprogrammer",
+      "source": "./plugins/coprogrammer",
+      "description": "Five skills for project readiness, task scoping, Manager coordination, branch review, and integration planning."
+    }
+  ]
+}

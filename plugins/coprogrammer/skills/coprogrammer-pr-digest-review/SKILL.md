@@ -5,6 +5,11 @@ description: "Generate or review a CoProgrammer branch digest after coding, then
 
 # CoProgrammer PR Digest Review
 
+Prerequisite for generating a digest: install the CoProgrammer CLI and make
+`coprogrammer` available on `PATH`. Do not assume the target repository
+contains CoProgrammer's Python source tree. If the CLI is unavailable, review
+the supplied artifacts and clearly report that a fresh digest was not generated.
+
 Use this workflow after a branch or PR exists and a reviewer needs to understand
 what should actually reach `main`.
 
@@ -15,7 +20,7 @@ what should actually reach `main`.
 2. Generate a branch digest if one is not already supplied:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer digest \
+coprogrammer digest \
   --base origin/main \
   --head HEAD \
   --language zh-CN \

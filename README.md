@@ -148,9 +148,10 @@ and [contributor handoff checklist](CONTRIBUTING.md#handoff-and-review).
 | [Coordination lifecycle](docs/COORDINATION_LIFECYCLE.md) | Before, during and after coding |
 | [Configuration](docs/CONFIGURATION.md) | Protected paths, language and project policy |
 | [GitHub Actions](docs/GITHUB_ACTIONS.md) | PR digests and workflow setup |
-| [Codex plugin](docs/PLUGIN_QUICKSTART.md) | Five reusable collaboration skills |
+| [Agent Plugins and Claude Code](docs/PLUGIN_QUICKSTART.md) | Installable package for Codex-compatible clients and Claude Code |
 | [Architecture](docs/ARCHITECTURE.md) | Components and artifact boundaries |
 | [Research landscape](docs/RESEARCH_LANDSCAPE.md) | Prior art and research questions |
+| [Latest ecosystem research](docs/RESEARCH_UPDATE_2026-09-27.md) | Portable distribution, gstack evidence lessons and next steps |
 | [Evaluation plan](docs/EVAL_PLAN.md) | How we intend to measure integration quality |
 | [Acknowledgments](ACKNOWLEDGMENTS.md) | Sources, design influences and attribution |
 

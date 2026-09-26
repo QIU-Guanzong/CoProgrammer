@@ -1,0 +1,20 @@
+{
+  "name": "coprogrammer-codex",
+  "interface": {
+    "displayName": "CoProgrammer for Codex"
+  },
+  "plugins": [
+    {
+      "name": "coprogrammer",
+      "source": {
+        "source": "local",
+        "path": "./plugins/coprogrammer"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -5,6 +5,12 @@ description: "Coordinate active multi-agent coding through CoProgrammer Manager 
 
 # CoProgrammer Active Sync
 
+Prerequisite: install the CoProgrammer CLI and make `coprogrammer` available on
+`PATH`. This plugin can be used in another repository, so do not assume that
+the current project contains CoProgrammer's Python source tree. If the CLI is
+unavailable, report Manager state as unavailable and continue only with work
+that does not require a live Manager read or write.
+
 Use this workflow during coding when several agents, branches, or worktrees may
 touch overlapping code or shared contracts.
 
@@ -13,22 +19,22 @@ touch overlapping code or shared contracts.
 1. Initialize Manager state if needed:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer manager init
+coprogrammer manager init
 ```
 
 2. Read current shared state:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer manager status
-PYTHONPATH=src python -m coprogrammer manager leases
-PYTHONPATH=src python -m coprogrammer manager decisions
-PYTHONPATH=src python -m coprogrammer manager contracts
+coprogrammer manager status
+coprogrammer manager leases
+coprogrammer manager decisions
+coprogrammer manager contracts
 ```
 
 3. For active work, record a heartbeat:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer manager heartbeat \
+coprogrammer manager heartbeat \
   --agent <agent> \
   --task "<task>"
 ```
@@ -36,7 +42,7 @@ PYTHONPATH=src python -m coprogrammer manager heartbeat \
 4. Before editing a shared area, request a lease:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer manager lease request \
+coprogrammer manager lease request \
   --holder <agent> \
   --pattern "<path-or-glob>"
 ```
@@ -44,7 +50,7 @@ PYTHONPATH=src python -m coprogrammer manager lease request \
 5. Before changing shared behavior, propose a contract change:
 
 ```bash
-PYTHONPATH=src python -m coprogrammer manager contract propose \
+coprogrammer manager contract propose \
   --proposer <agent> \
   --kind api \
   --name "<contract-name>" \
