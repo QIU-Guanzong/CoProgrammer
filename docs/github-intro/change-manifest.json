@@ -1,0 +1,24 @@
+{
+  "task": "Clarify the GitHub introduction and strengthen evidence-based collaboration",
+  "intent": "Help visitors understand the usable multi-agent workflow and prevent model reviews from completing against moved branch references.",
+  "scope": "docs and tooling",
+  "core_changes": [
+    "Publish a concise GitHub About description and relevant repository topics.",
+    "Reorganize the README around purpose, a concrete workflow, preview installation and supported integration surfaces.",
+    "Document portable contributor handoffs and attribute gstack design influences with pinned sources.",
+    "Check base/head references before and after model requests; reject stale reviews without retrying."
+  ],
+  "contracts": [],
+  "tests": [
+    "126 unit tests passed, including 15 focused review tests.",
+    "Project configuration validation passed.",
+    "19 relative documentation links resolve.",
+    "GitHub About description and 10 topics read back after update."
+  ],
+  "risks": [
+    "README changes remain on the upgrade PR until maintainer review and merge.",
+    "Client and provider adapters remain a source preview; this change makes no live model calls.",
+    "Reference freshness checks cover selected local refs, not a remote PR changing after capture.",
+    "Model advice and draft plans do not approve or apply changes."
+  ]
+}

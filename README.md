@@ -1,235 +1,157 @@
 # CoProgrammer
 
-CoProgrammer is an open protocol and toolkit for multi-agent software
-development in the AI coding era.
+**Coordinate coding agents. Make each branch easier to review.**
 
-CoProgrammer 同时支持中文团队协作场景：PR 分支消化报告可以用
-`zh-CN` 输出，也可以通过仓库变量切回英文。
+CoProgrammer is an open-source protocol and toolkit for teams working with
+multiple coding agents. It records who is changing what, surfaces overlapping
+work, and turns branch changes into reviewable digests and integration plans.
 
-The project starts from one practical belief:
+Use **Codex, Claude Code, or GitHub Copilot** for development, **GitHub** for PR
+review, and optionally **Claude, GLM, or DeepSeek** for a second opinion on a
+specific set of commits. Maintainers decide what reaches `main`.
 
-> AI-era merging is not only a text conflict problem. It is a semantic
-> integration problem.
+中文：让多个编程助手共享任务边界和协作状态，把分支改动整理为可审阅的摘要与集成计划。
+[中文接入指南](docs/MULTI_PLATFORM_QUICKSTART.md) ·
+[Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
 
-When several humans and AI agents work in parallel, the hard part is no longer
-choosing one side of a merge conflict. The hard part is understanding what each
-branch learned, preserving the useful insight, discarding noise, and rebuilding
-the smallest safe patch on top of the current main branch.
+> **0.2.0a1 source preview.** The multi-platform upgrade is available in
+> [PR #1](https://github.com/QIU-Guanzong/CoProgrammer/pull/1).
+> Client configuration generators and provider adapters are implemented;
+> live client/provider verification is still pending. Use the source setup below.
 
-## Where CoProgrammer Sits
+## When it helps
 
-CoProgrammer is **not** another parallel-agent orchestrator. It is the missing
-layer between orchestrators and the merge queue:
+Suppose Codex is changing an API while Claude Code updates its callers in
+another worktree. Both branches may pass their own tests while disagreeing on
+the interface. A clean Git merge alone does not resolve that disagreement.
 
-```text
-UPSTREAM      agent runtimes & orchestrators
-              (Conductor, Sculptor, Vibe Kanban, Claude Squad,
-               Codex, Copilot Cloud Agent, OpenHands, ...)
-              → produce parallel branches
-                      │
-COPROGRAMMER  integration & governance layer
-              protocol → telemetry → conflict forecast →
-              branch digest → integration plan →
-              minimal patch → integration record → policy update
-                      │
-DOWNSTREAM    landing infrastructure
-              (Merge Queue / Merge Trains / Mergify / Graphite,
-               CI, CODEOWNERS, branch protection)
-```
+CoProgrammer gives the team a shared record:
 
-Orchestrators solve "run N agents in parallel without stepping on each other."
-CoProgrammer solves "when N branches come back, decide what deserves to reach
-`main`, and rebuild it safely under main-branch constraints." See
-`docs/ORCHESTRATOR_INTEGRATION.md` for concrete hookup recipes.
-
-## Core Loop
-
-CoProgrammer organizes collaboration as a continuous loop:
-
-1. **Protocol before coding**: define main-branch principles, module
-   boundaries, shared contracts, protected files, and agent permissions.
-2. **Telemetry during coding**: agents publish heartbeats, contract changes,
-   current file ownership, experiments, and blockers.
-3. **Digest after coding**: a feature branch is summarized by intent, core
-   contribution, noise, contract changes, risks, and integration plan.
-4. **Semantic integration**: instead of directly merging a large AI branch, an
-   integration patch is rebuilt from latest `main` under main-branch
-   constraints.
-5. **Validation and feedback**: tests, contract checks, owner review, and merge
-   records update the protocol for the next cycle.
-
-## Repository Map
+| During the work | What reviewers can inspect |
+| --- | --- |
+| Define a task and its allowed paths | Intent, scope and shared contracts |
+| Request an advisory lease and publish heartbeats | Current ownership, overlap and blockers |
+| Generate a branch digest | Changed files, commits, protected paths and risk signals |
+| Request optional model review | Suggestions tied to exact commits and captured diff evidence |
+| Prepare an integration plan | What to preserve, drop, rebuild or defer, plus required human decisions |
 
 ```text
-.
-├── docs/                 Research route, framework, and MVP design
-├── protocols/            Human-readable collaboration protocols
-├── research/             Structured research leads and prior-art data
-├── schemas/              JSON schemas for machine-readable agent artifacts
-├── templates/            Task, heartbeat, digest, and integration templates
-├── src/coprogrammer/     First CLI scaffold
-├── tests/                Unit tests for the CLI scaffold
-├── AGENTS.md             Minimal stable instructions for coding agents
-├── .coprogrammer.json    Project policy config
-└── .github/              PR template, issue templates, CI, and PR digest workflow
+Task scope → shared work state → branch digest → integration plan
+                                                       ↓
+                                      maintainer review + project CI
 ```
 
-Start with:
+The local CLI, MCP server and GitHub Action use the same core. Leases coordinate
+cooperating agents; they do not lock files. Integration plans remain drafts:
+patch application, approval and merging stay with your existing review process.
 
-- `docs/COORDINATION_LIFECYCLE.md` for the before/during/after collaboration
-  loop: project covenant, Manager Plane synchronization, and post-PR semantic
-  integration;
-- `docs/ECOSYSTEM_EXTENSION_STRATEGY.md` for the research method and MCP,
-  skill, plugin, GitHub automation, and open-source library integration plan;
-- `docs/PLUGIN_QUICKSTART.md` for installing and using the repo-local
-  CoProgrammer Codex plugin;
-- `docs/COMPREHENSIVE_RESEARCH_PLAN.md` for the research program and six-week sprint;
-- `docs/RESEARCH_UPDATE_2026-05-25.md` for the latest Manager Plane evidence update;
-- `docs/RESEARCH_PROTOCOL.md` for how to capture and evaluate research leads;
-- `docs/FAILURE_TAXONOMY.md` for the failure modes CoProgrammer targets;
-- `docs/RESEARCH_LANDSCAPE.md` for current tool landscape and gaps;
-- `docs/OPEN_SOURCE_SCAN.md` for adjacent open-source projects and reusable features;
-- `docs/FEATURE_GAP_MATRIX.md` for product-level comparison;
-- `docs/DISCUSSIONS.md` for discussion categories and research intake;
-- `docs/ARCHITECTURE.md` for the system architecture;
-- `docs/MANAGER_PLANE.md` for the cloud/self-hosted control plane hypothesis;
-- `docs/MANAGER_API_SKETCH.md` for the first Manager API surface;
-- `docs/EVENT_LOG_PROTOTYPE.md` for the local Manager Plane prototype;
-- `docs/AGENT_RUNTIME_INTEROP.md` for integrating with Codex, Copilot, OpenHands, and other runtimes;
-- `docs/CONTEXT_FILE_STRATEGY.md` for keeping `AGENTS.md` small and structured state separate;
-- `docs/INTEGRATION_PATCH_DESIGN.md` for the minimal-patch reconstruction design;
-- `docs/MODEL_ROUTING_POLICY.md` for routing simple work to `codex-5.3` and high-risk work to review;
-- `docs/HIGH_STAR_PROJECT_SCAN_2026-05-26.md` for high-star project patterns to borrow;
-- `docs/FRAMEWORK.md` for the research framework;
-- `docs/ORCHESTRATOR_INTEGRATION.md` for feeding Conductor, Sculptor, Vibe
-  Kanban, and cloud-agent branches into CoProgrammer;
-- `docs/STRATEGY_MEMO_2026-06-10.md` for the latest positioning and priority
-  decisions;
-- `docs/EVAL_PLAN.md` for the AgenticFlict-based evaluation plan;
-- `ACKNOWLEDGMENTS.md` for the projects we learn from and how we credit them.
+## Try the preview
 
-## Multi-platform upgrade preview (0.2.0a1)
+Requires **Python 3.10+** and **Git**. Start with a local digest; no model key is
+needed.
 
-The source branch now includes shared-worktree Manager state, atomic leases
-with expiry/renewal, hardened MCP input handling, and native configuration
-generators for **Codex, Claude Code, and GitHub Copilot**. **Claude API, GLM,
-and DeepSeek** can analyze the same commit-bound evidence through explicit,
-opt-in provider calls. A read-only GitHub PR handoff records base/head SHAs;
-validated model advice can produce a draft integration plan.
-
-Start with [the multi-platform quickstart](docs/MULTI_PLATFORM_QUICKSTART.md).
-Use a source install of this branch until this preview is published. Generated
-configs, detected executables, and mocked provider tests do not establish a
-live connection. Plan generation does not apply patches or approve a merge.
-
-```bash
-coprogrammer integrations doctor
-coprogrammer integrations config --client codex
-coprogrammer integrations config --client claude
-coprogrammer integrations config --client copilot
-coprogrammer review --provider deepseek --model YOUR_MODEL_ID --base origin/main --head HEAD
-```
-
-The review command previews the request locally by default; only `--send`
-contacts the selected provider. Model identifiers and credentials are not
-hardcoded. See the guide for upgrade compatibility notes and verification scope.
-
-## Install (pick your surface)
-
-CoProgrammer ships one core through several thin wrappers — use whichever
-your stack already speaks (details: `docs/DISTRIBUTION_STRATEGY.md`):
-
-**MCP server** (Claude Code, Codex, Cursor, any MCP client):
-
-```json
-{ "mcpServers": { "coprogrammer": {
-    "command": "uvx", "args": ["coprogrammer", "mcp", "serve"] } } }
-```
-
-Tools exposed: `digest_branch`, `manager_status`, `manager_forecast`,
-`lease_request`, `lease_renew`, `lease_release`, `heartbeat`, `contract_propose`.
-
-**Agent Skills** (SKILL.md open standard — Claude Code, Codex CLI, Gemini
-CLI, Copilot, Cursor, 35+ tools): copy `plugins/coprogrammer/skills/*` into
-your agent's skills directory.
-
-**GitHub Action** (PR branch digest, zero setup):
-
-```yaml
-- uses: actions/checkout@v4
-  with: { fetch-depth: 0 }
-- uses: QIU-Guanzong/CoProgrammer@v0
-  with: { language: zh-CN }
-```
-
-**CLI**: `pipx install coprogrammer` (or from source:
-`python -m pip install -e .`).
-
-**Codex plugin**: `codex plugin marketplace add <this repo>` — see
-`docs/PLUGIN_QUICKSTART.md`.
-
-## First MVP
-
-The first useful version is a **Branch Digest Bot**:
-
-- reads a PR diff and commit history;
-- detects contract-sensitive files and architecture risk signals;
-- generates a branch digest draft;
-- asks reviewers to approve an integration plan before merging;
-- keeps direct AI-generated mega-branches out of `main`.
-
-The first GitHub Actions version is included in
-`.github/workflows/pr-digest.yml`. It generates `branch-digest.md`, uploads it
-as an artifact, and updates a stable PR comment for same-repository PRs.
-
-This repository already contains a minimal local CLI prototype:
-
-```bash
-python -m coprogrammer digest --base origin/main --head HEAD --output branch-digest.md
-python -m coprogrammer digest --base origin/main --head HEAD --language zh-CN
-python -m coprogrammer digest --base origin/main --working-tree
-python -m coprogrammer config validate
-python -m coprogrammer agents check
-python -m coprogrammer manifest validate templates/change-manifest.json
-python -m coprogrammer integration-plan validate templates/integration-plan.json
-python -m coprogrammer heartbeat new --agent agent-a --task "Implement login API"
-python -m coprogrammer manager lease request --holder agent-a --pattern "src/api/**"
-python -m coprogrammer manager contract propose --proposer agent-a --kind api --name "POST /login" --summary "Add login endpoint"
-python -m coprogrammer manager forecast --base origin/main --fail-on-conflict
-python -m coprogrammer manager status
-```
-
-Language can also be controlled by `COPROGRAMMER_LANGUAGE=en|zh-CN`.
-
-For local development:
-
-```bash
+```sh
+git clone --branch codex/multi-platform-upgrade https://github.com/QIU-Guanzong/CoProgrammer.git
+cd CoProgrammer
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install -e .
-python -m unittest discover -s tests
+
+coprogrammer config validate
+coprogrammer digest --base origin/main --head HEAD
+coprogrammer integrations doctor
 ```
 
-## Project Goals
+On Windows, create the environment with `python -m venv .venv` and activate it
+in PowerShell with `.venv/Scripts/Activate.ps1`. The clone command above selects
+the upgrade branch explicitly. For your own project, keep this environment
+active, change to that project's checkout, and use its base branch.
 
-- Create an open protocol for AI-assisted multi-agent collaboration.
-- Make branch intent, contracts, and insights first-class artifacts.
-- Reduce merge conflicts by forecasting ownership and contract collisions early.
-- Preserve useful experiments without merging noisy generated code.
-- Help reviewers inspect integration plans instead of massive raw diffs.
+`digest` produces a local Markdown report. `doctor` checks local tools,
+credential-variable presence and the shared state location; it does not verify
+an authenticated connection.
+Add `--language zh-CN` to generate Chinese digests.
 
-## Non-Goals
+## Connect your tools
 
-- CoProgrammer is not a replacement for Git, GitHub, GitLab, or CI.
-- CoProgrammer does not blindly auto-merge AI output.
-- CoProgrammer does not treat formatting churn, dependency upgrades, and feature
-  logic as the same kind of change.
+| Tool or service | Available in the preview |
+| --- | --- |
+| Codex | Native TOML configuration for the local MCP server |
+| Claude Code | Project MCP configuration for the same coordination tools |
+| GitHub Copilot in VS Code | Native MCP configuration |
+| GitHub | Read-only PR handoff with base/head commits; branch digest Action |
+| Claude API, GLM, DeepSeek | Optional structured review through explicit provider calls |
 
-## Status
+From the project you want to coordinate, generate the configuration for your
+client:
 
-This is an early research and tooling scaffold. The current focus is:
+```sh
+coprogrammer integrations config --client codex
+# Other clients: --client claude or --client copilot
 
-1. protocol design;
-2. branch digest format;
-3. lightweight CLI;
-4. GitHub Action integration;
-5. project policy and risk scoring;
-6. later: semantic integration bot and multi-agent orchestrator.
+coprogrammer manager lease request --holder codex-api --pattern 'src/api/**'
+coprogrammer manager heartbeat --agent codex-api --task 'Update API response'
+coprogrammer manager status
+```
+
+Configuration is printed for you to add to the client; existing settings are
+not overwritten. The local MCP server exposes branch digests, status, conflict
+forecasts, leases, heartbeats and contract proposals. Git worktrees share the
+repository's local coordination log by default.
+
+To preview an optional review request locally:
+
+```sh
+coprogrammer review --provider deepseek --model YOUR_MODEL_ID \
+  --base origin/main --head HEAD
+```
+
+Replace `YOUR_MODEL_ID` with an available model from your provider. Review
+commands contact the provider only when you add `--send`; this sends the
+captured diff and may incur provider charges. Model advice is distinct from a
+maintainer approval. See the [multi-platform guide](docs/MULTI_PLATFORM_QUICKSTART.md)
+for credentials, request limits, client setup and draft plan generation.
+
+## Build a shared workflow
+
+Assign roles by task, independently of which model or client performs them.
+Each handoff should name the goal, scope, base/head commits, checks actually
+run, unresolved questions and next owner. Keep review disagreements visible.
+
+We draw on [gstack](https://github.com/garrytan/gstack)'s explicit planning,
+review and verification stages, alongside GitHub's maintainer review model.
+For CoProgrammer, that means portable artifacts and checks tied to the code
+being reviewed. See the [design notes and sources](docs/github-intro/collaboration-notes.md)
+and [contributor handoff checklist](CONTRIBUTING.md#handoff-and-review).
+
+## Documentation
+
+| Start here | Purpose |
+| --- | --- |
+| [Multi-platform quickstart](docs/MULTI_PLATFORM_QUICKSTART.md) | Codex, Claude, Copilot, GitHub and model-provider setup |
+| [Coordination lifecycle](docs/COORDINATION_LIFECYCLE.md) | Before, during and after coding |
+| [Configuration](docs/CONFIGURATION.md) | Protected paths, language and project policy |
+| [GitHub Actions](docs/GITHUB_ACTIONS.md) | PR digests and workflow setup |
+| [Codex plugin](docs/PLUGIN_QUICKSTART.md) | Five reusable collaboration skills |
+| [Architecture](docs/ARCHITECTURE.md) | Components and artifact boundaries |
+| [Research landscape](docs/RESEARCH_LANDSCAPE.md) | Prior art and research questions |
+| [Evaluation plan](docs/EVAL_PLAN.md) | How we intend to measure integration quality |
+| [Acknowledgments](ACKNOWLEDGMENTS.md) | Sources, design influences and attribution |
+
+The repository contains implemented tooling and research proposals. In design
+documents, sections marked "future" describe planned work. A hosted Manager,
+automatic patch reconstruction and automatic merging are outside this preview.
+
+## Contribute
+
+Useful contributions include reproducible coordination failures, client setup
+reports, focused fixes and evidence from real PRs. Start with a small issue or
+change that explains the problem, expected behavior and validation.
+
+```sh
+python -m unittest discover -s tests
+coprogrammer config validate
+```
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for development rules and review
+artifacts. Source code is under [MIT](LICENSE).
