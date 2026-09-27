@@ -149,7 +149,7 @@ class McpRobustnessTest(unittest.TestCase):
             self.ctx, self.request("initialize", {"protocolVersion": "2026-07-28"})
         )
         self.assertEqual(response["result"]["protocolVersion"], "2025-11-25")
-        self.assertEqual(response["result"]["capabilities"], {"tools": {}})
+        self.assertEqual(response["result"]["capabilities"], {"tools": {}, "resources": {}, "prompts": {}})
 
     def test_invalid_initialize_does_not_change_negotiated_version(self) -> None:
         for params in ({"protocolVersion": []}, {"capabilities": None}, {"clientInfo": {"name": "x"}}):

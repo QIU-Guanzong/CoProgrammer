@@ -1,6 +1,6 @@
 # CoProgrammer Plugins
 
-The five collaboration workflows are packaged under `plugins/coprogrammer/`.
+The six collaboration workflows are packaged under `plugins/coprogrammer/`.
 That directory now has an Agent Plugins 1.0 manifest for portable clients, a
 Codex compatibility manifest, and a Claude Code plugin manifest. The repository
 root contains the Claude marketplace catalog.
@@ -9,6 +9,7 @@ root contains the Claude marketplace catalog.
 
 | Skill | Use it to |
 | --- | --- |
+| `coprogrammer-project-setup` | Preview and create project-local Skills, Markdown guidance and optional MCP configuration. |
 | `coprogrammer-project-covenant` | Check project instructions and safeguards before parallel work. |
 | `coprogrammer-task-brief` | Scope a request, protected paths and validation before editing. |
 | `coprogrammer-active-sync` | Read Manager state and coordinate leases, heartbeats, decisions and contracts. |
@@ -16,6 +17,20 @@ root contains the Claude marketplace catalog.
 | `coprogrammer-integration-plan` | Turn an approved review into a minimal, still-reviewable integration plan. |
 
 ## Install in Claude Code
+
+For direct project setup without installing a plugin, use the matching CLI:
+
+```bash
+coprogrammer setup --client claude --include-content
+coprogrammer setup --client claude --apply
+```
+
+This creates missing native project files and preserves existing instructions.
+Conflicting Skills, generated documents or MCP configuration require manual
+integration. The CLI includes all six Skill documents in its wheel; no source
+checkout is needed at runtime. Choose either project Skills or the plugin for
+the same client to avoid duplicate discovery. See the
+[project setup guide](knowledge/README.md).
 
 From a checkout that contains this marketplace (such as the upgrade branch):
 
@@ -90,7 +105,9 @@ claude plugin validate .
 claude plugin validate ./plugins/coprogrammer
 ```
 
-Review the plugin contents before installation. This release bundles skills
-only: it has no hooks, background monitors, MCP server, model credentials or
-provider network calls. The instructions may ask the client to run the
+Review the plugin contents before installation. The plugin bundles skills
+only: it has no hooks, background monitors, bundled MCP executable, model credentials or
+provider network calls. The separately installed CLI supplies the MCP server,
+including read-only packaged Markdown resources and prompt templates.
+The instructions may ask the client to run the
 CoProgrammer CLI when you invoke a relevant workflow.

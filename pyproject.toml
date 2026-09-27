@@ -31,3 +31,6 @@ coprogrammer = "coprogrammer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+coprogrammer = ["assets/skills/*/SKILL.md", "assets/templates/*.md"]

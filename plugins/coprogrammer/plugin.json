@@ -21,7 +21,7 @@
       "interface": {
         "displayName": "CoProgrammer",
         "shortDescription": "Coordinate coding work across agents and branches.",
-        "longDescription": "Five reusable workflows for project readiness, task scoping, shared Manager coordination, branch review, and reviewable integration plans.",
+        "longDescription": "Six reusable workflows for local project setup, project readiness, task scoping, shared Manager coordination, branch review, and reviewable integration plans.",
         "developerName": "CoProgrammer",
         "category": "Productivity",
         "capabilities": [

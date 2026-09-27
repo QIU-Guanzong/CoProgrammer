@@ -13,6 +13,7 @@ specific set of commits. Maintainers decide what reaches `main`.
 
 中文：让不同平台的编程助手按依赖领取任务、协调多个开发窗口、交流进展与交接，并把分支改动整理为可审阅的摘要与集成计划。
 [任务调度与冲突防护](docs/scheduling/README.md) ·
+[Skill / MCP / Markdown 接入](docs/knowledge/README.md) ·
 [多窗口协作指南](docs/collaboration/README.md) ·
 [中文接入指南](docs/MULTI_PLATFORM_QUICKSTART.md) ·
 [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
@@ -109,6 +110,26 @@ discussions and bounded change waiting. Git worktrees share the repository's
 local coordination log by default.
 
 ## Coordinate two coding windows
+
+To add reusable workflows and project guidance before starting the windows:
+
+```sh
+coprogrammer knowledge list
+coprogrammer setup --client codex --include-content  # preview only
+coprogrammer setup --client codex --apply
+```
+
+Use `claude` or `copilot` for those clients. Setup includes six Skills,
+Markdown instructions and task/handoff templates, plus native MCP configuration.
+It creates missing files, preserves existing project instructions, and refuses
+conflicting skills, generated documents or MCP settings. Use `--no-mcp` when
+keeping existing configuration and integrating the server separately.
+
+The MCP server also exposes twelve bundled Markdown resources and two prompt
+templates for task briefs and handoffs. Resources are read-only catalog entries;
+prompts prepare document context and do not execute tasks. Setup does not prove
+the client connected. See the [setup and knowledge guide](docs/knowledge/README.md)
+for native paths, conflict handling and connection verification.
 
 After installing the preview, run each block in that window's existing Git
 worktree. Each window gets a unique session ID, even if both use the same client.
@@ -230,6 +251,7 @@ and [contributor handoff checklist](CONTRIBUTING.md#handoff-and-review).
 | [Coordination lifecycle](docs/COORDINATION_LIFECYCLE.md) | Before, during and after coding |
 | [Multi-window collaboration](docs/collaboration/README.md) | Sessions, task inboxes, acknowledgements and resumable CLI/MCP sync |
 | [Task scheduling and communication](docs/scheduling/README.md) | Atomic claims, dependency routing, edit guards, recovery, waits and discussions |
+| [Skills, MCP and Markdown](docs/knowledge/README.md) | Project setup, packaged knowledge catalog and MCP resources/prompts |
 | [Collaboration research](docs/collaboration/research.md) | Current open-source approaches and the implementation choices they informed |
 | [Configuration](docs/CONFIGURATION.md) | Protected paths, language and project policy |
 | [GitHub Actions](docs/GITHUB_ACTIONS.md) | PR digests and workflow setup |

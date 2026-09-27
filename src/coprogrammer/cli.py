@@ -1669,6 +1669,28 @@ def command_integrations(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_knowledge(args: argparse.Namespace) -> int:
+    from . import knowledge
+    if args.knowledge_command == "show":
+        print(knowledge.read_document(args.id), end="")
+    else:
+        documents = knowledge.documents()
+        if args.kind:
+            documents = [item for item in documents if item["kind"] == args.kind]
+        print(json.dumps({"format": "coprogrammer.knowledge.v1", "documents": documents},
+                         ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_setup(args: argparse.Namespace) -> int:
+    from . import setup
+    operation = setup.apply if args.apply else setup.preview
+    result = operation(Path(args.cwd), args.client, args.skill,
+                       not args.no_mcp, not args.no_skills, args.include_content)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if result["can_apply"] else 1
+
+
 def command_github_context(args: argparse.Namespace) -> int:
     from .integrations import github_context
 
@@ -1814,6 +1836,26 @@ def build_parser() -> argparse.ArgumentParser:
     integration_plan_create.add_argument("--cwd", default=".")
     integration_plan_create.add_argument("--output")
     integration_plan_create.set_defaults(func=command_integration_plan_create)
+
+    knowledge = subparsers.add_parser("knowledge", help="Discover packaged Skills and Markdown resources.")
+    knowledge_sub = knowledge.add_subparsers(dest="knowledge_command", required=True)
+    knowledge_list = knowledge_sub.add_parser("list", help="List available Skills and Markdown templates.")
+    knowledge_list.add_argument("--kind", choices=("skill", "template"))
+    knowledge_list.set_defaults(func=command_knowledge)
+    knowledge_show = knowledge_sub.add_parser("show", help="Read one catalog document by its exact ID.")
+    knowledge_show.add_argument("id")
+    knowledge_show.set_defaults(func=command_knowledge)
+
+    setup = subparsers.add_parser("setup", help="Preview project Skills, Markdown and MCP config; use --apply to create missing files.")
+    setup.add_argument("--client", choices=("codex", "claude", "copilot"), required=True)
+    setup.add_argument("--cwd", default=".")
+    skill_selection = setup.add_mutually_exclusive_group()
+    skill_selection.add_argument("--skill", action="append", help="Full Skill name from knowledge list; repeatable, defaults to all.")
+    skill_selection.add_argument("--no-skills", action="store_true", help="Skip Skill files.")
+    setup.add_argument("--no-mcp", action="store_true", help="Skip native MCP config when merging it separately.")
+    setup.add_argument("--include-content", action="store_true", help="Include proposed content only; never show existing file content.")
+    setup.add_argument("--apply", action="store_true", help="Create missing files; preserve instructions and refuse conflicting config/skills/docs.")
+    setup.set_defaults(func=command_setup)
 
     integrations = subparsers.add_parser("integrations", help="Configure and inspect multi-platform integrations.")
     integrations_sub = integrations.add_subparsers(dest="integrations_command", required=True)

@@ -66,7 +66,7 @@ class PluginPackageTests(unittest.TestCase):
 
     def test_packaged_skills_do_not_assume_consumer_source_tree(self) -> None:
         skill_files = sorted((PLUGIN_ROOT / "skills").glob("*/SKILL.md"))
-        self.assertEqual(len(skill_files), 5)
+        self.assertEqual(len(skill_files), 6)
 
         for skill_file in skill_files:
             content = skill_file.read_text(encoding="utf-8")

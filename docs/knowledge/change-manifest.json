@@ -1,0 +1,9 @@
+{
+  "task": "Project Skills, MCP knowledge and Markdown setup",
+  "intent": "Connect reusable workflows, native MCP resources/prompts and repository guidance to project onboarding.",
+  "scope": "tooling | docs | tests | packaging",
+  "core_changes": ["Packaged six Skills and six Markdown templates", "Read-only knowledge CLI and native MCP resources/prompts", "Preview-first missing-file project setup for Codex, Claude Code and Copilot"],
+  "contracts": ["Additive MCP resources/prompts capabilities and wheel package data; maintainer review required"],
+  "tests": ["Catalog allowlist and canonical Skill equivalence", "Preservation, conflict, concurrency and failure behavior", "Real stdio and generated client process checks", "Source/wheel suites and artifact validation"],
+  "risks": ["Setup does not prove client trust or connectivity", "Generated MCP paths are machine-specific", "Existing config requires manual integration on conflict", "Resources contain curated bundled docs only"]
+}
