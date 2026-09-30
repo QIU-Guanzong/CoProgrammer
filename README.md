@@ -16,10 +16,10 @@ specific set of commits. Maintainers decide what reaches `main`.
 [Ecosystem comparison](docs/research/ecosystem-2026-09-30.md) ·
 [Contributing](CONTRIBUTING.md) · [MIT](LICENSE)
 
-> **0.2.0a1 source preview.** The multi-platform upgrade is available in
-> [PR #1](https://github.com/QIU-Guanzong/CoProgrammer/pull/1).
-> Client configuration generators and provider adapters are implemented;
-> live client/provider verification is still pending. Use the source setup below.
+> **0.2.0a2 pre-release.** Install the published package from
+> [PyPI](https://pypi.org/project/coprogrammer/). Client configuration
+> generators and provider adapters are implemented; live client/provider
+> verification is still pending.
 
 ## New in this source update
 
@@ -70,19 +70,23 @@ Requires **Python 3.10+** and **Git 2.36+**. Start with the offline demo; no mod
 is needed.
 
 ```sh
-git clone --branch codex/multi-platform-upgrade https://github.com/QIU-Guanzong/CoProgrammer.git
-cd CoProgrammer
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e .
-
+python -m pip install --pre coprogrammer
 coprogrammer demo
 ```
 
+To work from source instead, clone the default branch and replace the package
+install with `python -m pip install -e .`:
+
+```sh
+git clone https://github.com/QIU-Guanzong/CoProgrammer.git
+cd CoProgrammer
+```
+
 On Windows, create the environment with `python -m venv .venv` and activate it
-in PowerShell with `.venv/Scripts/Activate.ps1`. The clone command above selects
-the upgrade branch explicitly. For your own project, keep this environment
-active, change to that project's checkout, and use its base branch.
+in PowerShell with `.venv/Scripts/Activate.ps1`. For your own project, keep this
+environment active, change to that project's checkout, and use its base branch.
 
 The demo creates and cleans up a temporary repository and two worktrees. It
 exercises the actual coordination code; the Codex/Claude names are local
