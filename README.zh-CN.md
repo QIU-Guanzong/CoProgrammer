@@ -9,8 +9,8 @@ CoProgrammer 为分布在不同 Git 工作树中的编程助手提供本地协�
 [English](README.md) · [客户端接入](docs/knowledge/README.md) ·
 [生态调研](docs/research/ecosystem-2026-09-30.md) · [贡献指南](CONTRIBUTING.md) · [MIT](LICENSE)
 
-> 当前为 `0.2.0a1` 源码预览，升级内容在 [PR #1](https://github.com/QIU-Guanzong/CoProgrammer/pull/1)。
-> 请安装下面指定的分支。配置生成与本地协议测试不代表真实客户端已连接，
+> 当前发布为 `0.2.0a2` 预发布版，可从
+> [PyPI](https://pypi.org/project/coprogrammer/) 安装。配置生成与本地协议测试不代表真实客户端已连接，
 > 模型供应商的在线调用仍需单独验证。
 
 ## 先运行一次完整示例
@@ -18,12 +18,17 @@ CoProgrammer 为分布在不同 Git 工作树中的编程助手提供本地协�
 macOS / Linux：
 
 ```sh
-git clone --branch codex/multi-platform-upgrade https://github.com/QIU-Guanzong/CoProgrammer.git
-cd CoProgrammer
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e .
+python -m pip install --pre coprogrammer
 coprogrammer demo
+```
+
+如需从源码运行，请克隆默认分支，再用 `python -m pip install -e .` 安装：
+
+```sh
+git clone https://github.com/QIU-Guanzong/CoProgrammer.git
+cd CoProgrammer
 ```
 
 Windows PowerShell 使用 `python -m venv .venv` 创建环境，再运行
