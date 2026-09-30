@@ -1,0 +1,34 @@
+{
+  "task": "Research-led onboarding, coordination briefing and discovery upgrade",
+  "intent": "Make independent coding windows easier to try, understand and review without changing task authority or introducing a runtime dependency.",
+  "scope": "tooling, tests, docs",
+  "core_changes": [
+    "Executable offline two-worktree demo with verified refusals, handoff and cleanup",
+    "Bounded CLI/MCP briefing with one observation time, accurate blockers and scoped inbox counts",
+    "Single collaboration replay per combined snapshot with full history validation preserved",
+    "Reproducible synthetic Manager benchmark",
+    "Six-project source-backed research and complete Chinese README",
+    "GitHub About, relevant topics and source-preview homepage"
+  ],
+  "contracts": [
+    "Additive demo CLI command, manager briefing CLI command and manager_briefing MCP tool",
+    "New briefing output format coprogrammer.briefing.v1; no existing event/schema/protocol changes",
+    "Existing Manager reads retain transaction locks and may create state/lock files; no briefing event writes"
+  ],
+  "tests": [
+    "Full source unittest suite",
+    "Independent installed-wheel unittest suite",
+    "Real Git worktrees and stdio MCP smoke checks",
+    "Fixed-time expiry, scoped message privacy, truncation and malformed-history regressions",
+    "Concurrent Manager and scheduler tests",
+    "A/B benchmark output equivalence and validation-work counts",
+    "Config/manifest, JSON/YAML, documentation links and git diff --check"
+  ],
+  "risks": [
+    "Source preview remains in draft PR #1; maintainer review required for protected changes already in the full branch",
+    "Local sessions are routing labels, not live client/provider authentication",
+    "Synthetic message-heavy benchmarks do not predict task-heavy, disk-bound or multi-machine performance",
+    "Git 2.36+ is required for NUL-delimited worktree listing",
+    "GitHub metadata and documentation improve discovery entrypoints but do not prove traffic growth"
+  ]
+}

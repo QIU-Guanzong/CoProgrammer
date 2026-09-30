@@ -1,77 +1,113 @@
-# CoProgrammer Plugin Quickstart
+# CoProgrammer Plugins
 
-This repository includes a repo-local Codex plugin at
-`plugins/coprogrammer`.
+The six collaboration workflows are packaged under `plugins/coprogrammer/`.
+That directory now has an Agent Plugins 1.0 manifest for portable clients, a
+Codex compatibility manifest, and a Claude Code plugin manifest. The repository
+root contains the Claude marketplace catalog.
 
-The plugin packages the CoProgrammer lifecycle into five skills:
+## What is included
 
-| Skill | When to Use |
+| Skill | Use it to |
 | --- | --- |
-| `coprogrammer-project-covenant` | Audit or create the before-coding covenant pack. |
-| `coprogrammer-task-brief` | Turn a request into a scoped task brief before editing. |
-| `coprogrammer-active-sync` | Coordinate active work with Manager status, leases, heartbeats, contracts, and decisions. |
-| `coprogrammer-pr-digest-review` | Review a branch digest and classify preserve/drop/rebuild/defer decisions. |
-| `coprogrammer-integration-plan` | Convert an approved digest into a minimal integration plan. |
+| `coprogrammer-project-setup` | Preview and create project-local Skills, Markdown guidance and optional MCP configuration. |
+| `coprogrammer-project-covenant` | Check project instructions and safeguards before parallel work. |
+| `coprogrammer-task-brief` | Scope a request, protected paths and validation before editing. |
+| `coprogrammer-active-sync` | Read Manager state and coordinate leases, heartbeats, decisions and contracts. |
+| `coprogrammer-pr-digest-review` | Review a branch digest and classify what to keep, rebuild or defer. |
+| `coprogrammer-integration-plan` | Turn an approved review into a minimal, still-reviewable integration plan. |
 
-## Install
+## Install in Claude Code
 
-From this repository root:
-
-```bash
-codex plugin marketplace add /Users/c-gavin.yau/Downloads/Claude开发/CoProgrammer
-codex plugin add coprogrammer@personal
-```
-
-Confirm installation:
+For direct project setup without installing a plugin, use the matching CLI:
 
 ```bash
-codex plugin list | rg coprogrammer
+coprogrammer setup --client claude --include-content
+coprogrammer setup --client claude --apply
 ```
 
-Expected status:
+This creates missing native project files and preserves existing instructions.
+Conflicting Skills, generated documents or MCP configuration require manual
+integration. The CLI includes all six Skill documents in its wheel; no source
+checkout is needed at runtime. Choose either project Skills or the plugin for
+the same client to avoid duplicate discovery. See the
+[project setup guide](knowledge/README.md).
 
-```text
-coprogrammer@personal  installed, enabled  0.1.0
-```
-
-Start a new Codex thread after installation so the plugin skills appear in the
-available skill list.
-
-## Example Prompts
-
-```text
-Use $coprogrammer-project-covenant to audit this repo.
-```
-
-```text
-Use $coprogrammer-task-brief to scope this feature before coding.
-```
-
-```text
-Use $coprogrammer-active-sync to check current Manager state and request a lease.
-```
-
-```text
-Use $coprogrammer-pr-digest-review to review this PR before merge.
-```
-
-```text
-Use $coprogrammer-integration-plan to draft the minimal integration plan.
-```
-
-## Validate
-
-Plugin validation:
+From a checkout that contains this marketplace (such as the upgrade branch):
 
 ```bash
-python3 /Users/c-gavin.yau/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py \
-  /Users/c-gavin.yau/Downloads/Claude开发/CoProgrammer/plugins/coprogrammer
+claude plugin marketplace add /path/to/CoProgrammer
+claude plugin install coprogrammer@coprogrammer-claude
+claude plugin list
 ```
 
-Repository validation:
+After the marketplace entry is merged to the default branch, it can also be
+added with `claude plugin marketplace add QIU-Guanzong/CoProgrammer`.
+
+Start a new session or reload plugins. A skill can then be invoked as, for
+example, `/coprogrammer:coprogrammer-active-sync`.
+
+## Install in Codex
+
+From a local CoProgrammer checkout, register the repository marketplace:
 
 ```bash
-PYTHONPATH=src python -m unittest discover -s tests
-PYTHONPATH=src python -m coprogrammer config validate
-PYTHONPATH=src python -m coprogrammer agents check
+codex plugin marketplace add /path/to/CoProgrammer
+codex plugin marketplace list
 ```
+
+Open Codex's Plugins Directory, choose `CoProgrammer for Codex`, and install
+`coprogrammer`. Start a new Codex thread so the skills appear in its skill
+list. For a GitHub-hosted source after this marketplace is available on the
+default branch, the CLI can also register `QIU-Guanzong/CoProgrammer` directly.
+The portable `plugin.json` gives Agent Plugins-compatible clients a standard
+package entry point; their installation flows can differ.
+
+## Install the CLI for Manager operations
+
+The plugin package contains workflow instructions, not the CLI or MCP server.
+PyPI currently publishes `coprogrammer 0.1.0`; it predates commands added in
+this branch's `0.2.0a1` development version. To use every command referenced by
+these skills, install the CLI from a matching CoProgrammer checkout in the
+Python environment used by your terminal:
+
+```bash
+python -m pip install -e .
+coprogrammer --help
+```
+
+The published package is listed at
+[PyPI](https://pypi.org/project/coprogrammer/0.1.0/). Use the matching checkout
+until a release containing the current Manager and review-summary commands is
+available.
+
+Without the CLI, skills can still guide file-based planning and review. They
+must report Manager reads, lease changes, digest generation and plan validation
+as unavailable when those commands could not run.
+
+To connect a client to local Manager tools after installing the CLI, generate
+its native MCP configuration and merge it into that client or repository's
+configuration:
+
+```bash
+coprogrammer integrations config --client codex --output coprogrammer-client.json
+```
+
+Replace `codex` with `claude` or `copilot` for those clients. This step is
+separate from plugin installation; the plugin does not start an MCP process.
+
+## Inspect and validate
+
+The Claude Code validator checks both the repository marketplace and its
+contained plugin:
+
+```bash
+claude plugin validate .
+claude plugin validate ./plugins/coprogrammer
+```
+
+Review the plugin contents before installation. The plugin bundles skills
+only: it has no hooks, background monitors, bundled MCP executable, model credentials or
+provider network calls. The separately installed CLI supplies the MCP server,
+including read-only packaged Markdown resources and prompt templates.
+The instructions may ask the client to run the
+CoProgrammer CLI when you invoke a relevant workflow.

@@ -34,6 +34,7 @@ keeps its license.
 | Comby | Apache-2.0 | Structural search/replace as a deterministic patch primitive. |
 | AGENTS.md | CC / community spec | Minimal stable agent instruction convention. |
 | Paperclip | (see upstream) | Persistent manager/control-plane event model. |
+| [gstack](https://github.com/garrytan/gstack) | MIT (ideas only, no code copied) | Explicit workflow handoffs and review evidence tied to unchanged code; see [design notes](docs/github-intro/collaboration-notes.md). |
 
 ### Upstream runtimes and orchestrators we integrate with (not fork)
 

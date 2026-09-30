@@ -1,0 +1,38 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "coprogrammer",
+  "version": "0.2.0-alpha.1",
+  "description": "Coordinate AI coding work with shared state, scoped tasks, branch digests, and reviewable integration plans.",
+  "author": {
+    "name": "CoProgrammer"
+  },
+  "homepage": "https://github.com/QIU-Guanzong/CoProgrammer",
+  "repository": "https://github.com/QIU-Guanzong/CoProgrammer",
+  "license": "MIT",
+  "keywords": [
+    "coding-agents",
+    "agent-skills",
+    "multi-agent",
+    "code-review",
+    "integration"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "CoProgrammer",
+        "shortDescription": "Coordinate coding work across agents and branches.",
+        "longDescription": "Six reusable workflows for local project setup, project readiness, task scoping, shared Manager coordination, branch review, and reviewable integration plans.",
+        "developerName": "CoProgrammer",
+        "category": "Productivity",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "defaultPrompt": [
+          "Use CoProgrammer to scope this coding task before editing.",
+          "Use CoProgrammer to review this branch digest and prepare an integration plan."
+        ]
+      }
+    }
+  }
+}

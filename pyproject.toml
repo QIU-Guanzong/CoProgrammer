@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coprogrammer"
-version = "0.1.0"
+version = "0.2.0a1"
 description = "Open protocol and toolkit for semantic integration in multi-agent software development."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,3 +31,6 @@ coprogrammer = "coprogrammer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+coprogrammer = ["assets/skills/*/SKILL.md", "assets/templates/*.md"]

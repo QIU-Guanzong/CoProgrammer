@@ -1,6 +1,6 @@
 {
   "name": "coprogrammer",
-  "version": "0.1.0",
+  "version": "0.2.0-alpha.1",
   "description": "Lifecycle guardrails for AI-assisted multi-agent software development.",
   "author": {
     "name": "CoProgrammer"
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "CoProgrammer",
     "shortDescription": "Coordinate AI coding work before, during, and after PRs.",
-    "longDescription": "CoProgrammer turns project covenants, task briefs, Manager Plane events, branch digests, and integration plans into repeatable Codex workflows for multi-agent development.",
+    "longDescription": "CoProgrammer turns local project setup, project covenants, task briefs, Manager Plane events, branch digests, and integration plans into repeatable Codex workflows for multi-agent development.",
     "developerName": "CoProgrammer",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],

@@ -1,0 +1,27 @@
+{
+  "task": "Distribute CoProgrammer collaboration skills across portable Agent Plugins clients and Claude Code",
+  "intent": "Make the existing five workflows installable through a shared package and Claude marketplace, while accurately documenting the CLI prerequisite and next evidence-integrity milestone.",
+  "scope": "docs | tooling",
+  "core_changes": [
+    "Add Agent Plugins 1.0 and Claude Code plugin manifests for the existing skills.",
+    "Add native Claude Code and Codex marketplace catalogs at the repository root.",
+    "Use the installed coprogrammer CLI in packaged skill instructions.",
+    "Document current distribution state and source-backed evidence-freshness research."
+  ],
+  "contracts": [
+    "Agent Plugins 1.0.0 plugin manifest",
+    "Claude Code plugin manifest and marketplace entry",
+    "Codex repo marketplace entry with a contained local source"
+  ],
+  "tests": [
+    "Run the full unittest suite, including plugin and marketplace path checks.",
+    "Validate the portable manifest against Agent Plugins 1.0.0.",
+    "Run Claude Code plugin validation when the CLI is available.",
+    "Run repository configuration and change-manifest validation."
+  ],
+  "risks": [
+    "Agent Plugins support varies by client surface; the package currently contains skills only.",
+    "The CLI and MCP server are not bundled; this change does not publish the branch version to PyPI.",
+    "The Claude marketplace is a third-party marketplace and consumers should review plugin contents before installation."
+  ]
+}

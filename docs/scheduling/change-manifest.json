@@ -1,0 +1,9 @@
+{
+  "task": "Cross-client dispatch and development-time coordination",
+  "intent": "Connect task ownership, conflict prevention and agent communication during development.",
+  "scope": "backend | tooling | docs | tests",
+  "core_changes": ["Atomic dependency-aware task claims and path leases", "Claim fencing, workspace/branch binding and concrete-path guards", "Bounded wait and task conversation channels over CLI/MCP", "Nested transaction and same-label conflict fixes"],
+  "contracts": ["Additive task lifecycle events and MCP tools; maintainer review required"],
+  "tests": ["Scheduler and channel behavioral regressions", "Independent MCP process integration across Git worktrees", "Full source/wheel suites and JSON/schema/skill validation"],
+  "risks": ["Cooperative local coordination does not intercept arbitrary file writes", "Task completion is self-reported, not independent review approval", "Client brands are routing labels, not authenticated identities", "MCP wait is bounded and synchronous, not native model wakeup"]
+}
