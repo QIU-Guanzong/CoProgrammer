@@ -819,7 +819,7 @@ def lease_expiry(lease: dict[str, Any]) -> datetime | None:
         raise RuntimeError(f"invalid expires_at for lease {lease.get('id')}") from exc
 
 
-def active_leases(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def active_leases(events: list[dict[str, Any]], *, now: datetime | None = None) -> dict[str, dict[str, Any]]:
     leases: dict[str, dict[str, Any]] = {}
     for event in events:
         payload = event.get("payload", {})
@@ -832,7 +832,7 @@ def active_leases(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
             lease_id = payload.get("lease_id")
             if lease_id:
                 leases.pop(str(lease_id), None)
-    now = datetime.now(timezone.utc)
+    now = now or datetime.now(timezone.utc)
     return {lease_id: lease for lease_id, lease in leases.items()
             if (expiry := lease_expiry(lease)) is None or expiry > now}
 
@@ -1757,12 +1757,38 @@ def command_review_summary(args: argparse.Namespace) -> int:
     return 1 if args.fail_on_attention and result["attention_required"] else 0
 
 
+def command_demo(args: argparse.Namespace) -> int:
+    from .demo import run_demo
+    report = run_demo()
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print("CoProgrammer offline demo")
+        for step in report["steps"]:
+            print(f"[{step['status']}] {step['title']}: {step['detail']}")
+        print("Temporary worktrees cleaned up. No live coding clients or model providers were connected.")
+    return 0
+
+
+def command_manager_briefing(args: argparse.Namespace) -> int:
+    from .briefing import build_briefing, render_text
+    events = load_events(event_log_path(Path(args.cwd).resolve(), args.state_dir))
+    report = build_briefing(events, args.session, args.limit)
+    print(json.dumps(report, indent=2, ensure_ascii=False) if args.json else render_text(report),
+          end="\n" if args.json else "")
+    return 1 if args.fail_on_attention and report["attention_required"] else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="coprogrammer",
         description="Protocol tooling for semantic branch integration.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    demo = subparsers.add_parser("demo", help="Run a real offline coordination demo in temporary Git worktrees.")
+    demo.add_argument("--json", action="store_true")
+    demo.set_defaults(func=command_demo)
 
     digest = subparsers.add_parser("digest", help="Generate a branch digest draft.")
     digest.add_argument("--base", default="origin/main")
@@ -1935,6 +1961,15 @@ def build_parser() -> argparse.ArgumentParser:
     add_parsers(manager_subparsers)
     from .scheduler_cli import add_parsers as add_task_parsers
     add_task_parsers(manager_subparsers)
+
+    briefing = manager_subparsers.add_parser("briefing", help="Summarize ready work, blockers and next actions.")
+    briefing.add_argument("--cwd", default=".")
+    briefing.add_argument("--state-dir", default=None)
+    briefing.add_argument("--session", default="")
+    briefing.add_argument("--limit", type=int, default=20)
+    briefing.add_argument("--json", action="store_true")
+    briefing.add_argument("--fail-on-attention", action="store_true")
+    briefing.set_defaults(func=command_manager_briefing)
 
     manager_init = manager_subparsers.add_parser(
         "init",

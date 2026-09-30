@@ -174,10 +174,20 @@ def freshness(session: dict, now: datetime | None = None) -> str:
     return "fresh" if age < session["ttl_seconds"] else "stale"
 
 
-def directory(events: list[dict[str, Any]]) -> dict:
-    from .scheduler import board
+def _snapshot(events: list[dict[str, Any]], *, now: datetime | None = None) -> tuple[dict, dict, dict]:
+    """Build related views from one validated collaboration replay.
+
+    Only this event sequence is reused. Task history still receives its full
+    validation, and lease expiry/freshness are computed for every snapshot.
+    """
+    from .scheduler import _board
     sessions, messages = reconstruct(events)
-    tasks = board(events)
+    tasks = _board(events, collaboration_validated=True, now=now)
+    return sessions, messages, tasks
+
+
+def directory(events: list[dict[str, Any]]) -> dict:
+    sessions, messages, tasks = _snapshot(events)
     return {"sessions": [{**s, "freshness": freshness(s)} for s in sessions.values()],
             "pending_messages": sum(m["acknowledged_at"] is None for m in messages.values()),
             "tasks": tasks["tasks"], "task_counts": tasks["counts"]}
@@ -301,10 +311,9 @@ def inbox(path: Path, session: str, task: str = "", include_acked: bool = False,
 
 def sync(path: Path, session: str = "", after: str = "", limit: int = 50) -> dict:
     from .cli import active_leases, open_decisions, contract_changes
-    from .scheduler import board
     bounded(limit, "limit", 200)
     events = load_events(path)
-    sessions, messages = reconstruct(events)
+    sessions, messages, tasks = _snapshot(events)
     if session:
         _session(sessions, session, active=False)
     start = _after(events, after)
@@ -319,7 +328,6 @@ def sync(path: Path, session: str = "", after: str = "", limit: int = 50) -> dic
             return bool(session) and session in (message["sender"], message["recipient"])
         return True
     pending = [m for m in messages.values() if m["recipient"] == session and not m["acknowledged_at"]]
-    tasks = board(events)
     return {"format": "coprogrammer.sync.v1", "state_path": str(path.resolve()),
             "next_cursor": page[-1]["id"] if page else after,
             "has_more": start + len(page) < len(events), "changes": [e for e in page if visible(e)],

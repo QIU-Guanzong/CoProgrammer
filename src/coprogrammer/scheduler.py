@@ -114,10 +114,13 @@ def _ready_session(sessions: dict, session: str, cwd: Path | None = None,
     return record
 
 
-def _reconstruct(events: list[dict[str, Any]]) -> tuple[dict, dict]:
+def _reconstruct(events: list[dict[str, Any]], *, collaboration_validated: bool = False) -> tuple[dict, dict]:
     # Validate collaboration history even if a malformed event is unrelated to
     # the requested task. Then replay immutable session identities at each event.
-    co.reconstruct(events)
+    # A combined snapshot has already validated this exact event sequence. The
+    # flag is private and scoped to that call, never cached across transactions.
+    if not collaboration_validated:
+        co.reconstruct(events)
     tasks: dict[str, dict] = {}
     sessions: dict[str, dict] = {}
     leases: dict[str, dict] = {}
@@ -378,9 +381,14 @@ def guard(path: Path, cwd: Path, session: str, task_id: str, claim_id: str,
 
 
 def board(events: list[dict[str, Any]]) -> dict:
+    return _board(events)
+
+
+def _board(events: list[dict[str, Any]], *, collaboration_validated: bool = False,
+           now: datetime | None = None) -> dict:
     from .cli import active_leases
-    tasks, sessions = _reconstruct(events)
-    leases = active_leases(events)
+    tasks, sessions = _reconstruct(events, collaboration_validated=collaboration_validated)
+    leases = active_leases(events) if now is None else active_leases(events, now=now)
     records = []
     counts = {"queued": 0, "claimed": 0, "done": 0}
     for task in tasks.values():
@@ -398,7 +406,7 @@ def board(events: list[dict[str, Any]]) -> dict:
             if _conflicts(task, {key: lease for key, lease in leases.items() if key != task["lease_id"]}):
                 reasons.append("path_lease_conflict")
             owner = sessions[task["session"]]
-            if co.freshness(owner) != "fresh" or owner["status"] not in ("working", "idle"):
+            if co.freshness(owner, now) != "fresh" or owner["status"] not in ("working", "idle"):
                 reasons.append("owner_unavailable")
         counts[task["status"]] += 1
         records.append({**task, "blocked_reasons": reasons, "lease_status": lease_status,

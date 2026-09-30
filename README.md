@@ -1,27 +1,37 @@
 # CoProgrammer
 
-**Coordinate coding agents across windows, from task claim to review.**
+**Shared tasks, file leases and handoffs for Codex, Claude Code and Copilot.**
 
-CoProgrammer is an open-source protocol and toolkit for teams working with
-multiple coding agents. Queue scoped tasks, claim work with conflict checks,
-share task discussions and handoffs, and turn branch changes into reviewable digests and
-integration plans through one local CLI and MCP server.
+CoProgrammer coordinates coding agents working in separate Git worktrees.
+Claim scoped tasks atomically, spot blocked work, exchange durable handoffs,
+and turn branch changes into reviewable digests through a local CLI and MCP
+server. Python 3.10+, Git 2.36+, no runtime Python dependencies.
 
 Use **Codex, Claude Code, or GitHub Copilot** for development, **GitHub** for PR
 review, and optionally **Claude, GLM, or DeepSeek** for a second opinion on a
 specific set of commits. Maintainers decide what reaches `main`.
 
-中文：让不同平台的编程助手按依赖领取任务、协调多个开发窗口、交流进展与交接，并把分支改动整理为可审阅的摘要与集成计划。
-[任务调度与冲突防护](docs/scheduling/README.md) ·
-[Skill / MCP / Markdown 接入](docs/knowledge/README.md) ·
-[多窗口协作指南](docs/collaboration/README.md) ·
-[中文接入指南](docs/MULTI_PLATFORM_QUICKSTART.md) ·
-[Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
+[简体中文](README.zh-CN.md) · [Run the demo](#try-the-preview) ·
+[Connect a client](docs/knowledge/README.md) ·
+[Ecosystem comparison](docs/research/ecosystem-2026-09-30.md) ·
+[Contributing](CONTRIBUTING.md) · [MIT](LICENSE)
 
 > **0.2.0a1 source preview.** The multi-platform upgrade is available in
 > [PR #1](https://github.com/QIU-Guanzong/CoProgrammer/pull/1).
 > Client configuration generators and provider adapters are implemented;
 > live client/provider verification is still pending. Use the source setup below.
+
+## New in this source update
+
+- **One-command offline demo:** two real Git worktrees exercise claims,
+  dependency and path guards, message receipt and task completion. No model key.
+- **One collaboration briefing:** ready work, blockers, stale windows, open
+  decisions and next actions, available through both CLI and MCP.
+- **Less repeated state replay:** status views reuse validation within a
+  snapshot, while transactions and standalone history checks stay intact.
+  See the [reproducible benchmark](docs/upgrade-2026-09-30/performance.md).
+- **A complete Chinese entrypoint** and a [six-project research update](docs/research/ecosystem-2026-09-30.md)
+  explaining the choices behind this increment.
 
 ## When it helps
 
@@ -56,8 +66,8 @@ patch application, approval and merging stay with your existing review process.
 
 ## Try the preview
 
-Requires **Python 3.10+** and **Git**. Start with a local digest; no model key is
-needed.
+Requires **Python 3.10+** and **Git 2.36+**. Start with the offline demo; no model key
+is needed.
 
 ```sh
 git clone --branch codex/multi-platform-upgrade https://github.com/QIU-Guanzong/CoProgrammer.git
@@ -66,9 +76,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 
-coprogrammer config validate
-coprogrammer digest --base origin/main --head HEAD
-coprogrammer integrations doctor
+coprogrammer demo
 ```
 
 On Windows, create the environment with `python -m venv .venv` and activate it
@@ -76,10 +84,55 @@ in PowerShell with `.venv/Scripts/Activate.ps1`. The clone command above selects
 the upgrade branch explicitly. For your own project, keep this environment
 active, change to that project's checkout, and use its base branch.
 
-`digest` produces a local Markdown report. `doctor` checks local tools,
-credential-variable presence and the shared state location; it does not verify
-an authenticated connection.
-Add `--language zh-CN` to generate Chinese digests.
+The demo creates and cleans up a temporary repository and two worktrees. It
+exercises the actual coordination code; the Codex/Claude names are local
+session labels, not connected coding clients. Use `coprogrammer demo --json`
+for step-by-step evidence. See [what the demo checks](docs/DEMO.md).
+
+Then inspect your own repository:
+
+```sh
+coprogrammer integrations doctor
+coprogrammer manager briefing
+coprogrammer digest --base origin/main --head HEAD
+```
+
+`doctor` checks local tools and credential-variable presence without contacting
+providers. `briefing` summarizes current local coordination. `digest` produces
+a Markdown report; add `--language zh-CN` for Chinese output. Choose your own
+repository's base branch when it differs from `origin/main`.
+
+## Read the room before editing
+
+```sh
+coprogrammer manager briefing --session codex-api
+coprogrammer manager briefing --json --limit 20 --fail-on-attention
+```
+
+Register the session first (below), or omit `--session` for a repository-wide
+summary. The briefing explains blocked tasks and suggests the next checks.
+Its MCP equivalent is `manager_briefing`. Message bodies and claim tokens are
+omitted; counts remain complete when rows are truncated. A ready task still
+needs a successful claim. [Briefing semantics and exit codes](docs/BRIEFING.md).
+
+## Where it fits
+
+CoProgrammer connects independent coding windows to the project's existing
+review process. It complements tools that manage specifications, task memory
+or terminal sessions.
+
+| Your need | Start here |
+| --- | --- |
+| Exercise coordination before configuring any client | `coprogrammer demo` |
+| Resume work and understand blockers | `coprogrammer manager briefing` |
+| Add Skills, project instructions and MCP configuration | `coprogrammer setup --client codex` (preview) |
+| Reserve a scoped task across worktrees | `coprogrammer manager task claim` |
+| Review what changed and what evidence is missing | `digest` and `review-summary` |
+
+The [source-backed comparison](docs/research/ecosystem-2026-09-30.md) covers
+Beads, MCP Agent Mail, Overstory, agent-deck, GitHub Spec Kit and LangGraph,
+including current maintenance and license observations. It is a comparison,
+not a claim that those tools are installed or interoperable out of the box.
 
 ## Connect your tools
 
@@ -247,6 +300,9 @@ and [contributor handoff checklist](CONTRIBUTING.md#handoff-and-review).
 
 | Start here | Purpose |
 | --- | --- |
+| [Offline demo](docs/DEMO.md) | A repeatable two-worktree example without credentials |
+| [Collaboration briefing](docs/BRIEFING.md) | Ready work, blockers, bounded output and CLI/MCP semantics |
+| [Chinese introduction](README.zh-CN.md) | Installation, demonstration and everyday use in Chinese |
 | [Multi-platform quickstart](docs/MULTI_PLATFORM_QUICKSTART.md) | Codex, Claude, Copilot, GitHub and model-provider setup |
 | [Coordination lifecycle](docs/COORDINATION_LIFECYCLE.md) | Before, during and after coding |
 | [Multi-window collaboration](docs/collaboration/README.md) | Sessions, task inboxes, acknowledgements and resumable CLI/MCP sync |
@@ -258,7 +314,8 @@ and [contributor handoff checklist](CONTRIBUTING.md#handoff-and-review).
 | [Agent Plugins and Claude Code](docs/PLUGIN_QUICKSTART.md) | Installable package for Codex-compatible clients and Claude Code |
 | [Architecture](docs/ARCHITECTURE.md) | Components and artifact boundaries |
 | [Research landscape](docs/RESEARCH_LANDSCAPE.md) | Prior art and research questions |
-| [Latest ecosystem research](docs/RESEARCH_UPDATE_2026-09-27.md) | Portable distribution, gstack evidence lessons and next steps |
+| [Latest ecosystem research](docs/research/ecosystem-2026-09-30.md) | Six adjacent projects and the changes they informed |
+| [Portable distribution research](docs/RESEARCH_UPDATE_2026-09-27.md) | Plugin packaging and content-bound evidence |
 | [Evaluation plan](docs/EVAL_PLAN.md) | How we intend to measure integration quality |
 | [Acknowledgments](ACKNOWLEDGMENTS.md) | Sources, design influences and attribution |
 

@@ -60,6 +60,18 @@ REVIEW_LABEL_SCHEMA = {
 
 TOOLS: list[dict[str, Any]] = [
     {
+        "name": "manager_briefing",
+        "description": "Summarize ready tasks, blockers and next actions from one local snapshot. "
+                       "Advisory only; no claims, acknowledgements, approval or message bodies.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "session": string_schema(128),
+                "limit": {"type": "integer", "minimum": 1, "maximum": 200, "default": 20},
+            },
+        },
+    },
+    {
         "name": "review_summary",
         "description": (
             "Compare named local review artifacts against one base/head pair. "
@@ -215,7 +227,7 @@ TOOLS: list[dict[str, Any]] = [
 
 TOOLS.extend(collaboration_mcp.declarations(string_schema))
 TOOLS.extend(scheduler_mcp.declarations(string_schema))
-READ_ONLY_TOOLS = {"digest_branch", "manager_status", "manager_forecast", "review_summary",
+READ_ONLY_TOOLS = {"digest_branch", "manager_status", "manager_briefing", "manager_forecast", "review_summary",
                    "manager_sync", "message_inbox", "manager_wait", "message_thread", "task_board", "task_guard"}
 for _tool in TOOLS:
     _tool["inputSchema"]["additionalProperties"] = False
@@ -280,6 +292,12 @@ def tool_review_summary(ctx: ManagerContext, args: dict[str, Any]) -> str:
     report = build_summary(cwd, args.get("base", "origin/main"),
                            args.get("head", "HEAD"), reviews, args.get("expected", []))
     return json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False)
+
+
+def tool_manager_briefing(ctx: ManagerContext, args: dict[str, Any]) -> str:
+    from .briefing import build_briefing
+    return json.dumps(build_briefing(ctx.events(), args.get("session", ""), args.get("limit", 20)),
+                      indent=2, ensure_ascii=False)
 
 
 def tool_manager_status(ctx: ManagerContext, args: dict[str, Any]) -> str:
@@ -386,6 +404,7 @@ TOOL_HANDLERS = {
     "review_summary": tool_review_summary,
     "digest_branch": tool_digest_branch,
     "manager_status": tool_manager_status,
+    "manager_briefing": tool_manager_briefing,
     "manager_forecast": tool_manager_forecast,
     "lease_request": tool_lease_request,
     "lease_release": tool_lease_release,
