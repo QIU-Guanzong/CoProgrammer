@@ -32,7 +32,7 @@ checkout is needed at runtime. Choose either project Skills or the plugin for
 the same client to avoid duplicate discovery. See the
 [project setup guide](knowledge/README.md).
 
-From a checkout that contains this marketplace (such as the upgrade branch):
+From a checkout of the current default branch:
 
 ```bash
 claude plugin marketplace add /path/to/CoProgrammer
@@ -40,8 +40,8 @@ claude plugin install coprogrammer@coprogrammer-claude
 claude plugin list
 ```
 
-After the marketplace entry is merged to the default branch, it can also be
-added with `claude plugin marketplace add QIU-Guanzong/CoProgrammer`.
+The GitHub marketplace can also be added with
+`claude plugin marketplace add QIU-Guanzong/CoProgrammer`.
 
 Start a new session or reload plugins. A skill can then be invoked as, for
 example, `/coprogrammer:coprogrammer-active-sync`.
@@ -57,28 +57,29 @@ codex plugin marketplace list
 
 Open Codex's Plugins Directory, choose `CoProgrammer for Codex`, and install
 `coprogrammer`. Start a new Codex thread so the skills appear in its skill
-list. For a GitHub-hosted source after this marketplace is available on the
-default branch, the CLI can also register `QIU-Guanzong/CoProgrammer` directly.
+list. For the GitHub-hosted source, the CLI can also register
+`QIU-Guanzong/CoProgrammer` directly.
 The portable `plugin.json` gives Agent Plugins-compatible clients a standard
 package entry point; their installation flows can differ.
 
 ## Install the CLI for Manager operations
 
 The plugin package contains workflow instructions, not the CLI or MCP server.
-PyPI currently publishes `coprogrammer 0.1.0`; it predates commands added in
-the `0.3.0a1` source preview. To use every command referenced by
-these skills, install the CLI from a matching CoProgrammer checkout in the
-Python environment used by your terminal:
+For these v0.3 workflows, use CLI version `0.3.0a1` in the Python environment
+used by your terminal. Check its availability on
+[PyPI](https://pypi.org/project/coprogrammer/0.3.0a1/), then install:
+
+```bash
+python -m pip install --pre --upgrade "coprogrammer==0.3.0a1"
+coprogrammer --version
+```
+
+If that release is unavailable, install from a matching CoProgrammer checkout:
 
 ```bash
 python -m pip install -e .
 coprogrammer --help
 ```
-
-The published package is listed at
-[PyPI](https://pypi.org/project/coprogrammer/0.1.0/). Use the matching checkout
-until a release containing the current Manager and review-summary commands is
-available.
 
 Without the CLI, skills can still guide file-based planning and review. They
 must report Manager reads, lease changes, digest generation and plan validation
