@@ -1,0 +1,9 @@
+{
+  "task": "v0.3 workspace-aware coordination",
+  "intent": "Make session dispatch, verification freshness and cross-computer handoffs inspectable through CLI, MCP and packaged workflows.",
+  "scope": "feature | docs | tooling",
+  "core_changes": ["Session-aware dispatch preview", "Content-bound local check records", "Portable task handoff and receiving-clone comparison", "Matching Skills and Markdown guidance", "Fix Windows lock bootstrap writes exposed by cross-platform CI"],
+  "contracts": ["Additive CLI and read-only MCP results; existing Manager events unchanged"],
+  "tests": ["Focused regression tests", "Full source and independent-wheel suite", "Two-clone and stdio MCP acceptance", "Existing Ubuntu/Windows PR CI"],
+  "risks": ["Local records do not authenticate their author", "Ignored files, environment and dependencies are outside content fingerprints", "A handoff cannot transfer a lease between independent Managers"]
+}

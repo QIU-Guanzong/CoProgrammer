@@ -401,12 +401,17 @@ def utc_now() -> str:
 
 
 def run_git(args: list[str], cwd: Path) -> str:
+    # A caller's Git redirection must never move a requested project operation
+    # into another window's repository or index.
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update(GIT_OPTIONAL_LOCKS="0", GIT_TERMINAL_PROMPT="0")
     result = subprocess.run(
         ["git", *args],
         cwd=cwd,
         check=False,
         text=True,
         capture_output=True,
+        env=env,
     )
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "git command failed")
@@ -1785,6 +1790,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="Protocol tooling for semantic branch integration.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    from . import __version__
+    parser.add_argument("--version", action="version", version=__version__)
 
     demo = subparsers.add_parser("demo", help="Run a real offline coordination demo in temporary Git worktrees.")
     demo.add_argument("--json", action="store_true")
@@ -1961,6 +1968,8 @@ def build_parser() -> argparse.ArgumentParser:
     add_parsers(manager_subparsers)
     from .scheduler_cli import add_parsers as add_task_parsers
     add_task_parsers(manager_subparsers)
+    from .workflow_cli import add_parsers as add_workflow_parsers
+    add_workflow_parsers(subparsers, manager_subparsers)
 
     briefing = manager_subparsers.add_parser("briefing", help="Summarize ready work, blockers and next actions.")
     briefing.add_argument("--cwd", default=".")

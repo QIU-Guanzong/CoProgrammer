@@ -101,6 +101,29 @@ class ManagerStorageTest(unittest.TestCase):
         self.assertEqual(sum(grants), 1)
         self.assertEqual(len(cli.load_events(self.path)), 16)
 
+    def test_empty_lock_file_can_be_contended_without_bootstrap_writes(self) -> None:
+        self.path.parent.mkdir(parents=True)
+        lock = self.path.with_name(self.path.name + ".lock")
+        lock.write_bytes(b"")
+        ctx = multiprocessing.get_context("spawn")
+        entered, release = ctx.Event(), ctx.Event()
+        process = ctx.Process(target=_hold_transaction, args=(str(self.path), entered, release))
+        process.start()
+        try:
+            self.assertTrue(entered.wait(15))
+            with self.assertRaisesRegex(RuntimeError, "timed out"):
+                with transaction(self.path, timeout=0.05):
+                    self.fail("entered another process's empty-file lock")
+        finally:
+            release.set()
+            process.join(15)
+            if process.is_alive():
+                process.terminate()
+                process.join()
+        self.assertEqual(process.exitcode, 0)
+        self.assertEqual(lock.read_bytes(), b"")
+        self.assertFalse(self.path.exists())
+
     def test_all_event_writers_are_serialized(self) -> None:
         def append(i):
             cli.append_event(self.path, cli.make_event("agent.heartbeat", str(i), "repo:test"))

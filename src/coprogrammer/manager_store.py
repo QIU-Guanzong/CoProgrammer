@@ -206,9 +206,9 @@ def transaction(path: Path, timeout: float = DEFAULT_LOCK_TIMEOUT) -> Iterator[E
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.with_name(path.name + ".lock").open("a+b") as handle:
-            if os.name == "nt" and handle.tell() == 0:
-                handle.write(b"\0")
-                handle.flush()
+            # Windows permits locking beyond EOF. Bootstrap writes before the
+            # byte lock can conflict with another owner; keep even a new lock
+            # file empty and acquire ownership before accessing Manager state.
             _lock(handle, deadline)
             try:
                 current = EventTransaction(path)

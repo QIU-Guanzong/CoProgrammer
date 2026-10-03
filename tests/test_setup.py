@@ -3,11 +3,13 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import stat
 import subprocess
 import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from coprogrammer import knowledge, setup
@@ -120,6 +122,38 @@ class ProjectSetupTest(unittest.TestCase):
         self.assertTrue(all(result["applied"] for result in results))
         self.assertTrue(setup.preview(self.root, "claude")["can_apply"])
         self.assertTrue(all(r["status"] == "unchanged" for r in setup.preview(self.root, "claude")["files"]))
+
+    def test_locked_manager_file_does_not_require_resolving_its_contents(self):
+        lock = self.root / ".coprogrammer/events.jsonl.lock"
+        lock.parent.mkdir()
+        lock.touch()
+        original = Path.resolve
+
+        def resolve(path, *args, **kwargs):
+            if path == lock:
+                raise PermissionError("Windows cannot open another owner's locked file")
+            return original(path, *args, **kwargs)
+
+        with patch.object(Path, "resolve", resolve):
+            self.assertTrue(setup.apply(self.root, "claude")["applied"])
+        self.assertEqual(lock.read_bytes(), b"")
+
+    def test_windows_reparse_parent_is_blocked_without_resolving(self):
+        parent = self.root / ".agents"
+        parent.mkdir()
+        original = Path.lstat
+
+        def lstat(path, *args, **kwargs):
+            if path == parent:
+                return SimpleNamespace(st_mode=stat.S_IFDIR,
+                                       st_file_attributes=0x400)
+            return original(path, *args, **kwargs)
+
+        with patch.object(Path, "lstat", lstat):
+            report = setup.apply(self.root, "codex")
+        self.assertFalse(report["can_apply"])
+        self.assertTrue(any(name.startswith(".agents/") for name in report["conflicts"]))
+        self.assertFalse((self.root / "AGENTS.md").exists())
 
     def test_manager_log_and_lock_links_cannot_create_external_files(self):
         state = self.root / ".coprogrammer"

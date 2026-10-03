@@ -9,8 +9,8 @@ CoProgrammer 为分布在不同 Git 工作树中的编程助手提供本地协�
 [English](README.md) · [客户端接入](docs/knowledge/README.md) ·
 [生态调研](docs/research/ecosystem-2026-09-30.md) · [贡献指南](CONTRIBUTING.md) · [MIT](LICENSE)
 
-> 当前发布为 `0.2.0a2` 预发布版，可从
-> [PyPI](https://pypi.org/project/coprogrammer/) 安装。配置生成与本地协议测试不代表真实客户端已连接，
+> 当前源码为 `0.3.0a1` 预发布版，请查看
+> [PyPI](https://pypi.org/project/coprogrammer/) 的已发布版本，或使用下面的源码安装方式。配置生成与本地协议测试不代表真实客户端已连接，
 > 模型供应商的在线调用仍需单独验证。
 
 ## 先运行一次完整示例
@@ -125,11 +125,15 @@ coprogrammer review-summary --base origin/main --head HEAD \
 不会调用模型。可选 Claude、GLM、DeepSeek 审核适配器只在显式 `--send` 时
 发送已捕获的差异，可能产生供应商费用；模型建议不等于维护者批准。
 
-## 本轮升级与边界
+## v0.3 升级与边界
 
-本轮增加离线演示、协作简报、完整中文入口，并减少单次状态读取中重复的历史
-回放。[性能记录](docs/upgrade-2026-09-30/performance.md) 提供可重跑的合成日志基准；
-[六项目调研](docs/research/ecosystem-2026-09-30.md) 说明取舍与来源。
+- `manager dispatch --session <窗口>` 给出当前客户端和工作树可领取的任务及阻塞原因。
+- `check run` 记录显式检查，`check verify` 根据真实文件内容、命令、运行环境和时效判断结果是否仍有效。
+- `manager handoff` 导出任务交接包，另一台电脑用 `workspace compare` 核对版本、提交、基准和内容。
+
+完整流程见[跨窗口与跨电脑交接](docs/WORKSPACE_HANDOFF.md)、[验证记录](docs/VALIDATION_EVIDENCE.md)
+及[本轮调研](docs/upgrade-2026-10-04/research.md)。接收端仍需运行本地检查并领取本地任务；
+独立克隆使用独立 Manager，交接包不会转移租约。
 
 租约和 guard 依赖参与者遵守约定，不拦截任意文件写入。窗口活跃度来自显式
 pulse，不等于操作系统进程探测。消息回执表示收到，任务完成表示记录完成，

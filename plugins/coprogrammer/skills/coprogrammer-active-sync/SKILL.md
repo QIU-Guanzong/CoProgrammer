@@ -16,8 +16,9 @@ touch overlapping code or shared contracts.
 
 ## Workflow
 
-For cross-window work, use a matching source-preview CLI with `manager session`
-and `manager sync` available. Keep one session ID per window, even when several
+For cross-window work, check `coprogrammer --version` in each environment.
+Use CoProgrammer 0.3+ for dispatch previews, content-bound checks and portable
+handoffs; existing session/claim/message commands remain available. Keep one session ID per window, even when several
 windows use the same client. Register once in that window's working tree; resume
 with `pulse`, not another registration:
 
@@ -33,6 +34,8 @@ The inbox snapshot still includes unacknowledged messages after cursor advanceme
 `freshness` measures explicit pulses, not process liveness; reads do not keep a
 session alive. Git worktrees share Manager state; independent clones do not.
 
+Preview eligible work with `coprogrammer manager dispatch --session <window-id>`.
+This read does not claim or pulse; claim always rechecks constraints atomically.
 For queued work, create scoped tasks with `manager task create`, optional
 `--depends-on` and `--client` eligibility. Use `manager task claim` to atomically
 claim a task and its path lease; preserve the returned `claim_id`. Do not request
@@ -52,6 +55,27 @@ Respect guard failures. Guards verify current cooperative ownership and scope;
 they do not intercept writes or replace code review. Use a named Git branch,
 not detached HEAD. Pulse before the session becomes stale and renew claims
 before expiry; sync does neither.
+
+Record explicit noninteractive checks with content-bound receipts before reporting
+validation. Use an ignored directory or output outside the checkout:
+
+```bash
+coprogrammer check run --label tests --output .coprogrammer/checks/tests.json \
+  -- python -m unittest discover -s tests
+coprogrammer check verify --artifact .coprogrammer/checks/tests.json \
+  -- python -m unittest discover -s tests
+```
+
+A failed, changed, expired or missing record cannot establish a current pass.
+Ignored files and external inputs are outside the fingerprint; receipts do not
+authenticate the worker. MCP `check_verify` never runs a command.
+
+For another computer, reconcile and stop the source worker, commit intended
+changes, and export `manager handoff --session <window-id> --task <task-id>
+--base origin/main --check <receipt>` as JSON to an ignored/external path. The
+receiver uses `workspace compare <bundle>` after an explicit Git fetch/checkout.
+Context alignment transfers no ownership: rerun local checks and acquire a local
+claim. Independent clones keep independent Managers; never copy tokens or logs.
 
 Report completed work and actual validation with `manager task finish --summary
 <result>`; use `task release` with a summary to requeue unfinished work. Both
