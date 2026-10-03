@@ -24,3 +24,9 @@ Windows CI exposed a pre-lock bootstrap write failure in the existing Manager.
 documents locking beyond end-of-file. Empty lock files therefore need no seed
 byte; removing that write prevents a contender from touching a locked range.
 The new regression uses real process contention on an initially empty file.
+
+Concurrent Windows installers also exposed path-resolution mismatches on the
+Manager lock. [Python's stat attributes](https://docs.python.org/3.10/library/os.html#os.stat_result.st_file_attributes)
+and [reparse-point flag](https://docs.python.org/3.10/library/stat.html#stat.FILE_ATTRIBUTE_REPARSE_POINT)
+support checking each path component with non-following metadata. Setup now
+rejects symlinks and Windows reparse points without resolving a locked file.

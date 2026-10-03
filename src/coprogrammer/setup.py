@@ -28,14 +28,22 @@ def _target(root: Path, relative: str) -> Path:
     current = root
     for part in Path(relative).parts:
         current = current / part
-        if current.is_symlink() or current.resolve() != current:
+        try:
+            metadata = current.lstat()
+        except FileNotFoundError:
+            continue
+        # Resolving an existing Windows lock file may fail to open it and
+        # retain different path casing. Inspect non-following metadata instead;
+        # junctions and other reparse points remain blocked along with symlinks.
+        if (stat.S_ISLNK(metadata.st_mode)
+                or getattr(metadata, "st_file_attributes", 0)
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)):
             raise RuntimeError(f"unsafe linked setup path: {relative}")
-        if current.exists():
-            mode = current.stat().st_mode
-            if current == target and not stat.S_ISREG(mode):
-                raise RuntimeError(f"setup target is not a regular file: {relative}")
-            if current != target and not stat.S_ISDIR(mode):
-                raise RuntimeError(f"setup parent is not a directory: {relative}")
+        mode = metadata.st_mode
+        if current == target and not stat.S_ISREG(mode):
+            raise RuntimeError(f"setup target is not a regular file: {relative}")
+        if current != target and not stat.S_ISDIR(mode):
+            raise RuntimeError(f"setup parent is not a directory: {relative}")
     return target
 
 

@@ -15,6 +15,8 @@ Source branch: `codex/v0.3-workspace-handoff`.
   nonfinite, oversized or inconsistent artifact input.
   Cross-platform follow-up removes pre-lock Windows bootstrap writes and uses
   UTF-8 artifact streams; process contention and legacy-code-page tests cover it.
+  Setup inspects non-following file metadata so Windows lock files are not
+  misclassified as links; symlinks and reparse-point parents remain blocked.
 - Protected matches: CLI and package metadata. Current user authorization covers
   the next version and merging after verification; no protected schema, auth,
   migration or Manager architecture change is included.
