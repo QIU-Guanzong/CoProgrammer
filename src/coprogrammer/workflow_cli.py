@@ -3,9 +3,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from . import evidence, workflow, workspace
+
+
+def emit(text: str) -> None:
+    # Artifact streams are UTF-8 even when Windows pipe text defaults to a
+    # legacy code page. In-memory streams used by callers stay supported.
+    if hasattr(sys.stdout, "buffer"):
+        sys.stdout.buffer.write(text.encode("utf-8"))
+        sys.stdout.buffer.flush()
+    else:
+        sys.stdout.write(text)
+        sys.stdout.flush()
 
 
 def command(args):
@@ -36,9 +48,9 @@ def command(args):
             result = workflow.handoff(path, cwd, args.session, args.task, args.base,
                                       [cwd / p for p in args.check])
             if args.format == "markdown":
-                print(workflow.render_handoff(result), end="")
+                emit(workflow.render_handoff(result))
                 return 0
-    print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
+    emit(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
     return status
 
 

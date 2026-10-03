@@ -19,6 +19,8 @@ Command output goes to stderr; the JSON result goes to stdout. Receipts contain
 an argument hash, not command arguments, output or credential values. Commands
 must be noninteractive. Only the CLI can run a command; MCP `check_verify`
 never executes its optional expected command.
+JSON and Markdown artifact streams use UTF-8 even with a legacy Windows pipe
+encoding, so Chinese paths and task titles survive export and comparison.
 
 Exit 0 means successful and stable (`run`) or current (`verify`). Exit 1 means
 failed, stale or unavailable evidence. Invalid input and storage errors exit 2.

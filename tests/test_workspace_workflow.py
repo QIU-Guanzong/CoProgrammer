@@ -287,6 +287,22 @@ class DispatchAndHandoffTests(Fixture):
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertEqual(json.loads(result.stdout)["exit_code"], 3)
 
+    def test_json_and_markdown_artifacts_are_utf8_under_legacy_pipe_encoding(self):
+        (self.repo / "新文件.md").write_text("说明", encoding="utf-8")
+        self.session()
+        scheduler.create(self.path, self.repo, "codex", "api", "更新接口", ["src/**"])
+        env = {**os.environ, "PYTHONIOENCODING": "cp1252"}
+        for command in (["workspace", "snapshot"],
+                        ["manager", "handoff", "--session", "codex", "--task", "api", "--format", "markdown"]):
+            result = subprocess.run([sys.executable, "-m", "coprogrammer", *command, "--cwd", str(self.repo)],
+                                    env=env, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            text = result.stdout.decode("utf-8")
+            if command[0] == "workspace":
+                self.assertIn("新文件.md", json.loads(text)["dirty"]["paths"])
+            else:
+                self.assertIn("更新接口", text)
+
     def test_two_clone_handoff_matches_then_detects_drift_and_preserves_ownership(self):
         self.session()
         self.task()
