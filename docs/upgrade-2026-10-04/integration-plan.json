@@ -1,0 +1,15 @@
+{
+  "source_branch": "codex/multi-platform-upgrade",
+  "source_head": "dc49277900cfcb80a9670a0e62ec44e8bdd9dd75",
+  "main_base": "ef81bcbe1072444f9bbc94822251614621471f4c",
+  "branch_digest": "branch-digest.md",
+  "objective": "Build v0.3 from latest main; preserve all already-integrated collaboration capabilities and add workspace-aware dispatch, checks and handoffs.",
+  "changes_to_rebuild": ["Additive workflow modules and CLI/MCP adapters", "Content-bound local validation artifacts", "Portable context comparison and packaged guidance"],
+  "changes_to_drop": ["Old branch version numbers", "Reapplication of ten commits already squash-merged in PR #1", "Any rollback of newer main capabilities"],
+  "protected_areas": ["src/coprogrammer/cli.py", "pyproject.toml"],
+  "required_decisions": [],
+  "patch_primitives": [{"type": "manual", "tool": "Codex", "rationale": "Small additive modules preserve existing Manager events and provider behavior.", "files": ["src/coprogrammer/workspace.py", "src/coprogrammer/evidence.py", "src/coprogrammer/workflow.py"]}],
+  "validation": [{"name": "full unittest suite", "command": "PYTHONPATH=src python -m unittest discover -s tests", "required": true}, {"name": "configuration", "command": "PYTHONPATH=src python -m coprogrammer config validate", "required": true}],
+  "rollback_plan": "Revert the integration PR and pin the previous package release; existing Manager logs and client configuration need no migration.",
+  "status": "draft"
+}

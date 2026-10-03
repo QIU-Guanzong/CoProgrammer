@@ -30,6 +30,7 @@ from . import __version__
 from . import collaboration_mcp
 from . import scheduler_mcp
 from . import knowledge_mcp
+from . import workflow_mcp
 
 SUPPORTED_PROTOCOL_VERSIONS = (
     "2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25",
@@ -227,8 +228,10 @@ TOOLS: list[dict[str, Any]] = [
 
 TOOLS.extend(collaboration_mcp.declarations(string_schema))
 TOOLS.extend(scheduler_mcp.declarations(string_schema))
+TOOLS.extend(workflow_mcp.declarations(string_schema))
 READ_ONLY_TOOLS = {"digest_branch", "manager_status", "manager_briefing", "manager_forecast", "review_summary",
                    "manager_sync", "message_inbox", "manager_wait", "message_thread", "task_board", "task_guard"}
+READ_ONLY_TOOLS.update({"workspace_snapshot", "task_dispatch", "manager_handoff", "handoff_check", "check_verify"})
 for _tool in TOOLS:
     _tool["inputSchema"]["additionalProperties"] = False
     _tool["annotations"] = {
@@ -420,6 +423,10 @@ for _name in ("session_register", "session_pulse", "message_send", "message_inbo
 for _name in ("task_create", "task_claim", "task_renew", "task_finish", "task_release", "task_reclaim", "task_guard", "task_board"):
     TOOL_HANDLERS[_name] = lambda ctx, args, name=_name: json.dumps(
         scheduler_mcp.dispatch(name, ctx, args), indent=2, ensure_ascii=False)
+
+for _name in ("workspace_snapshot", "task_dispatch", "manager_handoff", "handoff_check", "check_verify"):
+    TOOL_HANDLERS[_name] = lambda ctx, args, name=_name: json.dumps(
+        workflow_mcp.dispatch(name, ctx, args), indent=2, ensure_ascii=False)
 
 
 def validate_value(value: Any, schema: dict[str, Any], field: str = "arguments") -> None:

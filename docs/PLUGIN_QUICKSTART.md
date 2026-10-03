@@ -66,7 +66,7 @@ package entry point; their installation flows can differ.
 
 The plugin package contains workflow instructions, not the CLI or MCP server.
 PyPI currently publishes `coprogrammer 0.1.0`; it predates commands added in
-this branch's `0.2.0a1` development version. To use every command referenced by
+the `0.3.0a1` source preview. To use every command referenced by
 these skills, install the CLI from a matching CoProgrammer checkout in the
 Python environment used by your terminal:
 

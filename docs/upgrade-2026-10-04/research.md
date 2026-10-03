@@ -1,0 +1,20 @@
+# Sources and choices — 2026-10-04
+
+- [gstack ship](https://github.com/garrytan/gstack/blob/main/ship/SKILL.md)
+  binds checks to consumed content and command, and distinguishes stale or
+  missing evidence from a successful run. CoProgrammer will hash supported
+  working content and exact command arguments, without storing command output
+  or arguments. HEAD alone cannot establish freshness. This is a local receipt,
+  not an authenticated review or complete dependency capture.
+- [Claude Code subagents](https://code.claude.com/docs/en/sub-agents) documents
+  per-worker worktree isolation and the importance of the actual working
+  directory. Dispatch will use the registered session's real checkout and
+  occupied worktree, with claim-time checks still authoritative.
+- [MCP tools, 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
+  defines tool annotations and structured results. Add bounded read-only tools
+  through the existing negotiated stdio server; expose no arbitrary command
+  execution or new transport. Existing compatibility behavior is retained.
+
+The practical missing link between computers is a portable, inspectable context
+artifact. This increment compares it explicitly against the receiving clone;
+it does not claim a globally shared lease or automatically import Manager state.

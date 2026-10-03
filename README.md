@@ -16,22 +16,26 @@ specific set of commits. Maintainers decide what reaches `main`.
 [Ecosystem comparison](docs/research/ecosystem-2026-09-30.md) ·
 [Contributing](CONTRIBUTING.md) · [MIT](LICENSE)
 
-> **0.2.0a2 pre-release.** Install the published package from
-> [PyPI](https://pypi.org/project/coprogrammer/). Client configuration
+> **v0.3 preview (`0.3.0a1`).** Check [PyPI](https://pypi.org/project/coprogrammer/)
+> for published versions, or use the source installation below. Client configuration
 > generators and provider adapters are implemented; live client/provider
 > verification is still pending.
 
-## New in this source update
+## New in v0.3
 
-- **One-command offline demo:** two real Git worktrees exercise claims,
-  dependency and path guards, message receipt and task completion. No model key.
-- **One collaboration briefing:** ready work, blockers, stale windows, open
-  decisions and next actions, available through both CLI and MCP.
-- **Less repeated state replay:** status views reuse validation within a
-  snapshot, while transactions and standalone history checks stay intact.
-  See the [reproducible benchmark](docs/upgrade-2026-09-30/performance.md).
-- **A complete Chinese entrypoint** and a [six-project research update](docs/research/ecosystem-2026-09-30.md)
-  explaining the choices behind this increment.
+- **Session-aware dispatch:** preview tasks compatible with this client,
+  session and worktree, then claim atomically.
+- **Content-bound checks:** record explicit local commands and detect stale
+  results after file edits, command/runtime changes or expiry.
+- **Portable handoffs:** compare versions, exact revisions, task scope and
+  content when moving work to another clone or computer. Local ownership remains
+  separate and receiving-machine checks are required.
+
+See [dispatch and handoff](docs/WORKSPACE_HANDOFF.md),
+[check receipts](docs/VALIDATION_EVIDENCE.md) and the
+[source-backed choices](docs/upgrade-2026-10-04/research.md).
+The offline demo, local messages, review adapters and preview-first setup remain
+available through CLI, MCP and packaged workflows.
 
 ## When it helps
 
