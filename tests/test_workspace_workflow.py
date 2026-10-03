@@ -64,7 +64,7 @@ class WorkspaceTests(Fixture):
         self.assertEqual(changed["content"], ws.snapshot(self.repo)["content"])
         self.commit()
         self.assertEqual(changed["content"], ws.snapshot(self.repo)["content"])
-        (self.repo / "新文件.md").write_text("新说明")
+        (self.repo / "新文件.md").write_text("新说明", encoding="utf-8")
         untracked = ws.snapshot(self.repo)
         self.assertIn("新文件.md", untracked["dirty"]["paths"])
         self.commit()
