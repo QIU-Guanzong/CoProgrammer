@@ -18,3 +18,9 @@
 The practical missing link between computers is a portable, inspectable context
 artifact. This increment compares it explicitly against the receiving clone;
 it does not claim a globally shared lease or automatically import Manager state.
+
+Windows CI exposed a pre-lock bootstrap write failure in the existing Manager.
+[Microsoft's `_locking` reference](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/locking?view=msvc-170)
+documents locking beyond end-of-file. Empty lock files therefore need no seed
+byte; removing that write prevents a contender from touching a locked range.
+The new regression uses real process contention on an initially empty file.

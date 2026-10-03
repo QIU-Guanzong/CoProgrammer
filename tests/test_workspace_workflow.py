@@ -119,9 +119,9 @@ class WorkspaceTests(Fixture):
             ws.snapshot(self.repo)
         self.git("update-index", "--force-remove", "dependency")
         row = self.git("ls-files", "--stage", "src/main.py").split("\t")[0].split()
-        data = f"0 {'0' * 40}\tsrc/main.py\n100644 {row[1]} 1\tsrc/main.py\n"
-        subprocess.run(["git", "update-index", "--index-info"], cwd=self.repo,
-                       input=data, text=True, check=True, capture_output=True)
+        data = f"0 {'0' * 40}\tsrc/main.py\0" + f"100644 {row[1]} 1\tsrc/main.py\0"
+        subprocess.run(["git", "update-index", "-z", "--index-info"], cwd=self.repo,
+                       input=data.encode("utf-8"), check=True, capture_output=True)
         with self.assertRaisesRegex(RuntimeError, "conflicts"):
             ws.snapshot(self.repo)
 
