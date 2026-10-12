@@ -1,0 +1,25 @@
+{
+  "task": "v0.3.0a2 onboarding and discoverability",
+  "intent": "Make first-use multi-window collaboration clear and easy to inspect.",
+  "scope": "feature | docs | tooling",
+  "core_changes": [
+    "start CLI with explicit dry-run/resume and no configuration installation",
+    "status CLI and read-only workspace_status MCP",
+    "Concrete bilingual README and two-window walkthrough",
+    "Matching plugin/package positioning and active-sync Skill"
+  ],
+  "contracts": [
+    "Additive CLI/MCP results; existing Manager events and task lifecycle unchanged"
+  ],
+  "tests": [
+    "Focused real-worktree regressions",
+    "Full source and independent-wheel suite",
+    "Ubuntu/Windows Python 3.10/3.13 CI",
+    "Published-package demo and MCP readback"
+  ],
+  "risks": [
+    "Local session IDs are self-reported",
+    "Status is advisory and does not pulse, claim or ACK",
+    "No distributed lock or client GUI connectivity claim"
+  ]
+}
