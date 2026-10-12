@@ -410,6 +410,7 @@ def run_git(args: list[str], cwd: Path) -> str:
         cwd=cwd,
         check=False,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         env=env,
     )

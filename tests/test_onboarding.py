@@ -147,6 +147,15 @@ class OnboardingTests(Fixture):
             onboarding.overview(self.path, self.repo, "missing")
         self.assertFalse(self.path.parent.exists())
 
+    def test_unicode_worktree_and_branch_keep_their_actual_names(self):
+        other = self.root / "协作目录"
+        subprocess.run(["git", "worktree", "add", "-b", "codex/接口", str(other)],
+                       cwd=self.repo, capture_output=True, check=True, timeout=20)
+        report = onboarding.start(self.path, other, "codex", "unicode-window")
+        self.assertEqual(report["workspace"]["worktree"], str(other))
+        self.assertEqual(report["workspace"]["branch"], "codex/接口")
+        self.assertEqual(onboarding.overview(self.path, other, "unicode-window")["workspace"], report["workspace"])
+
     def test_two_window_cli_start_status_claim_and_message_journey(self):
         other = self.root / "claude"
         self.git("worktree", "add", "-b", "claude-ui", str(other))
