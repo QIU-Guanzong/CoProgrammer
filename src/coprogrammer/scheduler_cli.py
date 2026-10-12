@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -11,8 +12,10 @@ from . import scheduler
 def working_files(cwd: Path) -> list[str]:
     """Keep both rename paths and unquoted Unicode names from Git's NUL format."""
     try:
+        env = {key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")}
+        env.update(GIT_OPTIONAL_LOCKS="0", GIT_TERMINAL_PROMPT="0")
         result = subprocess.run(["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
-                                cwd=cwd, capture_output=True, timeout=30, check=False)
+                                cwd=cwd, capture_output=True, timeout=30, check=False, env=env)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise RuntimeError("cannot inspect working-tree files") from exc
     if result.returncode or len(result.stdout) > 2_000_000:

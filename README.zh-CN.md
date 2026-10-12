@@ -108,6 +108,22 @@ MCP 提供同一套本地协作能力。`workspace_status` 汇总工作状态，
 
 ## 其他能力从哪里开始？
 
+### 减少手动同步（0.3.0a3+）
+
+提供 **Skill 版、MCP 版、完整接入版**。`setup --edition skills` 安装 Skill
+与 Markdown 指引；`--edition mcp` 只生成原生 MCP 配置；默认 `full` 包含两者。
+三个版本共用现有的六个 Skill 与调度器。
+
+`coprogrammer worker step --session codex-api --apply` 串起心跳、收件箱、待决事项、
+任务选择与范围检查，自动续期有效归属或领取合适任务。未确认接收的消息会暂停
+工作。完成时用 `worker finish --notify <窗口编号>` 记录交接通知，重复提交同一
+结果不会重复发送消息。
+
+GLM、DeepSeek 已配置在 Claude Code 中的窗口，登记 `--client claude`，分别添加
+`--provider glm` 或 `--provider deepseek`。任务可按客户端或提供方标签筛选；
+登记标签不会配置密钥，也不代表模型连接已验证。MCP 提供同样的 `worker_step`
+和 `worker_finish`，由参与窗口调用。[安装与自动协作指南 →](docs/AUTOMATIC_COLLABORATION.md)
+
 | 需要做的事 | 入口 |
 | --- | --- |
 | 查看分工、阻塞和下一步 | `coprogrammer status`；[入门指南](docs/GETTING_STARTED.md) |

@@ -1692,7 +1692,7 @@ def command_setup(args: argparse.Namespace) -> int:
     from . import setup
     operation = setup.apply if args.apply else setup.preview
     result = operation(Path(args.cwd), args.client, args.skill,
-                       not args.no_mcp, not args.no_skills, args.include_content)
+                       not args.no_mcp, not args.no_skills, args.include_content, args.edition)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["can_apply"] else 1
 
@@ -1885,6 +1885,8 @@ def build_parser() -> argparse.ArgumentParser:
     setup = subparsers.add_parser("setup", help="Preview project Skills, Markdown and MCP config; use --apply to create missing files.")
     setup.add_argument("--client", choices=("codex", "claude", "copilot"), required=True)
     setup.add_argument("--cwd", default=".")
+    setup.add_argument("--edition", choices=("full", "skills", "mcp"), default="full",
+                       help="Full setup, Skills plus Markdown, or only native MCP configuration.")
     skill_selection = setup.add_mutually_exclusive_group()
     skill_selection.add_argument("--skill", action="append", help="Full Skill name from knowledge list; repeatable, defaults to all.")
     skill_selection.add_argument("--no-skills", action="store_true", help="Skip Skill files.")
@@ -1973,6 +1975,8 @@ def build_parser() -> argparse.ArgumentParser:
     add_task_parsers(manager_subparsers)
     from .workflow_cli import add_parsers as add_workflow_parsers
     add_workflow_parsers(subparsers, manager_subparsers)
+    from .worker_cli import add_parsers as add_worker_parsers
+    add_worker_parsers(subparsers)
 
     briefing = manager_subparsers.add_parser("briefing", help="Summarize ready work, blockers and next actions.")
     briefing.add_argument("--cwd", default=".")

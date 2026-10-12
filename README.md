@@ -116,6 +116,23 @@ contains six Skills, and the CLI serves twelve read-only Markdown resources.
 
 ## What else can it do?
 
+### Less manual coordination (0.3.0a3+)
+
+Choose a **Skill**, **MCP** or **full** installation using `setup --edition skills`,
+`--edition mcp` or `--edition full`. They share the same six Skills and scheduler.
+
+`coprogrammer worker step --session codex-api --apply` combines activity,
+inbox/decision checks, task selection and scope guarding. It renews valid owned
+work or atomically claims eligible work. Pending messages stop work until receipt
+is explicitly handled. Completion can send durable handoffs to selected windows
+using `worker finish --notify <window-id>`; identical retries reuse messages.
+
+GLM/DeepSeek-backed Claude Code windows register with `--client claude` and
+`--provider glm` or `--provider deepseek`. Task filters match the host or declared
+provider; labels do not configure credentials or establish a model connection.
+MCP equivalents are `worker_step` and `worker_finish`, called by the participating
+agent. [Installation editions and automatic workflow →](docs/AUTOMATIC_COLLABORATION.md)
+
 | Need | Entry point |
 | --- | --- |
 | Inspect work and blockers | `coprogrammer status`; [status guide](docs/GETTING_STARTED.md) |

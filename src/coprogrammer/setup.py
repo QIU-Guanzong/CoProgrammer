@@ -48,11 +48,19 @@ def _target(root: Path, relative: str) -> Path:
 
 
 def _files(root: Path, client: str, skills: list[str] | None,
-           include_mcp: bool, include_skills: bool) -> list[dict]:
+           include_mcp: bool, include_skills: bool, edition: str = "full") -> list[dict]:
     if client not in CLIENT_LAYOUTS:
         raise RuntimeError("client must be codex, claude, or copilot")
     if type(include_mcp) is not bool or type(include_skills) is not bool:
         raise RuntimeError("setup switches must be boolean")
+    if edition not in ("full", "skills", "mcp"):
+        raise RuntimeError("edition must be full, skills, or mcp")
+    if edition == "mcp" and (not include_mcp or skills):
+        raise RuntimeError("MCP edition cannot disable MCP or select Skills")
+    if edition == "skills" and not include_skills:
+        raise RuntimeError("Skill edition cannot disable Skills")
+    include_mcp = include_mcp and edition != "skills"
+    include_skills = include_skills and edition != "mcp"
     available = [d["name"] for d in knowledge.documents() if d["kind"] == "skill"]
     selected = available if skills is None else skills
     if (not isinstance(selected, list) or len(selected) > len(available)
@@ -67,12 +75,13 @@ def _files(root: Path, client: str, skills: list[str] | None,
     def add(path, kind, content):
         files.append({"path": path, "kind": kind, "content": content})
 
-    add("AGENTS.md", "instructions", knowledge.read_document("templates/AGENTS"))
-    if instructions:
-        name = "CLAUDE" if client == "claude" else "copilot-instructions"
-        add(instructions, "instructions", knowledge.read_document(f"templates/{name}"))
-    for name in ("COORDINATION", "task-brief", "handoff"):
-        add(f"docs/coprogrammer/{name}.md", "template", knowledge.read_document(f"templates/{name}"))
+    if edition != "mcp":
+        add("AGENTS.md", "instructions", knowledge.read_document("templates/AGENTS"))
+        if instructions:
+            name = "CLAUDE" if client == "claude" else "copilot-instructions"
+            add(instructions, "instructions", knowledge.read_document(f"templates/{name}"))
+        for name in ("COORDINATION", "task-brief", "handoff"):
+            add(f"docs/coprogrammer/{name}.md", "template", knowledge.read_document(f"templates/{name}"))
     if include_skills:
         for name in selected:
             add(f"{skill_dir}/{name}/SKILL.md", "skill", knowledge.read_document(f"skills/{name}"))
@@ -82,11 +91,11 @@ def _files(root: Path, client: str, skills: list[str] | None,
 
 
 def _prepare(cwd: Path, client: str, skills: list[str] | None,
-             include_mcp: bool, include_skills: bool) -> tuple[Path, list[dict], list[str]]:
+             include_mcp: bool, include_skills: bool, edition: str = "full") -> tuple[Path, list[dict], list[str]]:
     root = cwd.resolve()
     if not root.is_dir():
         raise RuntimeError("setup project directory must already exist")
-    files = _files(root, client, skills, include_mcp, include_skills)
+    files = _files(root, client, skills, include_mcp, include_skills, edition)
     warnings = []
     for item in files:
         content = item["content"].encode("utf-8")
@@ -136,18 +145,18 @@ def _report(root: Path, client: str, files: list[dict], warnings: list[str],
 
 def preview(cwd: Path, client: str, skills: list[str] | None = None,
             include_mcp: bool = True, include_skills: bool = True,
-            include_content: bool = False) -> dict:
-    root, files, warnings = _prepare(cwd, client, skills, include_mcp, include_skills)
+            include_content: bool = False, edition: str = "full") -> dict:
+    root, files, warnings = _prepare(cwd, client, skills, include_mcp, include_skills, edition)
     return _report(root, client, files, warnings, include_content)
 
 
 def apply(cwd: Path, client: str, skills: list[str] | None = None,
           include_mcp: bool = True, include_skills: bool = True,
-          include_content: bool = False) -> dict:
+          include_content: bool = False, edition: str = "full") -> dict:
     from .cli import event_log_path
     from .manager_store import transaction
 
-    root, files, warnings = _prepare(cwd, client, skills, include_mcp, include_skills)
+    root, files, warnings = _prepare(cwd, client, skills, include_mcp, include_skills, edition)
     report = _report(root, client, files, warnings, include_content)
     if not report["can_apply"]:
         return report
@@ -161,7 +170,7 @@ def apply(cwd: Path, client: str, skills: list[str] | None = None,
     for name in (state_path.name, state_path.name + ".lock"):
         _target(state_root.parent, f"{state_root.name}/{name}")
     with transaction(state_path):
-        root, files, warnings = _prepare(root, client, skills, include_mcp, include_skills)
+        root, files, warnings = _prepare(root, client, skills, include_mcp, include_skills, edition)
         report = _report(root, client, files, warnings, include_content)
         if not report["can_apply"]:
             return report
