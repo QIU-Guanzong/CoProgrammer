@@ -40,13 +40,17 @@ def overview(path: Path, cwd: Path, session: str = "", limit: int = 20) -> dict:
 
 
 def start(path: Path, cwd: Path, client: str, session: str, task: str | None = None,
-          *, resume: bool = False, dry_run: bool = False) -> dict:
+          *, resume: bool = False, dry_run: bool = False,
+          provider: str | None = None, model: str | None = None) -> dict:
     """Register a window; explicitly resume only its matching local session."""
     if client not in setup.CLIENT_LAYOUTS:
         raise RuntimeError("client must be codex, claude, or copilot")
     co.identity(session)
     if task is not None:
         co.text(task, "task")
+    for name, value in (("provider", provider), ("model", model)):
+        if value is not None:
+            co.text(value, name, 2000, empty=True)
     actual = _workspace(cwd, writable=True)
     preview = setup.preview(Path(actual["worktree"]), client)
     # Actual writes always serialize, including the initial empty-log case.
@@ -58,6 +62,9 @@ def start(path: Path, cwd: Path, client: str, session: str, task: str | None = N
             old = co._session(sessions, session, cwd)
             if old["client"].casefold() != client:
                 raise RuntimeError("This session uses a different client; choose a new window ID.")
+            if any(value is not None and value != old[name]
+                   for name, value in (("provider", provider), ("model", model))):
+                raise RuntimeError("Provider/model identity differs; choose a new window ID.")
             if old["status"] not in ("working", "idle"):
                 raise RuntimeError("Resolve the blocked session with 'manager session pulse' before resuming.")
             owned = [t for t in board["tasks"] if t["status"] == "claimed" and t["session"] == session]
@@ -76,9 +83,11 @@ def start(path: Path, cwd: Path, client: str, session: str, task: str | None = N
             if resume:
                 co.pulse(path, cwd, session, task=selected_task)
             else:
-                co.register(path, cwd, session, client, selected_task)
+                co.register(path, cwd, session, client, selected_task, provider or "", model or "")
     return {"format": "coprogrammer.start.v1", "session": session, "client": client,
             "task": selected_task, "workspace": actual, "applied": not dry_run,
+            "provider": old["provider"] if resume else provider or "",
+            "model": old["model"] if resume else model or "",
             "operation": "resume" if resume else "register",
             "setup": {"missing": sum(f["status"] == "create" for f in preview["files"]),
                       "conflicts": preview["conflicts"], "connection": "not_checked",
@@ -152,7 +161,8 @@ def command(args):
     path = event_log_path(cwd, args.state_dir)
     if args.onboarding_action == "start":
         report = start(path, cwd, args.client, args.session, args.task,
-                       resume=args.resume, dry_run=args.dry_run)
+                       resume=args.resume, dry_run=args.dry_run,
+                       provider=args.provider, model=args.model)
         rendered = render_start(report)
     else:
         report = overview(path, cwd, args.session, args.limit)
@@ -172,6 +182,8 @@ def add_parsers(parsers):
             parser.add_argument("--client", choices=setup.CLIENT_LAYOUTS, required=True)
             parser.add_argument("--session", required=True)
             parser.add_argument("--task")
+            parser.add_argument("--provider", help="Declared model provider, e.g. glm/deepseek; does not configure credentials.")
+            parser.add_argument("--model", help="Declared model label; connectivity is not checked.")
             parser.add_argument("--resume", action="store_true", help="Explicitly refresh this window's existing session.")
             parser.add_argument("--dry-run", action="store_true", help="Preview without registering or refreshing the window.")
         else:

@@ -205,6 +205,12 @@ def _session(sessions: dict, session_id: str, cwd: Path | None = None, *, active
     return session
 
 
+def routing_labels(session: dict) -> set[str]:
+    """Declared host/provider labels, not authenticated provider connectivity."""
+    return {value.strip().casefold() for value in
+            (session["client"], session.get("provider", "")) if value.strip()}
+
+
 def register(path: Path, cwd: Path, session: str, client: str, task: str,
              provider: str = "", model: str = "", ttl_seconds: int = 300) -> dict:
     from .cli import make_event

@@ -18,7 +18,7 @@ def dispatch(path: Path, cwd: Path, session: str, limit: int = 20) -> dict:
     moment = datetime.now(timezone.utc)
     actual = co.workspace(cwd)
     with transaction(path) as tx:
-        sessions, _, board = co._snapshot(tx.events, now=moment)
+        sessions, _, board = co._snapshot([*tx.events, *tx.pending], now=moment)
         owner = co._session(sessions, session, active=False)
         reasons = []
         if owner["status"] not in ("working", "idle"):
@@ -37,7 +37,7 @@ def dispatch(path: Path, cwd: Path, session: str, limit: int = 20) -> dict:
             blocked = list(task["blocked_reasons"])
             if task["status"] != "queued":
                 blocked.append("task_not_queued")
-            if task["clients"] and owner["client"].strip().casefold() not in task["clients"]:
+            if task["clients"] and not co.routing_labels(owner).intersection(task["clients"]):
                 blocked.append("client_not_eligible")
             blocked = list(dict.fromkeys([*reasons, *blocked]))
             row = {"id": task["id"], "title": task["title"], "clients": task["clients"],

@@ -31,6 +31,7 @@ from . import collaboration_mcp
 from . import scheduler_mcp
 from . import knowledge_mcp
 from . import workflow_mcp
+from . import worker_cli
 
 SUPPORTED_PROTOCOL_VERSIONS = (
     "2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25",
@@ -229,6 +230,7 @@ TOOLS: list[dict[str, Any]] = [
 TOOLS.extend(collaboration_mcp.declarations(string_schema))
 TOOLS.extend(scheduler_mcp.declarations(string_schema))
 TOOLS.extend(workflow_mcp.declarations(string_schema))
+TOOLS.extend(worker_cli.declarations(string_schema))
 READ_ONLY_TOOLS = {"digest_branch", "manager_status", "manager_briefing", "manager_forecast", "review_summary",
                    "manager_sync", "message_inbox", "manager_wait", "message_thread", "task_board", "task_guard"}
 READ_ONLY_TOOLS.update({"workspace_status", "workspace_snapshot", "task_dispatch", "manager_handoff", "handoff_check", "check_verify"})
@@ -237,7 +239,7 @@ for _tool in TOOLS:
     _tool["annotations"] = {
         "readOnlyHint": _tool["name"] in READ_ONLY_TOOLS,
         "destructiveHint": _tool["name"] == "lease_release",
-        "idempotentHint": _tool["name"] in READ_ONLY_TOOLS or _tool["name"] == "message_ack",
+        "idempotentHint": _tool["name"] in READ_ONLY_TOOLS or _tool["name"] in ("message_ack", "worker_finish"),
         "openWorldHint": False,
     }
 TOOL_SCHEMAS = {tool["name"]: tool["inputSchema"] for tool in TOOLS}
@@ -427,6 +429,10 @@ for _name in ("task_create", "task_claim", "task_renew", "task_finish", "task_re
 for _name in ("workspace_status", "workspace_snapshot", "task_dispatch", "manager_handoff", "handoff_check", "check_verify"):
     TOOL_HANDLERS[_name] = lambda ctx, args, name=_name: json.dumps(
         workflow_mcp.dispatch(name, ctx, args), indent=2, ensure_ascii=False)
+
+for _name in ("worker_step", "worker_finish"):
+    TOOL_HANDLERS[_name] = lambda ctx, args, name=_name: json.dumps(
+        worker_cli.dispatch(name, ctx, args), indent=2, ensure_ascii=False)
 
 
 def validate_value(value: Any, schema: dict[str, Any], field: str = "arguments") -> None:

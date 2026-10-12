@@ -156,7 +156,7 @@ def _reconstruct(events: list[dict[str, Any]], *, collaboration_validated: bool 
                     raise RuntimeError("invalid task claim history")
                 _ready_session(sessions, event["actor"], moment=moment)
                 if (any(tasks[dep]["status"] != "done" for dep in task["depends_on"])
-                        or (task["clients"] and actor["client"].strip().casefold() not in task["clients"])):
+                        or (task["clients"] and not co.routing_labels(actor).intersection(task["clients"]))):
                     raise RuntimeError("task dependencies or client restriction not satisfied")
                 if task["worktree"] != actor["worktree"] or task["summary"]:
                     raise RuntimeError("invalid task worktree or claim summary")
@@ -258,7 +258,7 @@ def claim(path: Path, cwd: Path, session: str, task_id: str = "", ttl_seconds: i
                 reasons.append("task is not queued")
             if any(tasks[dep]["status"] != "done" for dep in task["depends_on"]):
                 reasons.append("unfinished dependencies")
-            if task["clients"] and owner["client"].strip().casefold() not in task["clients"]:
+            if task["clients"] and not co.routing_labels(owner).intersection(task["clients"]):
                 reasons.append("client is not eligible")
             if _conflicts(task, leases):
                 reasons.append("path lease conflict")
