@@ -1,18 +1,21 @@
 {
   "name": "coprogrammer",
-  "version": "0.3.0-alpha.1",
-  "description": "Lifecycle guardrails for AI-assisted multi-agent software development.",
+  "version": "0.3.0-alpha.2",
+  "description": "Shared tasks, file boundaries and durable handoffs for coding agents.",
   "author": {
     "name": "CoProgrammer"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "CoProgrammer",
-    "shortDescription": "Coordinate AI coding work before, during, and after PRs.",
-    "longDescription": "CoProgrammer turns local project setup, project covenants, task briefs, Manager Plane events, branch digests, and integration plans into repeatable Codex workflows for multi-agent development.",
+    "shortDescription": "Teamwork for coding agents.",
+    "longDescription": "Preview project setup, coordinate coding windows and scoped tasks, exchange durable handoffs, and prepare reviewable branch digests and integration plans.",
     "developerName": "CoProgrammer",
     "category": "Productivity",
-    "capabilities": ["Interactive", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
     "defaultPrompt": [
       "Audit this repo for CoProgrammer readiness.",
       "Create a scoped task brief for this change.",

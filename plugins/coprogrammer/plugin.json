@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "coprogrammer",
-  "version": "0.3.0-alpha.1",
-  "description": "Coordinate AI coding work with shared state, scoped tasks, branch digests, and reviewable integration plans.",
+  "version": "0.3.0-alpha.2",
+  "description": "Shared tasks, file boundaries and durable handoffs for coding agents.",
   "author": {
     "name": "CoProgrammer"
   },
@@ -20,8 +20,8 @@
     "com.openai": {
       "interface": {
         "displayName": "CoProgrammer",
-        "shortDescription": "Coordinate coding work across agents and branches.",
-        "longDescription": "Six reusable workflows for local project setup, project readiness, task scoping, shared Manager coordination, branch review, and reviewable integration plans.",
+        "shortDescription": "Teamwork for coding agents.",
+        "longDescription": "Preview project setup, coordinate coding windows and scoped tasks, exchange durable handoffs, and prepare reviewable branch digests and integration plans.",
         "developerName": "CoProgrammer",
         "category": "Productivity",
         "capabilities": [

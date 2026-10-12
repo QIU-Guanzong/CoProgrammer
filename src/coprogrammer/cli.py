@@ -1787,11 +1787,13 @@ def command_manager_briefing(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="coprogrammer",
-        description="Protocol tooling for semantic branch integration.",
+        description="Shared tasks, file boundaries and handoffs for coding agents. Start with 'coprogrammer demo'.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     from . import __version__
     parser.add_argument("--version", action="version", version=__version__)
+    from .onboarding import add_parsers as add_onboarding_parsers
+    add_onboarding_parsers(subparsers)
 
     demo = subparsers.add_parser("demo", help="Run a real offline coordination demo in temporary Git worktrees.")
     demo.add_argument("--json", action="store_true")
