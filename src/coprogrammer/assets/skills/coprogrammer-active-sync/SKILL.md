@@ -14,6 +14,19 @@ that does not require a live Manager read or write.
 Use this workflow during coding when several agents, branches, or worktrees may
 touch overlapping code or shared contracts.
 
+## Quick entry points
+
+With CLI 0.3.0a2+, inspect the current checkout using `coprogrammer status`.
+For a registered window, use `coprogrammer status --session <window-id>` to
+see work eligible for that client and worktree. Read-only status never pulses,
+claims or acknowledges a message. MCP clients can call `workspace_status`.
+
+To register a new window, preview `coprogrammer start --client <client> --session
+<window-id> --task <task> --dry-run`, then run without `--dry-run` when authorized.
+For the same existing window, explicitly add `--resume`; blocked/closed or
+mismatched windows require reconciliation. Start never installs client files
+or launches an agent. Keep the existing preview-first setup workflow.
+
 ## Workflow
 
 For cross-window work, check `coprogrammer --version` in each environment.

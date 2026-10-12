@@ -1,0 +1,48 @@
+{
+  "source_branch": "codex/v0.3-onboarding",
+  "source_head": "1810ede076bf4534f34b7cb9d1e10b2f452c3227",
+  "main_base": "9ce280073ab01d9c5233f028364aa77faf9a8cdc",
+  "branch_digest": "branch-digest.md",
+  "objective": "Deliver simple window startup and inspectable status with clear bilingual onboarding.",
+  "changes_to_rebuild": [
+    "Additive CLI/MCP adapter over existing sessions and claims",
+    "Guided README and independently reproducible walkthrough",
+    "Matching package/Skill/plugin release assets",
+    "Windows log replacement resilience using the existing lock and atomic commit"
+  ],
+  "changes_to_drop": [
+    "Automatic client launch or configuration installation",
+    "Event/schema migrations",
+    "Distributed ownership claims or promised star growth"
+  ],
+  "protected_areas": [
+    "src/coprogrammer/cli.py",
+    "pyproject.toml"
+  ],
+  "required_decisions": [],
+  "patch_primitives": [
+    {
+      "type": "manual",
+      "tool": "Codex",
+      "rationale": "Thin entry points reuse the current Manager transactions and preserve existing event formats.",
+      "files": [
+        "src/coprogrammer/onboarding.py",
+        "src/coprogrammer/workflow_mcp.py"
+      ]
+    }
+  ],
+  "validation": [
+    {
+      "name": "source and installed-wheel tests",
+      "command": "python -m unittest discover -s tests",
+      "required": true
+    },
+    {
+      "name": "config",
+      "command": "python -m coprogrammer config validate",
+      "required": true
+    }
+  ],
+  "rollback_plan": "Revert the integration PR and pin 0.3.0a1; no event/config migration.",
+  "status": "draft"
+}

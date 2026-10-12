@@ -15,6 +15,9 @@ def declarations(string_schema):
                      "inputSchema": {"type": "object", "properties": properties,
                                      "required": required, "additionalProperties": False}})
 
+    add("workspace_status", "Read windows, session-specific eligible work, blockers and next steps from local Manager state. No pulse, claim, ACK or client launch.", {
+        "session": identity, "limit": {"type": "integer", "minimum": 1, "maximum": 200, "default": 20}}, [])
+
     add("workspace_snapshot", "Read bounded Git content fingerprint, revisions, sanitized repository identity and dirty paths; no fetch or writes.", {"base": base}, [])
     add("task_dispatch", "Preview eligible tasks for this session/client/worktree. No claim, pulse or worker launch; claim rechecks atomically.", {
         "session": identity, "limit": {"type": "integer", "minimum": 1, "maximum": 200, "default": 20}}, ["session"])
@@ -30,6 +33,9 @@ def declarations(string_schema):
 
 
 def dispatch(name, ctx, args):
+    if name == "workspace_status":
+        from .onboarding import overview
+        return overview(ctx.log_path, ctx.cwd, args.get("session", ""), args.get("limit", 20))
     if name == "workspace_snapshot":
         return workspace.snapshot(ctx.cwd, args.get("base", "HEAD"))
     if name == "task_dispatch":

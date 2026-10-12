@@ -2,6 +2,18 @@
 
 CoProgrammer is itself developed with the collaboration style it proposes.
 
+## Your first contribution
+
+Start with `coprogrammer demo` and the [two-window walkthrough](docs/GETTING_STARTED.md).
+Reproduce one problem before changing code. A focused improvement to a client
+example, error message, worktree conflict check or handoff guide is a useful
+first PR. Describe what users did, what went wrong and how they can verify the fix.
+
+For a documentation change, run the example you changed. For CLI or MCP behavior,
+add a regression that exercises the failure through a real checkout or server.
+Open a [GitHub issue](https://github.com/QIU-Guanzong/CoProgrammer/issues) for
+questions with a minimal reproduction; remove credentials and private source.
+
 ## Development Rules
 
 1. Keep protocol changes, tool changes, dependency upgrades, and formatting-only

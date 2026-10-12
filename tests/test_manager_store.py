@@ -299,6 +299,71 @@ class ManagerStorageTest(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), before)
         self.assertEqual(list(self.path.parent.glob(".events.jsonl.*")), [])
 
+    def test_windows_transient_replacement_retries_same_log_under_lock(self) -> None:
+        from coprogrammer import manager_store
+        original_replace = manager_store.os.replace
+        for code in (5, 32, 33):
+            with self.subTest(winerror=code):
+                before = self.path.read_bytes() if self.path.exists() else None
+                sources = []
+                def replace(source, target):
+                    sources.append(source)
+                    self.assertIn(str(self.path), manager_store._LOCAL.active)
+                    self.assertEqual(self.path.read_bytes() if self.path.exists() else None, before)
+                    if len(sources) < 3:
+                        error = OSError("temporarily occupied")
+                        error.winerror = code
+                        raise error
+                    original_replace(source, target)
+                with mock.patch.object(manager_store, "_WINDOWS", True), \
+                        mock.patch.object(manager_store.os, "replace", side_effect=replace), \
+                        mock.patch.object(manager_store.time, "sleep") as sleep:
+                    cli.append_event(self.path, cli.make_event("agent.heartbeat", "actor", "repo:test"))
+                self.assertEqual(len(set(sources)), 1)
+                self.assertEqual([call.args[0] for call in sleep.call_args_list], [0.02, 0.04])
+                self.assertEqual(list(self.path.parent.glob(".events.jsonl.*")), [])
+        self.assertEqual(len(cli.load_events(self.path)), 3)
+
+    def test_windows_persistent_replacement_error_preserves_log_and_is_bounded(self) -> None:
+        self.request()
+        before = self.path.read_bytes()
+        error = OSError("access denied")
+        error.winerror = 5
+        with mock.patch("coprogrammer.manager_store._WINDOWS", True), \
+                mock.patch("coprogrammer.manager_store.os.replace", side_effect=error) as replace, \
+                mock.patch("coprogrammer.manager_store.time.sleep") as sleep:
+            with self.assertRaisesRegex(RuntimeError, "cannot commit.*access denied"):
+                self.request(holder="claude", patterns=["docs/**"])
+        self.assertEqual(replace.call_count, 6)
+        self.assertEqual(sleep.call_count, 5)
+        self.assertAlmostEqual(sum(call.args[0] for call in sleep.call_args_list), 0.62)
+        self.assertEqual(self.path.read_bytes(), before)
+        self.assertEqual(list(self.path.parent.glob(".events.jsonl.*")), [])
+
+    def test_unrelated_windows_replacement_error_is_not_retried(self) -> None:
+        error = OSError("disk unavailable")
+        error.winerror = 112
+        with mock.patch("coprogrammer.manager_store._WINDOWS", True), \
+                mock.patch("coprogrammer.manager_store.os.replace", side_effect=error) as replace, \
+                mock.patch("coprogrammer.manager_store.time.sleep") as sleep:
+            with self.assertRaisesRegex(RuntimeError, "cannot commit.*disk unavailable"):
+                self.request()
+        self.assertEqual(replace.call_count, 1)
+        sleep.assert_not_called()
+        self.assertFalse(self.path.exists())
+
+    def test_posix_replacement_error_is_not_retried(self) -> None:
+        error = PermissionError("access denied")
+        error.winerror = 5
+        with mock.patch("coprogrammer.manager_store._WINDOWS", False), \
+                mock.patch("coprogrammer.manager_store.os.replace", side_effect=error) as replace, \
+                mock.patch("coprogrammer.manager_store.time.sleep") as sleep:
+            with self.assertRaisesRegex(RuntimeError, "cannot commit.*access denied"):
+                self.request()
+        self.assertEqual(replace.call_count, 1)
+        sleep.assert_not_called()
+        self.assertFalse(self.path.exists())
+
     def test_cli_renew_and_release(self) -> None:
         lease = self.request()["lease"]
         with contextlib.redirect_stdout(io.StringIO()):
