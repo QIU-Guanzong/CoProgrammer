@@ -7,7 +7,8 @@
   "changes_to_rebuild": [
     "Additive CLI/MCP adapter over existing sessions and claims",
     "Guided README and independently reproducible walkthrough",
-    "Matching package/Skill/plugin release assets"
+    "Matching package/Skill/plugin release assets",
+    "Windows log replacement resilience using the existing lock and atomic commit"
   ],
   "changes_to_drop": [
     "Automatic client launch or configuration installation",

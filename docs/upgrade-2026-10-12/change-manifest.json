@@ -6,7 +6,8 @@
     "start CLI with explicit dry-run/resume and no configuration installation",
     "status CLI and read-only workspace_status MCP",
     "Concrete bilingual README and two-window walkthrough",
-    "Matching plugin/package positioning and active-sync Skill"
+    "Matching plugin/package positioning and active-sync Skill",
+    "Bounded Windows atomic log replacement retries under the existing transaction lock"
   ],
   "contracts": [
     "Additive CLI/MCP results; existing Manager events and task lifecycle unchanged"

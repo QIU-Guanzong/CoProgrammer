@@ -21,6 +21,23 @@ _LOCKS: dict[str, threading.RLock] = {}
 _LOCKS_GUARD = threading.Lock()
 _LOCAL = threading.local()
 DEFAULT_LOCK_TIMEOUT = 10.0
+_WINDOWS = os.name == "nt"
+
+
+def _replace_event_log(source: str, target: Path) -> None:
+    """Keep the transaction locked across bounded Windows replacement retries."""
+    for attempt in range(6):
+        try:
+            os.replace(source, target)
+            return
+        except OSError as exc:
+            # Windows can briefly refuse replacement while another handle is
+            # closing or a filesystem observer is inspecting the new file.
+            # Retry the same complete, flushed file; never delete the old log.
+            if (not _WINDOWS or getattr(exc, "winerror", None) not in (5, 32, 33)
+                    or attempt == 5):
+                raise
+            time.sleep(0.02 * 2 ** attempt)
 
 
 def _reject_nonfinite(value: str) -> None:
@@ -149,7 +166,7 @@ class EventTransaction:
                     handle.write(json.dumps(event, ensure_ascii=False, sort_keys=True, allow_nan=False) + "\n")
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.replace(temporary, self.path)
+            _replace_event_log(temporary, self.path)
             temporary = None
         except (OSError, TypeError, ValueError, RecursionError) as exc:
             raise RuntimeError(f"cannot commit Manager event log {self.path}: {exc}") from exc

@@ -11,6 +11,11 @@ Rebuild only additive start/status entry points and read-only MCP status.
   settings are added. Status uses actual client/worktree eligibility and never ACKs.
 - Decode Git metadata as UTF-8; real non-ASCII worktree/branch regressions cover
   the new entry points along with legacy-encoding terminal output.
+- A real Windows 3.10 multiprocess CI run rejected atomic event-log replacement
+  with WinError 5. Retry Windows errors 5/32/33 at most six times, retaining the
+  transaction lock and the same flushed temporary file. Persistent and unrelated
+  errors still fail without overwriting the previous log. Four regressions cover
+  recovery, bounded failure, error selection and unchanged POSIX behavior.
 - Display positioning: CoProgrammer — Teamwork for coding agents. README starts
   with a concrete problem, actual demo excerpt, install/use steps and help routes.
 - GitHub About/topics and the disabled Discussions entry were aligned with the
