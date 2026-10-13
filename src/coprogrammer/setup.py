@@ -83,6 +83,8 @@ def _files(root: Path, client: str, skills: list[str] | None,
             add(f"{skill_dir}/{name}/SKILL.md", "skill", knowledge.read_document(f"skills/{name}"))
     if include_mcp:
         add(config_path, "mcp", integrations.client_config(client, root))
+        if client == "openclaw":
+            add(".coprogrammer-kit/openclaw/profile.json", "mcp", integrations.openclaw_profile(root))
     return files
 
 

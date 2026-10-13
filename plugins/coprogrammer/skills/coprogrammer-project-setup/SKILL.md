@@ -25,8 +25,12 @@ Choose `claude` for Claude Code or `copilot` for GitHub Copilot. With CLI
 0.3.0a4+, choose `openclaw`, `workbuddy`, `harness` (generic agent harness) or
 `generic` for other hosts. Read `coprogrammer integrations list` for activation
 paths. OpenClaw loads workspace `skills/`; its exported node MCP entry needs
-manual integration. WorkBuddy and generic hosts receive import kits, not claimed
-native discovery paths. Do not modify global profiles or install a remote bridge
+manual integration. With CLI 0.3.0a5+, WorkBuddy uses documented project
+`.codebuddy/skills/` and `.workbuddy/mcp.json`; older versions use import kits.
+OpenClaw also receives an isolated embedded profile; generic hosts receive import
+kits. `coprogrammer integrations verify --client CLIENT` reports installation
+conflicts, stdio transport and native OpenClaw discovery separately from model
+connection. Do not modify global profiles or install a remote bridge
 as part of project setup.
 
 Use `--edition skills`, `--edition mcp` or `--edition full` (CLI 0.3.0a3+)
