@@ -5,6 +5,7 @@ import json
 import os
 import signal
 import subprocess
+import threading
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -188,15 +189,48 @@ class WatcherTests(Fixture):
 
     def test_duplicate_watcher_refused_while_manager_remains_available_to_child(self):
         self.task()
-        command = [sys.executable, "-c", "import time,json;time.sleep(1);print(json.dumps({'status':'done','summary':'Done'}))"]
+        release = self.path.parent / "release-watch"
+        command = [sys.executable, "-c", "import time,json,pathlib;\nwhile not pathlib.Path('.coprogrammer/release-watch').exists():time.sleep(.02)\nprint(json.dumps({'status':'done','summary':'Done'}))"]
         with ThreadPoolExecutor(max_workers=1) as pool:
             pending = pool.submit(self.call, command, apply=True)
             end = time.monotonic() + 8
             while time.monotonic() < end and not any(e["type"] == "task.claimed" for e in load_events(self.path)):
                 time.sleep(.02)
-            with self.assertRaisesRegex(RuntimeError, "lock"):
-                self.call(apply=True)
+            try:
+                with self.assertRaisesRegex(RuntimeError, "lock"):
+                    self.call(apply=True)
+            finally:
+                release.touch()
             self.assertEqual(pending.result(timeout=15)["completed_tasks"], 1)
+
+    def test_peer_lock_spending_wait_budget_does_not_abort_or_retry_command(self):
+        from coprogrammer.manager_store import transaction
+        original = watcher.channels.wait
+        first = True
+        def wait(*args, **kwargs):
+            nonlocal first
+            if not first:
+                return original(*args, **kwargs)
+            first = False
+            held, release = threading.Event(), threading.Event()
+            def peer():
+                with transaction(self.path):
+                    self.task("late")
+                    held.set()
+                    release.wait(5)
+            thread = threading.Thread(target=peer)
+            thread.start()
+            try:
+                self.assertTrue(held.wait(5))
+                return original(args[0], args[1], args[2], .05)
+            finally:
+                release.set()
+                thread.join(5)
+        with patch("coprogrammer.watcher.channels.wait", side_effect=wait):
+            report = self.call(apply=True, wait=True, max_cycles=3, poll_seconds=1, duration=10)
+        self.assertEqual(report["completed_tasks"], 1)
+        self.assertEqual(report["reason"], "cycle_limit")
+        self.assertEqual(sum(e["type"] == "task.claimed" for e in load_events(self.path)), 1)
 
     def test_interrupt_returns_summary_without_releasing_original_claim(self):
         if os.name != "posix":

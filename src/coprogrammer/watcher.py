@@ -98,7 +98,16 @@ def watch(path: Path, cwd: Path, session: str, command: list[str], *,
                 cursor = events[-1]["id"]
                 remaining = max(0.0, deadline - time.monotonic())
                 if remaining:
-                    channels.wait(path, session, cursor, min(poll_seconds, remaining))
+                    try:
+                        channels.wait(path, session, cursor, min(poll_seconds, remaining))
+                    except RuntimeError as exc:
+                        # A bounded read wait can spend its budget acquiring a
+                        # peer-held Manager lock. Recheck at the next boundary;
+                        # this never retries a launched command or takes a lease.
+                        if str(exc) not in ("timed out waiting for Manager event lock",
+                                            "timed out waiting for Manager thread lock"):
+                            report.update(state="attention", reason="manager_wait_failed")
+                            break
             else:
                 report.update(state="stopped", reason="cycle_limit")
         except KeyboardInterrupt:
