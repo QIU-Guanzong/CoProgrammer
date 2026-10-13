@@ -16,12 +16,46 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-CLIENTS = ("codex", "claude", "copilot")
+CLIENT_LAYOUTS = {
+    "codex": (".agents/skills", ".codex/config.toml", None),
+    "claude": (".claude/skills", ".mcp.json", "CLAUDE.md"),
+    "copilot": (".agents/skills", ".vscode/mcp.json", ".github/copilot-instructions.md"),
+    "openclaw": ("skills", ".coprogrammer-kit/openclaw/mcp.json", None),
+    "workbuddy": (".coprogrammer-kit/workbuddy/skills", ".coprogrammer-kit/workbuddy/mcp.json", None),
+    "harness": (".coprogrammer-kit/harness/skills", ".coprogrammer-kit/harness/mcp.json", None),
+    "generic": (".coprogrammer-kit/generic/skills", ".coprogrammer-kit/generic/mcp.json", None),
+}
+CLIENTS = tuple(CLIENT_LAYOUTS)
+
+
+def client_profiles() -> dict:
+    """Describe installation evidence without claiming a native connection."""
+    result = {}
+    for client, (skills, config, _) in CLIENT_LAYOUTS.items():
+        native = client in ("codex", "claude", "copilot")
+        result[client] = {
+            "skills_directory": skills, "mcp_config": config,
+            "skills_activation": ("workspace" if native or client == "openclaw" else "manual_import"),
+            "mcp_activation": "native_project_config" if native else "manual_import",
+            "connection": "not_checked",
+            "instructions": (
+                "Reload the client and complete its normal project/MCP trust flow." if native else
+                "Select this folder as the OpenClaw workspace to load skills/. Use CLI for local coordination; "
+                "merge the exported nodeHost.mcp.servers.coprogrammer entry into the node's active "
+                "openclaw.json, preserving other settings. Restart the node and verify tool discovery. "
+                "The kit itself is not auto-loaded." if client == "openclaw" else
+                "Import the Skill folders and stdio MCP entry through WorkBuddy's supported UI. "
+                "This kit is not an auto-discovered WorkBuddy configuration." if client == "workbuddy" else
+                "Import Skills/MCP through the chosen runtime's documented interface, or call the CLI. "
+                "Harness is a generic adapter label, not a specific product API."
+            ),
+        }
+    return result
 
 
 def client_config(client: str, cwd: Path) -> str:
     if client not in CLIENTS:
-        raise RuntimeError("client must be codex, claude, or copilot")
+        raise RuntimeError("client must be one of: " + ", ".join(CLIENTS))
     cwd = cwd.resolve()
     if not cwd.is_dir():
         raise RuntimeError("client working directory does not exist")
@@ -43,7 +77,10 @@ def client_config(client: str, cwd: Path) -> str:
             "startup_timeout_sec = 15\n"
             "tool_timeout_sec = 60\n"
         )
-    key = "mcpServers" if client == "claude" else "servers"
+    if client == "openclaw":
+        return json.dumps({"nodeHost": {"mcp": {"servers": {"coprogrammer": server}}}},
+                          ensure_ascii=False, indent=2) + "\n"
+    key = "servers" if client == "copilot" else "mcpServers"
     return json.dumps({key: {"coprogrammer": {"type": "stdio", **server}}},
                       ensure_ascii=False, indent=2) + "\n"
 
@@ -68,7 +105,8 @@ def doctor(cwd: Path) -> dict[str, Any]:
         "clients": {name: {"executable_present": shutil.which(command) is not None,
                             "connection": "not_checked"}
                     for name, command in (("codex", "codex"), ("claude", "claude"),
-                                          ("github", "gh"))},
+                                          ("github", "gh"), ("openclaw", "openclaw"))},
+        "client_profiles": client_profiles(),
         "copilot": {"configuration": "supported", "connection": "not_checked"},
         "providers": provider_states,
         "manager_log": str(cli.event_log_path(cwd.resolve())),

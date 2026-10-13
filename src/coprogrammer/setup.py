@@ -13,11 +13,7 @@ from pathlib import Path
 
 from . import integrations, knowledge
 
-CLIENT_LAYOUTS = {
-    "codex": (".agents/skills", ".codex/config.toml", None),
-    "claude": (".claude/skills", ".mcp.json", "CLAUDE.md"),
-    "copilot": (".agents/skills", ".vscode/mcp.json", ".github/copilot-instructions.md"),
-}
+CLIENT_LAYOUTS = integrations.CLIENT_LAYOUTS
 MAX_EXISTING_BYTES = 1_000_000
 
 
@@ -50,7 +46,7 @@ def _target(root: Path, relative: str) -> Path:
 def _files(root: Path, client: str, skills: list[str] | None,
            include_mcp: bool, include_skills: bool, edition: str = "full") -> list[dict]:
     if client not in CLIENT_LAYOUTS:
-        raise RuntimeError("client must be codex, claude, or copilot")
+        raise RuntimeError("client must be one of: " + ", ".join(CLIENT_LAYOUTS))
     if type(include_mcp) is not bool or type(include_skills) is not bool:
         raise RuntimeError("setup switches must be boolean")
     if edition not in ("full", "skills", "mcp"):
@@ -136,9 +132,10 @@ def _report(root: Path, client: str, files: list[dict], warnings: list[str],
         "files": [{k: v for k, v in item.items() if include_content or k != "content"} for item in files],
         "warnings": warnings,
         "connection": "not_checked",
+        "activation": integrations.client_profiles()[client],
         "next_steps": ["Review the generated project files and preserve local instructions.",
                        "Keep .coprogrammer/ runtime state out of version control.",
-                       "Reload the chosen client and complete its normal project/MCP trust flow.",
+                       integrations.client_profiles()[client]["instructions"],
                        "Generated MCP paths are machine-specific; regenerate after moving Python, package or project."],
     }
 

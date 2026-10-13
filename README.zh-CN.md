@@ -134,6 +134,23 @@ GLM、DeepSeek 已配置在 Claude Code 中的窗口，登记 `--client claude`�
 | 审阅并整理分支改动 | `digest` / `integration-plan`；[命令参考](docs/GETTING_STARTED.md#prepare-a-pr) |
 | 请求第二份审核意见 | 明确调用 Claude、GLM 或 DeepSeek；[多平台指南](docs/MULTI_PLATFORM_QUICKSTART.md) |
 
+### 接入更多 AI 工作环境（0.3.0a4+）
+
+OpenClaw 可以加载工作区 Skills；WorkBuddy 可以导入 Skill/MCP 接入包。
+通用 agent harness 可以导入 MCP，或在工作步骤之间调用 CLI，复用任务队列、
+范围检查和持久收件箱。
+
+```sh
+coprogrammer setup --client openclaw --edition full --include-content
+coprogrammer setup --client workbuddy --edition full --include-content
+coprogrammer setup --client harness --edition mcp --include-content
+```
+
+检查所选方案后加 `--apply`。报告会说明需要哪些客户端导入步骤；生成文件不代表
+已经连接。Grok 也可用于明确发起的代码评审：
+`review --provider grok --model MODEL`。
+[接入步骤、能力边界与 Grok 指南 →](docs/EXTENDED_AI_INTEGRATIONS.md)
+
 ## 怎样配合现有工具？
 
 如果你已经使用多个编程助手，希望它们共享任务归属、沟通记录和审核材料，

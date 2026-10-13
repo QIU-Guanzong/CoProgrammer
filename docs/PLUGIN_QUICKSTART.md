@@ -65,12 +65,12 @@ package entry point; their installation flows can differ.
 ## Install the CLI for Manager operations
 
 The plugin package contains workflow instructions, not the CLI or MCP server.
-For these v0.3 workflows, use CLI version `0.3.0a3` in the Python environment
+For these v0.3 workflows, use CLI version `0.3.0a4` in the Python environment
 used by your terminal. Check its availability on
-[PyPI](https://pypi.org/project/coprogrammer/0.3.0a3/), then install:
+[PyPI](https://pypi.org/project/coprogrammer/0.3.0a4/), then install:
 
 ```bash
-python -m pip install --pre --upgrade "coprogrammer==0.3.0a3"
+python -m pip install --pre --upgrade "coprogrammer==0.3.0a4"
 coprogrammer --version
 ```
 

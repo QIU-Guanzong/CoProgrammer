@@ -1,6 +1,6 @@
 # Codex、Claude、GitHub、GLM、DeepSeek 接入指南
 
-本指南对应 `0.2.0a1` 升级预览。版本发布前，从此分支安装；生成配置不代表
+本指南对应 `0.3.0a4` 升级预览。使用相应版本的安装包；生成配置不代表
 客户端已连接，检测到环境变量也不代表服务商认证通过。
 
 ## 各平台如何协作
@@ -14,6 +14,11 @@
 | Claude API | Anthropic Messages 适配 | 对指定提交的代码差异提出结构化建议 |
 | GLM | Z.AI Chat Completions 适配 | 同上，服务地址与模型可显式指定 |
 | DeepSeek | Chat Completions 适配 | 同上 |
+| Grok / xAI | Responses API 适配 | 显式模型与离线请求预览；仅 `--send` 调用 |
+| OpenClaw / WorkBuddy / agent harness | Skills、MCP 导入包或 CLI | 复用现有队列、冲突检查与本地消息 |
+
+新增运行环境的具体导入路径与验证边界见
+[更多 AI 接入指南](EXTENDED_AI_INTEGRATIONS.md)。
 
 Codex 和 Claude Code 是协作客户端，模型 API 是独立服务入口。
 模型建议不会直接写代码、执行返回的命令、批准契约或合并 PR。
@@ -99,6 +104,7 @@ MCP 调用应检查 `granted`。不确定的 glob 交集和大小写别名按可
 | `anthropic` | `https://api.anthropic.com/v1` | `ANTHROPIC_API_KEY` |
 | `glm` | `https://api.z.ai/api/paas/v4` | `ZAI_API_KEY`，其次 `GLM_API_KEY` |
 | `deepseek` | `https://api.deepseek.com` | `DEEPSEEK_API_KEY` |
+| `grok` | `https://api.x.ai/v1`（Responses API） | `XAI_API_KEY` |
 
 可通过 `--base-url` 指定兼容的 HTTPS 根地址。GLM 中国入口可显式指定
 `https://open.bigmodel.cn/api/paas/v4`，此时优先读取 `GLM_API_KEY`。
@@ -120,7 +126,7 @@ coprogrammer review --provider deepseek --model YOUR_MODEL_ID \
   --base origin/main --head HEAD --send --output .coprogrammer/deepseek-review.json
 ```
 
-切换为 `--provider glm` 或 `--provider anthropic` 可独立复核同一对提交。
+切换为 `--provider glm`、`--provider anthropic` 或 `--provider grok` 可独立复核同一对提交。
 各模型输出独立保存；系统不把多模型意见一致当作集成批准。
 只有正常完成且通过结构校验的结果会保存为 `advisory`。不自动重试，避免重复计费。
 

@@ -1,6 +1,12 @@
 # Agent Runtime Interop
 
-Last updated: 2026-05-25
+Last updated: 2026-10-13
+
+Current installation profiles include Codex, Claude, Copilot, OpenClaw,
+WorkBuddy, generic agent harnesses and other MCP/CLI hosts. See the
+[runtime installation guide](EXTENDED_AI_INTEGRATIONS.md) for native versus
+manual activation. The local worker boundary APIs implement task selection,
+ownership renewal, guards and durable handoffs; they do not control windows.
 
 ## Positioning
 
