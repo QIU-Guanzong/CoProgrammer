@@ -33,7 +33,7 @@ class ManagedSetupUpgradeTest(unittest.TestCase):
         return patch.object(knowledge, "read_document", side_effect=read)
 
     def snapshot(self):
-        return {str(p.relative_to(self.root)): p.read_bytes()
+        return {p.relative_to(self.root).as_posix(): p.read_bytes()
                 for p in self.root.rglob("*") if p.is_file()}
 
     def test_recorded_upgrade_requires_explicit_apply_and_preserves_instructions(self):
@@ -120,7 +120,7 @@ class ManagedSetupUpgradeTest(unittest.TestCase):
         with self.changed_catalog(f"skills/{self.skill}", f"skills/{other}"):
             result = setup.apply(self.root, "codex", [self.skill], include_mcp=False, upgrade=True)
             self.assertTrue(result["applied"])
-            self.assertEqual((self.root / f".agents/skills/{other}/SKILL.md").read_text(encoding="utf-8"),
+            self.assertEqual((self.root / f".agents/skills/{other}/SKILL.md").read_bytes().decode("utf-8"),
                              self.original_read(f"skills/{other}"))
             receipt = json.loads((self.root / setup.MANIFEST_PATH).read_bytes())["files"]
             self.assertIn(f".claude/skills/{self.skill}/SKILL.md", receipt)
