@@ -1668,7 +1668,7 @@ def command_integrations(args: argparse.Namespace) -> int:
         result = integrations.client_config(args.client, Path(args.cwd))
     elif args.integrations_command == "verify":
         from .runtime_verify import verify
-        result = verify(Path(args.cwd), args.client, args.timeout_seconds)
+        result = verify(Path(args.cwd), args.client, args.timeout_seconds, args.native_executable)
     elif args.integrations_command == "doctor":
         result = integrations.doctor(Path(args.cwd))
     else:
@@ -1915,6 +1915,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--client", choices=CLIENTS, required=True)
         if name == "verify":
             command.add_argument("--timeout-seconds", type=int, default=60)
+            command.add_argument("--native-executable", help="Explicit trusted OpenClaw CLI path/name; never changes the default launcher or service config.")
         command.set_defaults(func=command_integrations)
 
     github_context = subparsers.add_parser("github-context", help="Read a GitHub PR into a commit-bound handoff.")

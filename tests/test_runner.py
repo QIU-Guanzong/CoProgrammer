@@ -155,7 +155,7 @@ class VerificationTest(Fixture):
             profile = Path(env["OPENCLAW_CONFIG_PATH"])
             self.assertEqual(profile.parent, Path(env["OPENCLAW_STATE_DIR"]))
             self.assertEqual(json.loads(profile.read_text())["agents"]["defaults"]["workspace"], str(self.repo))
-            if argv[1] == "config": return {"ok": True, "data": {"valid": True}}
+            if argv[1] == "config": return {"ok": True, "data": {"valid": True, "path": str(profile)}}
             return {"ok": True, "data": {"tools": ["coprogrammer__worker_step", "coprogrammer__worker_finish"], "diagnostics": []}}
         with patch("coprogrammer.runtime_verify.shutil.which", return_value="openclaw"), \
                 patch("coprogrammer.runtime_verify._json_command", side_effect=native):

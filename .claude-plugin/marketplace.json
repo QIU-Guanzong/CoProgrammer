@@ -9,7 +9,7 @@
     {
       "name": "coprogrammer",
       "source": "./plugins/coprogrammer",
-      "description": "Five skills for project readiness, task scoping, Manager coordination, branch review, and integration planning."
+      "description": "Six skills for project setup, readiness, task scoping, Manager coordination, branch review and integration planning."
     }
   ]
 }

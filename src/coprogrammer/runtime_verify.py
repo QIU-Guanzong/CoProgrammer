@@ -35,11 +35,16 @@ def _json_command(argv: list[str], cwd: Path, timeout: int, env: dict) -> dict:
         return {"ok": False, "reason": "invalid_client_reply"}
 
 
-def verify(cwd: Path, client: str, timeout: int = 60) -> dict:
+def verify(cwd: Path, client: str, timeout: int = 60,
+           native_executable: str | None = None) -> dict:
     if client not in integrations.CLIENTS:
         raise RuntimeError("unknown client")
     if type(timeout) is not int or not 1 <= timeout <= 180:
         raise RuntimeError("verification timeout must be 1..180 seconds")
+    if native_executable is not None and (client != "openclaw"
+            or not isinstance(native_executable, str) or not native_executable.strip()
+            or len(native_executable) > 4000 or "\0" in native_executable):
+        raise RuntimeError("native_executable must select one trusted OpenClaw executable")
     cwd = cwd.resolve()
     plan = setup.preview(cwd, client)
     missing = [item["path"] for item in plan["files"] if item["status"] == "create"]
@@ -82,11 +87,12 @@ def verify(cwd: Path, client: str, timeout: int = 60) -> dict:
               "note": "Transport discovery does not establish model access, task execution or global client activation."}
     if client != "openclaw":
         return report
-    executable = shutil.which("openclaw")
+    executable = shutil.which(native_executable or "openclaw")
     if not executable:
         report["native_client"] = {"status": "unavailable", "reason": "openclaw_not_installed"}
         return report
     report["network_used"] = "not_checked"
+    report["native_executable"] = executable
     with tempfile.TemporaryDirectory(prefix="coprogrammer-openclaw-probe-") as tmp:
         root = Path(tmp)
         profile = root / "openclaw.json"
@@ -96,6 +102,17 @@ def verify(cwd: Path, client: str, timeout: int = 60) -> dict:
         checked = _json_command([executable, "config", "validate", "--json"], cwd, timeout, env)
         if not checked["ok"] or checked["data"].get("valid") is not True:
             report["native_client"] = {"status": "failed", "reason": "native_profile_validation_failed"}
+            return report
+        checked_path = checked["data"].get("path")
+        try:
+            bound = (isinstance(checked_path, str) and
+                     os.path.normcase(str(Path(checked_path).resolve())) ==
+                     os.path.normcase(str(profile.resolve())))
+        except (OSError, RuntimeError, ValueError):
+            bound = False
+        if not bound:
+            report["native_client"] = {"status": "failed", "reason": "isolated_profile_not_used",
+                                       "next_step": "Select the trusted native CLI with --native-executable; keep managed-service settings separate."}
             return report
         probed = _json_command([executable, "mcp", "probe", "coprogrammer", "--json"], cwd, timeout, env)
         if not probed["ok"]:

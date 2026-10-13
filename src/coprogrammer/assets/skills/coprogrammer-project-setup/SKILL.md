@@ -37,7 +37,7 @@ Use `--edition skills`, `--edition mcp` or `--edition full` (CLI 0.3.0a3+)
 for the requested variant. Add `--no-mcp` when only Skills and Markdown are needed.
 Inspect the proposed
 paths and contents, including every existing-file conflict. Preserve existing
-instructions and MCP servers; setup does not overwrite or merge them.
+instructions and MCP servers. Differing custom files require manual integration.
 
 For an authorized setup request, apply the reviewed plan with the same flags:
 
@@ -45,11 +45,29 @@ For an authorized setup request, apply the reviewed plan with the same flags:
 coprogrammer setup --client codex --apply
 ```
 
-Only absent files are created. Read the result, check the generated files and
+With CLI 0.3.0a6+, `setup --upgrade` previews updates to generated files still
+matching the local hash receipt; add `--apply` after review. Instructions are
+always preserved, and differing unrecorded/custom files remain conflicts.
+With CLI 0.3.0a7+, `start --client CLIENT --session WINDOW --apply-setup --dry-run`
+previews installation and registration together. Remove `--dry-run` within the
+authorized scope to apply; conflicts prevent registration. Use `--resume` for
+the same existing window. Review/checkpoint setup files before scoped work.
+
+Read the result, check the generated files and
 report conflicts that still need narrow manual integration. Do not infer that
 a generated MCP configuration proves the client connected or trusted it.
 Follow that client's available reload/trust flow when connection verification
 is in scope. No setup step grants authority to contact other agents or services.
+For OpenClaw, a managed launcher may ignore local profile variables; verification
+must bind the generated profile before discovery. Select a trusted native CLI
+explicitly with `--native-executable` when needed; keep service settings intact.
+
+For an authorized foreground execution workflow, CLI 0.3.0a7+ `worker watch`
+reuses the trusted JSON harness contract with finite cycle/duration limits.
+Preview first; add `--apply` to launch. `--wait` is a bounded foreground wait,
+and `--handle-inbox` accepts only the harness's explicit delivered-ID receipts.
+Stop on failed scope checks, decisions or invalid replies; do not retry or
+take over leases automatically. It does not launch GUI clients or choose models.
 
 Inspect the bundled guidance without changing the project:
 

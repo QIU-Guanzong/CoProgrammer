@@ -125,6 +125,16 @@ contains six Skills, and the CLI serves twelve read-only Markdown resources.
 
 ## What else can it do?
 
+### Process ready tasks without repeating each command (0.3.0a7+)
+
+`start --apply-setup --dry-run` previews project installation and window
+registration together. After review, remove `--dry-run` to apply them.
+`worker watch` continues ready tasks and, with explicit `--handle-inbox`, the
+harness's delivered-message receipts. Use `--wait` for bounded foreground waits
+on peer changes. Failures, decisions and scope problems stop processing.
+It requires your trusted JSON harness; it does not log clients in or launch
+their GUIs. [Foreground worker guide](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/FOREGROUND_WORKERS.md).
+
 ### Less manual coordination (0.3.0a3+)
 
 Choose a **Skill**, **MCP** or **full** installation using `setup --edition skills`,
