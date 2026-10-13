@@ -1,0 +1,28 @@
+{
+  "task": "v0.3.0a6 managed project setup updates",
+  "intent": "Refresh unchanged generated Skills, templates and MCP configuration after package or path changes without overwriting customization.",
+  "scope": "tooling | docs | tests",
+  "core_changes": [
+    "Explicit setup --upgrade preview/application",
+    "Worktree-local hash-only setup receipt",
+    "Cooperating installer serialization, rechecks and bounded rollback",
+    "Related-project research and bilingual maintenance guidance"
+  ],
+  "contracts": [
+    "Additive setup API/CLI and report fields",
+    "No Manager event, schema, protocol, workflow or runtime dependency change",
+    "Instructions preserved; custom/unrecorded differences remain conflicts"
+  ],
+  "tests": [
+    "Upgrade, customization, adoption, subset and multi-client regression tests",
+    "Real Git linked-worktree receipt isolation",
+    "Concurrent installs, linked/reparse paths, failures and rollback",
+    "Source, installed wheel, Windows/Linux CI and published package verification"
+  ],
+  "risks": [
+    "Pre-receipt differing files require manual review",
+    "Multi-file updates are not filesystem transactions",
+    "Hash receipts are local advisory records, not authenticated ownership",
+    "Native/model connection remains separately verified; WorkBuddy UI deferred"
+  ]
+}

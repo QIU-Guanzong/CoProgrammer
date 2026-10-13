@@ -1698,7 +1698,8 @@ def command_setup(args: argparse.Namespace) -> int:
     from . import setup
     operation = setup.apply if args.apply else setup.preview
     result = operation(Path(args.cwd), args.client, args.skill,
-                       not args.no_mcp, not args.no_skills, args.include_content, args.edition)
+                       not args.no_mcp, not args.no_skills, args.include_content, args.edition,
+                       upgrade=args.upgrade)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["can_apply"] else 1
 
@@ -1888,7 +1889,7 @@ def build_parser() -> argparse.ArgumentParser:
     knowledge_show.add_argument("id")
     knowledge_show.set_defaults(func=command_knowledge)
 
-    setup = subparsers.add_parser("setup", help="Preview project Skills, Markdown and MCP config; use --apply to create missing files.")
+    setup = subparsers.add_parser("setup", help="Preview project Skills, Markdown and MCP config; --apply installs and --upgrade refreshes unchanged recorded files.")
     from .integrations import CLIENTS
     from .providers import PROVIDERS
     setup.add_argument("--client", choices=CLIENTS, required=True)
@@ -1900,7 +1901,8 @@ def build_parser() -> argparse.ArgumentParser:
     skill_selection.add_argument("--no-skills", action="store_true", help="Skip Skill files.")
     setup.add_argument("--no-mcp", action="store_true", help="Skip native MCP config when merging it separately.")
     setup.add_argument("--include-content", action="store_true", help="Include proposed content only; never show existing file content.")
-    setup.add_argument("--apply", action="store_true", help="Create missing files; preserve instructions and refuse conflicting config/skills/docs.")
+    setup.add_argument("--upgrade", action="store_true", help="Preview refreshes of generated files still matching their local setup receipt; requires --apply to write.")
+    setup.add_argument("--apply", action="store_true", help="Apply the preview; create missing files and explicitly refresh with --upgrade, preserving instructions and customization.")
     setup.set_defaults(func=command_setup)
 
     integrations = subparsers.add_parser("integrations", help="Configure and inspect multi-platform integrations.")

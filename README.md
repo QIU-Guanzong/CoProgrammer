@@ -113,6 +113,11 @@ preserved; differing Skills or MCP configuration are reported as conflicts.
 Reload the client and follow its normal project/MCP trust flow. Generated
 configuration alone does not establish a connection.
 
+After upgrading the package or moving Python/project paths, preview updates to
+unchanged generated files with `coprogrammer setup --client codex --upgrade`;
+add `--apply` to write them. Customized files continue to report conflicts.
+[Update an installed project](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/INSTALLATION_MAINTENANCE.md).
+
 MCP exposes the same local workflows. `workspace_status` provides the combined
 status view; `task_dispatch` previews eligible tasks. The packaged plugin
 contains six Skills, and the CLI serves twelve read-only Markdown resources.

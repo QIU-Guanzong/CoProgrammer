@@ -105,6 +105,10 @@ coprogrammer setup --client codex --apply
 Skills 或 MCP 配置会报告冲突。随后重新加载客户端，完成其项目和 MCP 信任流程。
 配置生成成功不代表客户端已经连接。
 
+升级包或移动 Python/项目路径后，运行 `coprogrammer setup --client codex --upgrade`
+预览更新，再加 `--apply` 写入。只更新有安装记录且未被改动的生成文件；自定义内容
+继续报告冲突。见[安装后如何升级](docs/INSTALLATION_MAINTENANCE.md)。
+
 MCP 提供同一套本地协作能力。`workspace_status` 汇总工作状态，`task_dispatch`
 筛选可领取任务。插件包含六个 Skills，命令行包提供十二个只读 Markdown 资源。
 [接入指南](docs/knowledge/README.md) · [插件安装](docs/PLUGIN_QUICKSTART.md)
