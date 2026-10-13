@@ -44,7 +44,7 @@ def start(path: Path, cwd: Path, client: str, session: str, task: str | None = N
           provider: str | None = None, model: str | None = None) -> dict:
     """Register a window; explicitly resume only its matching local session."""
     if client not in setup.CLIENT_LAYOUTS:
-        raise RuntimeError("client must be codex, claude, or copilot")
+        raise RuntimeError("client must be one of: " + ", ".join(setup.CLIENT_LAYOUTS))
     co.identity(session)
     if task is not None:
         co.text(task, "task")

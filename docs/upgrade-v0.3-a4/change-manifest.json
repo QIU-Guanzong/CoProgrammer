@@ -1,0 +1,9 @@
+{
+  "task": "v0.3.0a4 expanded AI runtime adapters",
+  "intent": "Let more installed AI runtimes share task ownership, scope guards and local handoffs.",
+  "scope": "feature | docs | tooling",
+  "core_changes": ["OpenClaw, WorkBuddy, harness and generic setup profiles", "Explicit activation metadata", "Grok Responses API advisory adapter", "Bilingual discovery and installation Skill"],
+  "contracts": ["Existing event, task, session and MCP tool formats unchanged", "CLI client/provider choices expanded additively", "Setup reports include additive activation metadata"],
+  "tests": ["Real generated stdio startup", "Cross-worktree routing and inbox acknowledgement", "Import editions and conflict preservation", "Grok safe preview, parsing, truncation and failure cases", "Source and installed wheel suites; Ubuntu/Windows CI"],
+  "risks": ["Manual import is not verified native client discovery", "No live model accounts tested", "Harness is generic, not a product integration", "Cross-machine live coordination is not implemented"]
+}

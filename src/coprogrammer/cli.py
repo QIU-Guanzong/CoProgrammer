@@ -1670,6 +1670,7 @@ def command_integrations(args: argparse.Namespace) -> int:
         result = integrations.doctor(Path(args.cwd))
     else:
         result = {"clients": list(integrations.CLIENTS), "providers": providers.provider_info(),
+                  "client_profiles": integrations.client_profiles(),
                   "github": "read-only PR context and existing opt-in PR comments"}
     _emit_artifact(result, args.output)
     return 0
@@ -1883,10 +1884,12 @@ def build_parser() -> argparse.ArgumentParser:
     knowledge_show.set_defaults(func=command_knowledge)
 
     setup = subparsers.add_parser("setup", help="Preview project Skills, Markdown and MCP config; use --apply to create missing files.")
-    setup.add_argument("--client", choices=("codex", "claude", "copilot"), required=True)
+    from .integrations import CLIENTS
+    from .providers import PROVIDERS
+    setup.add_argument("--client", choices=CLIENTS, required=True)
     setup.add_argument("--cwd", default=".")
     setup.add_argument("--edition", choices=("full", "skills", "mcp"), default="full",
-                       help="Full setup, Skills plus Markdown, or only native MCP configuration.")
+                       help="Full setup, Skills plus Markdown, or only MCP configuration/import recipe.")
     skill_selection = setup.add_mutually_exclusive_group()
     skill_selection.add_argument("--skill", action="append", help="Full Skill name from knowledge list; repeatable, defaults to all.")
     skill_selection.add_argument("--no-skills", action="store_true", help="Skip Skill files.")
@@ -1902,7 +1905,7 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--cwd", default=".")
         command.add_argument("--output")
         if name == "config":
-            command.add_argument("--client", choices=("codex", "claude", "copilot"), required=True)
+            command.add_argument("--client", choices=CLIENTS, required=True)
         command.set_defaults(func=command_integrations)
 
     github_context = subparsers.add_parser("github-context", help="Read a GitHub PR into a commit-bound handoff.")
@@ -1913,7 +1916,7 @@ def build_parser() -> argparse.ArgumentParser:
     github_context.set_defaults(func=command_github_context)
 
     review = subparsers.add_parser("review", help="Preview a model review request; --send explicitly calls the provider.")
-    review.add_argument("--provider", choices=("anthropic", "glm", "deepseek"), required=True)
+    review.add_argument("--provider", choices=PROVIDERS, required=True)
     review.add_argument("--model", required=True, help="Explicit model ID available to your provider account.")
     review.add_argument("--base-url", help="Explicit HTTPS provider API root.")
     review.add_argument("--base")

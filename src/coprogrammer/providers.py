@@ -48,6 +48,14 @@ PROVIDERS = {
         "key_env": ["DEEPSEEK_API_KEY"],
         "documentation": "https://api-docs.deepseek.com/api/create-chat-completion/",
     },
+    "grok": {
+        "label": "Grok / xAI",
+        "protocol": "openai-responses",
+        "base_url": "https://api.x.ai/v1",
+        "path": "/responses",
+        "key_env": ["XAI_API_KEY"],
+        "documentation": "https://docs.x.ai/developers/rest-api-reference/inference/responses",
+    },
 }
 
 
@@ -125,6 +133,15 @@ def build_request(provider: str, model: str, prompt: str, *,
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if spec["protocol"] == "anthropic-messages":
         headers["anthropic-version"] = "2023-06-01"
+    body = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+        "stream": False,
+    }
+    if spec["protocol"] == "openai-responses":
+        body = {"model": model, "input": [{"role": "user", "content": prompt}],
+                "max_output_tokens": max_tokens, "stream": False, "store": False}
     return {
         "provider": provider,
         "model": model,
@@ -132,12 +149,7 @@ def build_request(provider: str, model: str, prompt: str, *,
         "method": "POST",
         "headers": headers,
         "key_env": key_env,
-        "body": {
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": max_tokens,
-            "stream": False,
-        },
+        "body": body,
     }
 
 
@@ -165,10 +177,10 @@ def _token_count(value: object) -> int | None:
     return value if type(value) is int and value >= 0 else None
 
 
-def _usage(raw: object, anthropic: bool) -> dict:
+def _usage(raw: object, anthropic: bool, responses: bool = False) -> dict:
     raw = raw if isinstance(raw, dict) else {}
-    incoming = _token_count(raw.get("input_tokens" if anthropic else "prompt_tokens"))
-    outgoing = _token_count(raw.get("output_tokens" if anthropic else "completion_tokens"))
+    incoming = _token_count(raw.get("input_tokens" if anthropic or responses else "prompt_tokens"))
+    outgoing = _token_count(raw.get("output_tokens" if anthropic or responses else "completion_tokens"))
     # Anthropic reports cached input separately from newly processed input.
     if anthropic and incoming is not None:
         for key in ("cache_creation_input_tokens", "cache_read_input_tokens"):
@@ -187,10 +199,33 @@ def _parse_response(raw: bytes, provider: str, model: str, secret: str) -> dict:
         result = json.loads(raw.decode("utf-8"))
     except (UnicodeError, ValueError, RecursionError):
         raise error from None
-    if not isinstance(result, dict) or "error" in result:
+    responses = PROVIDERS[provider]["protocol"] == "openai-responses"
+    if not isinstance(result, dict) or ("error" in result and not (responses and result["error"] is None)):
         raise error
     anthropic = PROVIDERS[provider]["protocol"] == "anthropic-messages"
-    if anthropic:
+    if responses:
+        if result.get("status") not in ("completed", "incomplete"):
+            raise error
+        output = result.get("output")
+        if not isinstance(output, list) or not all(isinstance(item, dict) for item in output):
+            raise error
+        text_blocks = []
+        for item in output:
+            if item.get("type") != "message" or item.get("role") != "assistant":
+                continue
+            content = item.get("content")
+            if not isinstance(content, list) or not all(isinstance(block, dict) for block in content):
+                raise error
+            for block in content:
+                if block.get("type") == "output_text":
+                    if not isinstance(block.get("text"), str):
+                        raise error
+                    text_blocks.append(block["text"])
+        text = "\n".join(text_blocks)
+        details = result.get("incomplete_details")
+        cap_reached = isinstance(details, dict) and details.get("reason") == "max_output_tokens"
+        reason = ("max_tokens" if cap_reached else "incomplete") if result["status"] == "incomplete" else "stop"
+    elif anthropic:
         blocks = result.get("content")
         if not isinstance(blocks, list) or not all(isinstance(block, dict) for block in blocks):
             raise error
@@ -216,15 +251,15 @@ def _parse_response(raw: bytes, provider: str, model: str, secret: str) -> dict:
         raise error from None
     known_reasons = ("stop", "end_turn", "length", "max_tokens", "stop_sequence",
                      "tool_use", "tool_calls", "content_filter", "sensitive", "refusal",
-                     "pause_turn", "model_context_window_exceeded", "network_error")
+                     "pause_turn", "model_context_window_exceeded", "network_error", "incomplete")
     reason = reason if isinstance(reason, str) and reason in known_reasons else None
     return {
         "provider": provider,
         "model": model,
         "text": text.replace(secret, "[REDACTED]"),
-        "usage": _usage(result.get("usage"), anthropic),
+        "usage": _usage(result.get("usage"), anthropic, responses),
         "finish_reason": reason,
-        "truncated": reason in ("length", "max_tokens", "model_context_window_exceeded"),
+        "truncated": reason in ("length", "max_tokens", "model_context_window_exceeded", "incomplete"),
     }
 
 

@@ -1,6 +1,6 @@
 ---
 name: coprogrammer-project-setup
-description: "Set up repository-local CoProgrammer skills, Markdown instructions and optional MCP configuration for Codex, Claude Code or GitHub Copilot while preserving existing files."
+description: "Install project-local CoProgrammer Skills, Markdown and MCP configuration or import kits for coding agents and agent harnesses while preserving existing files."
 ---
 
 # CoProgrammer Project Setup
@@ -21,8 +21,17 @@ Preview its local file plan from the target repository:
 coprogrammer setup --client codex --include-content
 ```
 
-Choose `claude` for Claude Code or `copilot` for GitHub Copilot. Add `--no-mcp`
-when the user wants only skills and Markdown guidance. Inspect the proposed
+Choose `claude` for Claude Code or `copilot` for GitHub Copilot. With CLI
+0.3.0a4+, choose `openclaw`, `workbuddy`, `harness` (generic agent harness) or
+`generic` for other hosts. Read `coprogrammer integrations list` for activation
+paths. OpenClaw loads workspace `skills/`; its exported node MCP entry needs
+manual integration. WorkBuddy and generic hosts receive import kits, not claimed
+native discovery paths. Do not modify global profiles or install a remote bridge
+as part of project setup.
+
+Use `--edition skills`, `--edition mcp` or `--edition full` (CLI 0.3.0a3+)
+for the requested variant. Add `--no-mcp` when only Skills and Markdown are needed.
+Inspect the proposed
 paths and contents, including every existing-file conflict. Preserve existing
 instructions and MCP servers; setup does not overwrite or merge them.
 

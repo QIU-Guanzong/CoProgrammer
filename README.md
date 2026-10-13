@@ -143,6 +143,23 @@ agent. [Installation editions and automatic workflow →](docs/AUTOMATIC_COLLABO
 | Review a branch for integration | `digest` / `integration-plan`; [CLI reference](docs/GETTING_STARTED.md#prepare-a-pr) |
 | Request a second opinion | Explicit Claude, GLM or DeepSeek review; [multi-platform guide](docs/MULTI_PLATFORM_QUICKSTART.md) |
 
+### Bring your own agent harness (0.3.0a4+)
+
+OpenClaw can load workspace Skills; WorkBuddy can import a Skill/MCP kit.
+Generic agent harnesses can import MCP or call the CLI at work boundaries.
+All use the existing task queue, scope guards and durable local inbox.
+
+```sh
+coprogrammer setup --client openclaw --edition full --include-content
+coprogrammer setup --client workbuddy --edition full --include-content
+coprogrammer setup --client harness --edition mcp --include-content
+```
+
+Review your chosen plan, then add `--apply`. Import profiles explain the required
+client activation; generated files do not establish a connection. Grok is also
+available for explicit advisory reviews via `review --provider grok --model MODEL`.
+[Runtime adapters, activation steps and Grok guide →](docs/EXTENDED_AI_INTEGRATIONS.md)
+
 ## How it fits
 
 Use CoProgrammer when you already run coding agents and need shared ownership,
