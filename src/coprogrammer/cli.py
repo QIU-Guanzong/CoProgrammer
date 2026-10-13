@@ -1666,6 +1666,9 @@ def command_integrations(args: argparse.Namespace) -> int:
     _check_output(args.output)
     if args.integrations_command == "config":
         result = integrations.client_config(args.client, Path(args.cwd))
+    elif args.integrations_command == "verify":
+        from .runtime_verify import verify
+        result = verify(Path(args.cwd), args.client, args.timeout_seconds)
     elif args.integrations_command == "doctor":
         result = integrations.doctor(Path(args.cwd))
     else:
@@ -1673,6 +1676,8 @@ def command_integrations(args: argparse.Namespace) -> int:
                   "client_profiles": integrations.client_profiles(),
                   "github": "read-only PR context and existing opt-in PR comments"}
     _emit_artifact(result, args.output)
+    if args.integrations_command == "verify":
+        return 1 if result["installation"]["status"] != "ready" or result["transport"]["status"] != "verified" or result["native_client"]["status"] in ("failed", "unavailable") else 0
     return 0
 
 
@@ -1900,12 +1905,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     integrations = subparsers.add_parser("integrations", help="Configure and inspect multi-platform integrations.")
     integrations_sub = integrations.add_subparsers(dest="integrations_command", required=True)
-    for name in ("list", "doctor", "config"):
+    for name in ("list", "doctor", "config", "verify"):
         command = integrations_sub.add_parser(name)
         command.add_argument("--cwd", default=".")
         command.add_argument("--output")
-        if name == "config":
+        if name in ("config", "verify"):
             command.add_argument("--client", choices=CLIENTS, required=True)
+        if name == "verify":
+            command.add_argument("--timeout-seconds", type=int, default=60)
         command.set_defaults(func=command_integrations)
 
     github_context = subparsers.add_parser("github-context", help="Read a GitHub PR into a commit-bound handoff.")

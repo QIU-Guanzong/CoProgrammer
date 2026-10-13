@@ -1,16 +1,20 @@
-# CoProgrammer
+# CoProgrammer: multi-agent coding coordination
 
 **Teamwork for coding agents.**
 
-Shared tasks, file boundaries and durable handoffs for **Codex, Claude Code and
-GitHub Copilot** working in the same Git repository.
+Shared tasks, conflict checks and durable handoffs across **Git worktrees and
+multiple AI coding windows**. Project setup supports Codex, Claude Code, Copilot,
+OpenClaw and WorkBuddy; agent harnesses can use the CLI or MCP.
 
 [![CI](https://github.com/QIU-Guanzong/CoProgrammer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/QIU-Guanzong/CoProgrammer/actions/workflows/ci.yml)
-[![MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE)
+[![MIT](https://img.shields.io/badge/license-MIT-black)](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/LICENSE)
 
-[简体中文](README.zh-CN.md) · [Try it](#try-the-preview) ·
-[Two-window walkthrough](docs/GETTING_STARTED.md) ·
-[Connect your client](docs/knowledge/README.md) · [Releases](https://github.com/QIU-Guanzong/CoProgrammer/releases)
+[简体中文](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/README.zh-CN.md) · [Try it](#try-the-preview) ·
+[Two-window walkthrough](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/GETTING_STARTED.md) ·
+[Connect your client](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/knowledge/README.md) · [Releases](https://github.com/QIU-Guanzong/CoProgrammer/releases)
+
+[Is this useful for your workflow?](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/USE_CASES.md) ·
+[Native checks and harness automation](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/NATIVE_RUNTIME_WORKFLOW.md)
 
 ## The problem
 
@@ -53,7 +57,7 @@ An excerpt from an actual run:
 [passed] Reject overlapping work: A different worktree cannot claim src/api.py while Codex holds src/**.
 ```
 
-[What the demo checks →](docs/DEMO.md)
+[What the demo checks →](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/DEMO.md)
 
 ## Use it in your project
 
@@ -86,7 +90,7 @@ coprogrammer manager task claim --session codex-api --id api-v2
 ```
 
 Claims return an ownership token. Use it with the existing guard and finish
-commands; the [two-window walkthrough](docs/GETTING_STARTED.md) covers dependency
+commands; the [two-window walkthrough](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/GETTING_STARTED.md) covers dependency
 setup, messages, receipts and completion. Status distinguishes repository-wide
 readiness from work eligible for the selected window.
 
@@ -112,7 +116,7 @@ configuration alone does not establish a connection.
 MCP exposes the same local workflows. `workspace_status` provides the combined
 status view; `task_dispatch` previews eligible tasks. The packaged plugin
 contains six Skills, and the CLI serves twelve read-only Markdown resources.
-[Client setup](docs/knowledge/README.md) · [Plugin installation](docs/PLUGIN_QUICKSTART.md)
+[Client setup](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/knowledge/README.md) · [Plugin installation](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/PLUGIN_QUICKSTART.md)
 
 ## What else can it do?
 
@@ -131,17 +135,17 @@ GLM/DeepSeek-backed Claude Code windows register with `--client claude` and
 `--provider glm` or `--provider deepseek`. Task filters match the host or declared
 provider; labels do not configure credentials or establish a model connection.
 MCP equivalents are `worker_step` and `worker_finish`, called by the participating
-agent. [Installation editions and automatic workflow →](docs/AUTOMATIC_COLLABORATION.md)
+agent. [Installation editions and automatic workflow →](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/AUTOMATIC_COLLABORATION.md)
 
 | Need | Entry point |
 | --- | --- |
-| Inspect work and blockers | `coprogrammer status`; [status guide](docs/GETTING_STARTED.md) |
-| Send and acknowledge handoffs | `manager message`; [communication guide](docs/AGENT_RUNTIME_INTEROP.md) |
-| Check file scope before edits | `manager task guard`; [scheduling guide](docs/MULTI_PLATFORM_QUICKSTART.md) |
-| Detect stale test results | `check run` / `check verify`; [check receipts](docs/VALIDATION_EVIDENCE.md) |
-| Continue on another computer | `manager handoff` / `workspace compare`; [portable handoffs](docs/WORKSPACE_HANDOFF.md) |
-| Review a branch for integration | `digest` / `integration-plan`; [CLI reference](docs/GETTING_STARTED.md#prepare-a-pr) |
-| Request a second opinion | Explicit Claude, GLM or DeepSeek review; [multi-platform guide](docs/MULTI_PLATFORM_QUICKSTART.md) |
+| Inspect work and blockers | `coprogrammer status`; [status guide](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/GETTING_STARTED.md) |
+| Send and acknowledge handoffs | `manager message`; [communication guide](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/AGENT_RUNTIME_INTEROP.md) |
+| Check file scope before edits | `manager task guard`; [scheduling guide](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/MULTI_PLATFORM_QUICKSTART.md) |
+| Detect stale test results | `check run` / `check verify`; [check receipts](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/VALIDATION_EVIDENCE.md) |
+| Continue on another computer | `manager handoff` / `workspace compare`; [portable handoffs](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/WORKSPACE_HANDOFF.md) |
+| Review a branch for integration | `digest` / `integration-plan`; [CLI reference](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/GETTING_STARTED.md#prepare-a-pr) |
+| Request a second opinion | Explicit Claude, GLM or DeepSeek review; [multi-platform guide](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/MULTI_PLATFORM_QUICKSTART.md) |
 
 ### Bring your own agent harness (0.3.0a4+)
 
@@ -158,7 +162,7 @@ coprogrammer setup --client harness --edition mcp --include-content
 Review your chosen plan, then add `--apply`. Import profiles explain the required
 client activation; generated files do not establish a connection. Grok is also
 available for explicit advisory reviews via `review --provider grok --model MODEL`.
-[Runtime adapters, activation steps and Grok guide →](docs/EXTENDED_AI_INTEGRATIONS.md)
+[Runtime adapters, activation steps and Grok guide →](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/EXTENDED_AI_INTEGRATIONS.md)
 
 ## How it fits
 
@@ -172,7 +176,7 @@ agent work tracking; [Gas Town](https://github.com/gastownhall/gastown) manages
 multi-agent workspaces and orchestration. CoProgrammer focuses on local task
 ownership, path coordination, durable handoffs and inspectable integration
 artifacts through a small Python CLI/MCP package.
-[Comparison and design choices →](docs/research/onboarding-2026-10-12.md)
+[Comparison and design choices →](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/research/onboarding-2026-10-12.md)
 
 Local worktrees share a Manager. Independent clones have separate Managers:
 portable handoffs compare context and do not transfer a global lease. Path
@@ -200,4 +204,4 @@ python -m pip install -e .
 python -m unittest discover -s tests
 ```
 
-[MIT license](LICENSE). Preview software; feedback and concrete bug reports are welcome.
+[MIT license](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/LICENSE). Preview software; feedback and concrete bug reports are welcome.

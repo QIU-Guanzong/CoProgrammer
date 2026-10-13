@@ -1,6 +1,8 @@
 # More AI runtimes, one coordination workflow
 
-Available in **0.3.0a4+**. CoProgrammer coordinates tasks, file boundaries and
+Available in **0.3.0a4+**, with native installation/verification updates in
+**0.3.0a5**: see [the current native workflow](NATIVE_RUNTIME_WORKFLOW.md).
+CoProgrammer coordinates tasks, file boundaries and
 handoffs. Your chosen runtime owns the model, editing tools and execution loop.
 An agent harness can call the CLI at work boundaries or expose the same workflow
 through MCP; it does not need a separate scheduler implementation.
@@ -11,7 +13,7 @@ through MCP; it does not need a separate scheduler implementation.
 | --- | --- | --- | --- |
 | Codex / Claude Code / Copilot | Existing project directories | Existing native project config | Generated config starts the packaged stdio server |
 | OpenClaw | `skills/` in the selected agent workspace | `.coprogrammer-kit/openclaw/mcp.json`, using `nodeHost.mcp.servers` | Workspace Skill format and real stdio server startup; node pairing is not tested |
-| WorkBuddy | Import folders from `.coprogrammer-kit/workbuddy/skills/` | Import the entry from `.coprogrammer-kit/workbuddy/mcp.json` | Import artifacts and real stdio server startup; desktop UI discovery is not tested |
+| WorkBuddy a5+ | Project `.codebuddy/skills/` | Project `.workbuddy/mcp.json` | Documented native paths and real stdio startup; desktop GUI discovery remains unverified |
 | Agent harness | Import `.coprogrammer-kit/harness/skills/`, or use CLI | Import `.coprogrammer-kit/harness/mcp.json` | Generic CLI/MCP compatibility; no product-specific harness API |
 | Other runtimes | Import `.coprogrammer-kit/generic/skills/`, or use CLI | Import `.coprogrammer-kit/generic/mcp.json` | Generic CLI/MCP compatibility |
 | Grok / xAI | Run in a compatible host, registering `--provider grok` | The host connects to CoProgrammer; the model API is separate | Responses API request and response handling with fixtures; no live account call |
@@ -59,12 +61,11 @@ serves stdio, not a remote HTTP endpoint.
 
 ### WorkBuddy
 
-Import the generated Skill folders through WorkBuddy's Skill/plugin interface.
-For a local MCP connector, use `mcpServers.coprogrammer` from the exported JSON:
-copy its command and arguments into the supported connector UI or config.
-The kit directory is not a claimed native WorkBuddy discovery path. Preserve
-existing connectors and complete WorkBuddy's normal trust/reload flow; then
-call `workspace_status` and confirm it reports the intended worktree.
+With a5+, setup writes the documented `.codebuddy/skills/` and `.workbuddy/mcp.json`
+project files. Existing a4 import kits remain untouched. Preserve existing
+connectors and complete WorkBuddy's normal trust/reload flow; then call
+`workspace_status` and confirm it reports the intended worktree. See the
+[current native steps and evidence](NATIVE_RUNTIME_WORKFLOW.md).
 
 The official [plugin guide](https://www.codebuddy.cn/docs/workbuddy/Plugins)
 documents Skill and MCP extensions. Desktop, CodeBuddy IDE and CodeBuddy Code

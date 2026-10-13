@@ -1,0 +1,38 @@
+{
+  "captured_at_utc": "2026-10-13T02:51:45.869239+00:00",
+  "evidence_type": "unauthenticated_local_native_runtime_and_protocol_fixture",
+  "openclaw": {
+    "version": "2026.6.8",
+    "config_validation": "passed",
+    "eligible_workspace_skills": 6,
+    "native_mcp_discovery": "passed",
+    "SessionMcpRuntime_calls": 5,
+    "task_claim_finish_handoff": "passed",
+    "edits_and_call_selection": "test_controller",
+    "model_calls": 0
+  },
+  "harness": {
+    "external_process": "deterministic_protocol_fixture",
+    "delivered_receipts": 1,
+    "downstream_task": "completed",
+    "scope_guard": "passed",
+    "model_calls": 0
+  },
+  "workbuddy": {
+    "version": "5.7.7",
+    "source": "official_download_history",
+    "signature_validation": "passed",
+    "gui_connection": "unverified",
+    "further_gui_testing": "deferred_at_user_request"
+  },
+  "available_model_access": {
+    "openclaw_inspected_provider_key_present": false,
+    "claude_cli_logged_in": false
+  },
+  "outcomes_not_established": [
+    "autonomous_model_completion",
+    "independent_user_productivity",
+    "search_ranking",
+    "adoption_or_star_growth"
+  ]
+}

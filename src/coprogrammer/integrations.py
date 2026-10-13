@@ -21,7 +21,7 @@ CLIENT_LAYOUTS = {
     "claude": (".claude/skills", ".mcp.json", "CLAUDE.md"),
     "copilot": (".agents/skills", ".vscode/mcp.json", ".github/copilot-instructions.md"),
     "openclaw": ("skills", ".coprogrammer-kit/openclaw/mcp.json", None),
-    "workbuddy": (".coprogrammer-kit/workbuddy/skills", ".coprogrammer-kit/workbuddy/mcp.json", None),
+    "workbuddy": (".codebuddy/skills", ".workbuddy/mcp.json", None),
     "harness": (".coprogrammer-kit/harness/skills", ".coprogrammer-kit/harness/mcp.json", None),
     "generic": (".coprogrammer-kit/generic/skills", ".coprogrammer-kit/generic/mcp.json", None),
 }
@@ -32,17 +32,20 @@ def client_profiles() -> dict:
     """Describe installation evidence without claiming a native connection."""
     result = {}
     for client, (skills, config, _) in CLIENT_LAYOUTS.items():
-        native = client in ("codex", "claude", "copilot")
+        native = client in ("codex", "claude", "copilot", "workbuddy")
         result[client] = {
             "skills_directory": skills, "mcp_config": config,
             "skills_activation": ("workspace" if native or client == "openclaw" else "manual_import"),
             "mcp_activation": "native_project_config" if native else "manual_import",
             "connection": "not_checked",
+            "verification_command": f"coprogrammer integrations verify --client {client}",
             "instructions": (
                 "Reload the client and complete its normal project/MCP trust flow." if native else
                 "Select this folder as the OpenClaw workspace to load skills/. Use CLI for local coordination; "
                 "merge the exported nodeHost.mcp.servers.coprogrammer entry into the node's active "
                 "openclaw.json, preserving other settings. Restart the node and verify tool discovery. "
+                "For embedded MCP, use the generated profile.json via OPENCLAW_CONFIG_PATH and "
+                "OPENCLAW_STATE_DIR pointing to a project-local state directory. "
                 "The kit itself is not auto-loaded." if client == "openclaw" else
                 "Import the Skill folders and stdio MCP entry through WorkBuddy's supported UI. "
                 "This kit is not an auto-discovered WorkBuddy configuration." if client == "workbuddy" else
@@ -83,6 +86,13 @@ def client_config(client: str, cwd: Path) -> str:
     key = "servers" if client == "copilot" else "mcpServers"
     return json.dumps({key: {"coprogrammer": {"type": "stdio", **server}}},
                       ensure_ascii=False, indent=2) + "\n"
+
+
+def openclaw_profile(cwd: Path) -> str:
+    """An isolated embedded runtime profile; no account data or global defaults."""
+    server = json.loads(client_config("openclaw", cwd))["nodeHost"]["mcp"]["servers"]["coprogrammer"]
+    return json.dumps({"agents": {"defaults": {"workspace": str(cwd.resolve())}},
+                       "mcp": {"servers": {"coprogrammer": server}}}, ensure_ascii=False, indent=2) + "\n"
 
 
 def doctor(cwd: Path) -> dict[str, Any]:

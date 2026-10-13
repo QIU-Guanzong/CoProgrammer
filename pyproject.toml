@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coprogrammer"
-version = "0.3.0a4"
-description = "Shared tasks, file boundaries and handoffs for coding agents."
+version = "0.3.0a5"
+description = "Coordinate AI coding agents across Git worktrees: tasks, conflict checks and handoffs."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
   { name = "Qiu Guanzong" }
 ]
-keywords = ["ai", "software-development", "multi-agent", "merge", "code-review"]
+keywords = ["ai-agents", "multi-agent", "agent-harness", "mcp", "codex", "claude-code", "openclaw", "workbuddy", "git-worktree", "task-scheduling", "code-review"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",

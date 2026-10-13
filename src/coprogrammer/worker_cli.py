@@ -10,7 +10,12 @@ def command(args):
     from .workflow_cli import emit
     cwd = Path(args.cwd).resolve()
     path = event_log_path(cwd, args.state_dir)
-    if args.worker_action == "step":
+    if args.worker_action == "run":
+        from .runner import run
+        argv = args.command[1:] if args.command[:1] == ["--"] else args.command
+        report = run(path, cwd, args.session, argv, apply=args.apply,
+                     timeout=args.timeout_seconds, notify=args.notify, handle_inbox=args.handle_inbox)
+    elif args.worker_action == "step":
         report = worker.step(path, cwd, args.session, apply=args.apply,
                              task_id=args.id, files=args.file, limit=args.limit,
                              ttl_seconds=args.ttl_seconds)
@@ -18,18 +23,27 @@ def command(args):
         report = worker.finish(path, cwd, args.session, args.id, args.claim,
                                args.summary, args.notify)
     emit(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    if args.worker_action == "run" and report.get("state") == "attention":
+        return 1
     return 0
 
 
 def add_parsers(parsers):
     root = parsers.add_parser("worker", help="Preview/apply work boundaries and finish with local notifications.")
     actions = root.add_subparsers(dest="worker_action", required=True)
-    for action in ("step", "finish"):
+    for action in ("step", "finish", "run"):
         parser = actions.add_parser(action)
         parser.add_argument("--cwd", default=".")
         parser.add_argument("--state-dir", default=None)
         parser.add_argument("--session", required=True)
-        if action == "step":
+        if action == "run":
+            import argparse
+            parser.add_argument("--apply", action="store_true", help="Explicitly run one trusted harness command after claiming/guarding work.")
+            parser.add_argument("--timeout-seconds", type=int, default=120)
+            parser.add_argument("--notify", action="append")
+            parser.add_argument("--handle-inbox", action="store_true", help="Deliver inbox to the trusted command; acknowledge only its explicit receipt IDs, with no project edits.")
+            parser.add_argument("command", nargs=argparse.REMAINDER, help="Trusted command argv after --; JSON task on stdin, JSON result on stdout.")
+        elif action == "step":
             parser.add_argument("--apply", action="store_true", help="Pulse and claim/guard/renew atomically; never ACK or launch clients.")
             parser.add_argument("--id", default="", help="Optional specific task; otherwise choose the first eligible task.")
             parser.add_argument("--file", action="append", help="Planned path; actual working-tree changes are also checked.")

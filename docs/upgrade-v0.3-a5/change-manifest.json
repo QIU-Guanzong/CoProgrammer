@@ -1,0 +1,27 @@
+{
+  "task": "v0.3.0a5 native activation and harness automation",
+  "intent": "Make installation diagnosable and explicit harness teamwork easier to run.",
+  "scope": "feature | docs | tooling",
+  "core_changes": [
+    "Isolated native OpenClaw verifier/profile",
+    "Documented WorkBuddy project paths",
+    "Explicit runner with claim/guard/finish and opt-in delivered receipts",
+    "Problem-based bilingual README and package metadata"
+  ],
+  "contracts": [
+    "No event or schema migration",
+    "New CLI-only command runner; no arbitrary-command MCP tool"
+  ],
+  "tests": [
+    "Native OpenClaw config/Skills/SessionMcpRuntime calls",
+    "Real-process runner concurrency, failure and message guards",
+    "Full source/wheel and Windows/Linux CI",
+    "Fresh published package verification"
+  ],
+  "risks": [
+    "No available live model credentials in tested clients",
+    "WorkBuddy GUI verification deferred by user",
+    "Cooperative scope guards are not process sandboxing",
+    "No adoption or productivity outcome established"
+  ]
+}

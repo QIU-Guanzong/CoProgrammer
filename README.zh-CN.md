@@ -1,9 +1,10 @@
-# CoProgrammer
+# CoProgrammer：多助手、多窗口编程协作
 
 **让编程助手协作有序。Teamwork for coding agents.**
 
-为同一个 Git 仓库中的 **Codex、Claude Code 和 GitHub Copilot** 提供共享任务、
-文件范围检查和持久交接记录。
+让同一 Git 仓库中的多个 AI 编程窗口共享任务、检查文件范围冲突、保留交接记录。
+支持 Codex、Claude Code、Copilot、OpenClaw、WorkBuddy 的项目接入，
+通用 agent harness 可通过 CLI 或 MCP 使用。
 
 [![CI](https://github.com/QIU-Guanzong/CoProgrammer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/QIU-Guanzong/CoProgrammer/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE)
@@ -11,6 +12,8 @@
 [English](README.md) · [先体验](#先体验一次完整流程) ·
 [双窗口实操](docs/GETTING_STARTED.md) · [客户端接入](docs/knowledge/README.md) ·
 [版本发布](https://github.com/QIU-Guanzong/CoProgrammer/releases)
+
+[什么情况下值得用？](docs/USE_CASES.md) · [原生检查与自动执行](docs/NATIVE_RUNTIME_WORKFLOW.md)
 
 ## 它解决什么问题？
 

@@ -29,10 +29,11 @@ class ImportKitTest(unittest.TestCase):
     def test_profiles_distinguish_workspace_loading_and_manual_import(self):
         profiles = integrations.client_profiles()
         self.assertEqual(profiles["openclaw"]["skills_activation"], "workspace")
-        for client in ("openclaw", "workbuddy", "harness", "generic"):
+        for client in ("openclaw", "harness", "generic"):
             self.assertEqual(profiles[client]["mcp_activation"], "manual_import")
             self.assertEqual(profiles[client]["connection"], "not_checked")
-        self.assertEqual(profiles["workbuddy"]["skills_activation"], "manual_import")
+        self.assertEqual(profiles["workbuddy"]["skills_activation"], "workspace")
+        self.assertEqual(profiles["workbuddy"]["mcp_activation"], "native_project_config")
         profiles["codex"]["connection"] = "fabricated"
         self.assertEqual(integrations.client_profiles()["codex"]["connection"], "not_checked")
 
@@ -97,7 +98,8 @@ class ImportKitTest(unittest.TestCase):
             for client in ("openclaw", "workbuddy", "harness", "generic"):
                 with self.subTest(client=client), contextlib.redirect_stdout(io.StringIO()) as out:
                     self.assertEqual(cli.main(["setup", "--client", client, "--edition", "mcp", "--cwd", tmp]), 0)
-                    self.assertEqual(json.loads(out.getvalue())["activation"]["mcp_activation"], "manual_import")
+                    expected = "native_project_config" if client == "workbuddy" else "manual_import"
+                    self.assertEqual(json.loads(out.getvalue())["activation"]["mcp_activation"], expected)
                     self.assertEqual(list(Path(tmp).iterdir()), [])
         args = cli.build_parser().parse_args(["review", "--provider", "grok", "--model", "explicit-model"])
         self.assertEqual(args.provider, "grok")
