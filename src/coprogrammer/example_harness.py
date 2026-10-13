@@ -9,7 +9,8 @@ from pathlib import Path
 
 
 def main():
-    packet = json.load(sys.stdin)
+    # JSON bytes are UTF-8 regardless of the client's Windows/terminal locale.
+    packet = json.load(sys.stdin.buffer)
     if packet.get("format") != "coprogrammer.harness-task.v1":
         raise SystemExit("Expected a harness protocol fixture packet")
     if packet["kind"] == "inbox":

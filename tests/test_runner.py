@@ -112,6 +112,19 @@ class RunnerTest(Fixture):
             self.call(editing, apply=True, handle_inbox=True)
         self.assertEqual(co.inbox(self.path, "harness")["pending_total"], 1)
 
+    def test_bundled_harness_handles_utf8_under_an_ascii_stdin_locale(self):
+        from coprogrammer import example_harness
+        initial = sc.claim(self.path, self.repo, "harness", "api")
+        sc.finish(self.path, self.repo, "harness", "api", initial["claim_id"], "Fixture preparation")
+        sc.create(self.path, self.repo, "harness", "utf8-docs", "中文任务", ["docs/**"])
+        other = self.other()
+        co.send(self.path, other, "other", "harness", "upgrade", "中文交接消息")
+        code = f"import sys,runpy; sys.stdin.reconfigure(encoding='ascii'); runpy.run_path({example_harness.__file__!r},run_name='__main__')"
+        command = [sys.executable, "-I", "-c", code]
+        self.assertEqual(self.call(command, apply=True, handle_inbox=True)["state"], "received")
+        self.assertEqual(self.call(command, apply=True)["state"], "done")
+        self.assertTrue((self.repo / "docs/runner-fixture.txt").is_file())
+
 
 class VerificationTest(Fixture):
     def test_installation_conflict_is_reported_without_copying_private_content(self):
