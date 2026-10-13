@@ -1,0 +1,32 @@
+{
+  "task": "v0.3.0a7 foreground worker automation",
+  "intent": "Reduce repeated coordination commands and make project startup/install results easier to inspect.",
+  "scope": "tooling | docs | tests",
+  "core_changes": [
+    "Explicit start --apply-setup over managed setup receipts",
+    "Bounded foreground worker watch with optional waiting, progress and explicit inbox receipts",
+    "Independent watcher and runner locks over shared Manager communication",
+    "Explicit native CLI selection and isolated profile binding",
+    "Bundled Skill and bilingual first-use guidance"
+  ],
+  "contracts": [
+    "Existing run/claim/guard/finish/receipt contracts reused",
+    "No schema/event/workflow/dependency changes",
+    "No implicit daemon, provider selection, retries, takeover, approval or Git checkpoint",
+    "No managed-service or global client configuration changes"
+  ],
+  "tests": [
+    "Real worktree dependency/handoff/receipt and foreground process checks",
+    "Startup preview/conflict/failure/resume invariants",
+    "Failure, timeout, scope, interruption and watcher exclusion",
+    "Native proxy/profile mismatch and explicit local CLI verification",
+    "Source, reused isolated wheel environment, platform CI and published readback"
+  ],
+  "risks": [
+    "Trusted harness still required; deterministic fixtures are not AI models",
+    "Prior dirty changes can block a different task scope",
+    "Foreground waits are bounded and do not wake client GUIs",
+    "Local native OpenClaw and managed-service proxy are separate verification scopes",
+    "WorkBuddy UI and autonomous model collaboration remain unverified"
+  ]
+}

@@ -41,10 +41,13 @@ def overview(path: Path, cwd: Path, session: str = "", limit: int = 20) -> dict:
 
 def start(path: Path, cwd: Path, client: str, session: str, task: str | None = None,
           *, resume: bool = False, dry_run: bool = False,
-          provider: str | None = None, model: str | None = None) -> dict:
+          provider: str | None = None, model: str | None = None,
+          apply_setup: bool = False) -> dict:
     """Register a window; explicitly resume only its matching local session."""
     if client not in setup.CLIENT_LAYOUTS:
         raise RuntimeError("client must be one of: " + ", ".join(setup.CLIENT_LAYOUTS))
+    if type(apply_setup) is not bool:
+        raise RuntimeError("apply_setup must be boolean")
     co.identity(session)
     if task is not None:
         co.text(task, "task")
@@ -52,7 +55,9 @@ def start(path: Path, cwd: Path, client: str, session: str, task: str | None = N
         if value is not None:
             co.text(value, name, 2000, empty=True)
     actual = _workspace(cwd, writable=True)
-    preview = setup.preview(Path(actual["worktree"]), client)
+    preview = setup.preview(Path(actual["worktree"]), client, upgrade=apply_setup)
+    installed = preview
+    applied = False
     # Actual writes always serialize, including the initial empty-log case.
     with transaction(path) if not dry_run or path.exists() else nullcontext(None) as tx:
         events = [*tx.events, *tx.pending] if tx else []
@@ -79,20 +84,32 @@ def start(path: Path, cwd: Path, client: str, session: str, task: str | None = N
             selected_task = session if task is None else task
         if co.workspace(cwd) != actual:
             raise RuntimeError("Workspace changed while preparing this window; retry.")
-        if not dry_run:
-            if resume:
+        if not dry_run and (not apply_setup or preview["can_apply"]):
+            if apply_setup:
+                installed = setup.apply(Path(actual["worktree"]), client, upgrade=True)
+            if apply_setup and not installed["can_apply"]:
+                pass
+            elif co.workspace(cwd) != actual:
+                raise RuntimeError("Workspace changed while installing project setup; inspect files before retrying.")
+            elif resume:
                 co.pulse(path, cwd, session, task=selected_task)
+                applied = True
             else:
                 co.register(path, cwd, session, client, selected_task, provider or "", model or "")
+                applied = True
     return {"format": "coprogrammer.start.v1", "session": session, "client": client,
-            "task": selected_task, "workspace": actual, "applied": not dry_run,
+            "task": selected_task, "workspace": actual, "applied": applied,
+            "blocked": apply_setup and not installed["can_apply"],
             "provider": old["provider"] if resume else provider or "",
             "model": old["model"] if resume else model or "",
             "operation": "resume" if resume else "register",
             "setup": {"missing": sum(f["status"] == "create" for f in preview["files"]),
-                      "conflicts": preview["conflicts"], "connection": "not_checked",
-                      "applied": False},
-            "note": "Only local session state is updated. Client files are previewed, never installed; no agent is launched."}
+                      "updates": sum(f["status"] == "update" for f in preview["files"]),
+                      "conflicts": installed["conflicts"], "connection": "not_checked",
+                      "can_apply": installed["can_apply"], "applied": installed["applied"],
+                      **({"files": installed["files"]} if apply_setup else {})},
+            "note": ("Project files and session registration are separate operations; inspect files after any failure. No agent is launched or model connected."
+                     if apply_setup else "Only local session state is updated. Client files are previewed, never installed; no agent is launched.")}
 
 
 def _line(value: str) -> str:
@@ -104,11 +121,13 @@ def render_start(report: dict) -> str:
     lines = ["CoProgrammer — Teamwork for coding agents", "",
              f"Window: {report['session']} ({report['client']})",
              f"Branch: {_line(report['workspace']['branch'])}",
-             f"Session: {verb}" if report["applied"] else f"Preview: would {report['operation']} this window",
+             f"Session: {verb}" if report["applied"] else
+             "Blocked: resolve project setup conflicts before registration" if report["blocked"] else
+             f"Preview: would {report['operation']} this window",
              f"Client setup: {report['setup']['missing']} missing files, {len(report['setup']['conflicts'])} conflicts",
              "", "Next:", f"  coprogrammer status --session {report['session']}",
              f"  coprogrammer setup --client {report['client']} --include-content",
-             "", "Review setup before applying it. Keep .coprogrammer/ out of commits.",
+             "", "Review generated files before scoped tasks. Commit them or deliberately ignore local setup files; keep .coprogrammer/ out of commits.",
              report["note"]]
     return "\n".join(lines) + "\n"
 
@@ -162,13 +181,14 @@ def command(args):
     if args.onboarding_action == "start":
         report = start(path, cwd, args.client, args.session, args.task,
                        resume=args.resume, dry_run=args.dry_run,
-                       provider=args.provider, model=args.model)
+                       provider=args.provider, model=args.model, apply_setup=args.apply_setup)
         rendered = render_start(report)
     else:
         report = overview(path, cwd, args.session, args.limit)
         rendered = render_status(report)
     emit(json.dumps(report, ensure_ascii=False, indent=2) + "\n" if args.json else rendered)
-    return int(args.onboarding_action == "status" and args.fail_on_attention and report["attention_required"])
+    return int(report.get("blocked", False) if args.onboarding_action == "start" else
+               args.fail_on_attention and report["attention_required"])
 
 
 def add_parsers(parsers):
@@ -186,6 +206,7 @@ def add_parsers(parsers):
             parser.add_argument("--model", help="Declared model label; connectivity is not checked.")
             parser.add_argument("--resume", action="store_true", help="Explicitly refresh this window's existing session.")
             parser.add_argument("--dry-run", action="store_true", help="Preview without registering or refreshing the window.")
+            parser.add_argument("--apply-setup", action="store_true", help="Install/refresh unchanged recorded project files before registering; --dry-run previews the file plan.")
         else:
             parser.add_argument("--session", default="")
             parser.add_argument("--limit", type=int, default=20)

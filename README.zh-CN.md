@@ -115,6 +115,14 @@ MCP 提供同一套本地协作能力。`workspace_status` 汇总工作状态，
 
 ## 其他能力从哪里开始？
 
+### 连续处理任务和交接消息（0.3.0a7+）
+
+`start --apply-setup --dry-run` 一起预览项目接入和窗口登记，审阅后去掉
+`--dry-run` 应用。`worker watch` 连续处理可领取任务；明确指定 `--handle-inbox`
+后处理 harness 给出的已投递消息回执，`--wait` 有限等待其他窗口的变化。
+失败、人工决策和文件范围问题会停止。需要提供可信 JSON harness，不代替客户端
+登录或启动其界面。见[前台自动协作指南](docs/FOREGROUND_WORKERS.md)。
+
 ### 减少手动同步（0.3.0a3+）
 
 提供 **Skill 版、MCP 版、完整接入版**。`setup --edition skills` 安装 Skill
