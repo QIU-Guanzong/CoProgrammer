@@ -60,6 +60,7 @@ coprogrammer setup --client codex \
 | --- | --- |
 | `create` | 文件缺失，应用后返回 `created` |
 | `unchanged` | 内容相同，不重写、不改变修改时间 |
+| `update` | 加 `--upgrade` 后，有记录且仍匹配旧摘要的生成文件待更新，应用后返回 `updated` |
 | `preserve` | 已有项目说明内容不同，原样保留并提示手动引用协作指南 |
 | `conflict` | 同路径 MCP、Skill 或生成文档内容不同，本次不应用任何接入文件 |
 | `blocked` | 目标或父目录是链接、类型不符或不可检查，本次不应用 |
@@ -67,8 +68,12 @@ coprogrammer setup --client codex \
 冲突返回状态码 1；检查 `conflicts`。不会自动重写 JSON/TOML，避免破坏 JSONC
 注释、未知设置或已有服务器。可以先使用 `--no-mcp --apply` 安装 Skill 和文档，
 再以 `integrations config --client <client>` 获取服务片段，按现有结构手动合并。
-没有强制覆盖选项。写入失败时尝试撤回本次已完整创建且未被改动的文件；
+没有强制覆盖选项。默认仅创建缺失文件；`--upgrade` 可更新有安装记录且未被改动的
+生成文件，项目说明始终保留。成功后记录摘要到 `.coprogrammer/setup-manifest.json`。
+写入失败时尝试恢复本次已完整写入且未被改动的文件；
 残留空目录、部分写入或并发修改需检查后再重试。
+
+升级、旧安装接管和失败恢复详见[安装维护](../INSTALLATION_MAINTENANCE.md)。
 
 ## MCP 文档与提示入口
 

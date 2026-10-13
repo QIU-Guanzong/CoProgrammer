@@ -1,6 +1,6 @@
 {
   "name": "coprogrammer",
-  "version": "0.3.0-alpha.5",
+  "version": "0.3.0-alpha.6",
   "description": "Shared tasks, file boundaries and durable handoffs for coding agents.",
   "author": {
     "name": "CoProgrammer"
