@@ -1,0 +1,30 @@
+{
+  "task": "Codex harness first-use check",
+  "intent": "Let installed users diagnose executable availability before claiming a task and explain task-only message handling.",
+  "scope": "tooling | docs | tests",
+  "core_changes": [
+    "Standalone --check mode with executable discovery and actionable JSON results",
+    "Mutually exclusive check and explicit execution modes",
+    "Installed-environment and existing receipt troubleshooting guidance",
+    "Offline availability, no-side-effect and CLI boundary tests"
+  ],
+  "contracts": [
+    "Existing harness packet/result, runner, watcher and Manager contracts retained",
+    "Task-only adapter and explicit receipts retained; no new inbox handler",
+    "Native discovery is distinct from version/configuration/model validation",
+    "No provider routing, account access, retries, takeovers, approvals or publication"
+  ],
+  "tests": [
+    "Target independently verified imported 14-test adapter suite and config/manifest",
+    "Executable path/PATH discovery and missing/nonexecutable diagnostics",
+    "No stdin/native/Git/Manager/temp operations in check mode",
+    "CLI mutual exclusion and retained explicit execution behavior",
+    "Serial full unittest, config/manifest, JSON/YAML and local installed-package smoke"
+  ],
+  "risks": [
+    "An available executable is not proof of compatible Codex version or model access",
+    "The check does not authenticate or invoke the selected executable",
+    "Real model and Windows native CI acceptance remain unperformed",
+    "Local changes remain unreleased; public push/PR/merge/release is prohibited"
+  ]
+}

@@ -12,10 +12,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 class KnowledgeTests(unittest.TestCase):
     def test_catalog_is_complete_and_metadata_is_detached(self):
         catalog = knowledge.documents()
-        self.assertEqual(len(catalog), 12)
+        self.assertEqual(len(catalog), 16)
         self.assertEqual(len({doc["id"] for doc in catalog}), len(catalog))
         self.assertEqual({doc["name"] for doc in catalog if doc["kind"] == "template"},
-                         {"AGENTS", "CLAUDE", "copilot-instructions", "COORDINATION", "task-brief", "handoff"})
+                         {"AGENTS", "CLAUDE", "copilot-instructions", "COORDINATION", "task-brief", "handoff",
+                          "CODEX_TASK_HARNESS", "CLAUDE_TASK_HARNESS", "FOREGROUND_WORKERS", "INTERRUPTED_RUN_INSPECTION"})
         for doc in catalog:
             with self.subTest(document=doc["id"]):
                 self.assertEqual(set(doc), {"id", "kind", "name", "title", "description", "mime_type", "uri"})
@@ -52,6 +53,12 @@ class KnowledgeTests(unittest.TestCase):
                 frontmatter = lines[1:lines.index("---", 1)]
                 self.assertIn("name: " + doc["name"], frontmatter)
                 self.assertTrue(any(line.startswith("description: ") for line in frontmatter))
+
+    def test_installed_worker_guides_match_canonical_documents(self):
+        for name in ("CODEX_TASK_HARNESS", "CLAUDE_TASK_HARNESS", "FOREGROUND_WORKERS", "INTERRUPTED_RUN_INSPECTION"):
+            with self.subTest(guide=name):
+                self.assertEqual(knowledge.read_document(f"templates/{name}").encode("utf-8"),
+                                 (REPO_ROOT / "docs" / (name + ".md")).read_bytes())
 
     def test_unknown_or_path_like_input_is_rejected_before_resource_access(self):
         invalid = ("", "templates/../AGENTS", "templates/AGENTS.md", "templates/agents",

@@ -1,0 +1,26 @@
+{
+  "task": "Whole-package release candidate acceptance and installed guide repair",
+  "intent": "Verify the cumulative cloud upgrade as an installed package and repair the observed missing diagnostic guides.",
+  "scope": "tooling | docs | tests",
+  "core_changes": [
+    "Bundle three canonical guides using existing Markdown package data and knowledge allowlist",
+    "Clarify installed diagnostic entry points and queued-task prerequisite",
+    "Clean wheel/sdist and fully offline installed workflow acceptance"
+  ],
+  "contracts": [
+    "Existing resource request/response shape and URI validation unchanged",
+    "Task, probe, Manager, setup selections and configuration behavior unchanged",
+    "No version bump, protected path edit or public delivery retry"
+  ],
+  "tests": [
+    "Guide resource completeness and canonical byte synchronization",
+    "Clean wheel/sdist install with no source import path",
+    "Synthetic check, preview, success, failure and interruption inspection",
+    "Serial full unittest, config/manifests, JSON/YAML and artifact preservation"
+  ],
+  "risks": [
+    "The local candidate keeps version0.3.0a7 and is not a publishable version assignment",
+    "Offline fixtures do not establish real model/task or native Windows acceptance",
+    "Historical GitHub403 and failed Library delivery remain blocked without retry"
+  ]
+}

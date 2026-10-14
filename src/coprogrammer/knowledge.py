@@ -36,6 +36,14 @@ _TEMPLATES = (
      "Record scope, ownership, validation and expected handoff artifacts."),
     ("handoff", "Development handoff template",
      "Record actual changes, validation, remaining work and coordination state."),
+    ("CODEX_TASK_HARNESS", "Codex task harness guide",
+     "Check an installed Codex adapter and explicitly execute scoped tasks."),
+    ("CLAUDE_TASK_HARNESS", "Claude task harness guide",
+     "Discover an installed Claude client and explicitly run task-only structured output."),
+    ("FOREGROUND_WORKERS", "Foreground worker guide",
+     "Process bounded tasks, inspect failures and receive explicit handoffs."),
+    ("INTERRUPTED_RUN_INSPECTION", "Interrupted run inspection guide",
+     "Inspect original task and message outcomes without replaying mutations."),
 )
 
 _CATALOG = tuple(

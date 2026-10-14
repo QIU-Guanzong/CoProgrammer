@@ -11,7 +11,7 @@ def command(args):
     cwd = Path(args.cwd).resolve()
     path = event_log_path(cwd, args.state_dir)
     if args.worker_action in ("run", "watch"):
-        from .runner import run
+        from .runner import RunInterrupted, run
         argv = args.command[1:] if args.command[:1] == ["--"] else args.command
         options = dict(apply=args.apply, timeout=args.timeout_seconds,
                        notify=args.notify, handle_inbox=args.handle_inbox)
@@ -26,7 +26,11 @@ def command(args):
                            poll_seconds=args.poll_seconds,
                            progress=progress)
         else:
-            report = run(path, cwd, args.session, argv, **options)
+            try:
+                report = run(path, cwd, args.session, argv, **options)
+            except RunInterrupted as interrupted:
+                emit(json.dumps(interrupted.report, ensure_ascii=False, indent=2) + "\n")
+                return 130
     elif args.worker_action == "step":
         report = worker.step(path, cwd, args.session, apply=args.apply,
                              task_id=args.id, files=args.file, limit=args.limit,
