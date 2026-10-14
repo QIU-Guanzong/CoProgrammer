@@ -120,8 +120,24 @@ add `--apply` to write them. Customized files continue to report conflicts.
 
 MCP exposes the same local workflows. `workspace_status` provides the combined
 status view; `task_dispatch` previews eligible tasks. The packaged plugin
-contains six Skills, and the CLI serves twelve read-only Markdown resources.
+contains six Skills, and this candidate build serves sixteen read-only Markdown
+resources, including the worker and recovery guides.
 [Client setup](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/knowledge/README.md) · [Plugin installation](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/PLUGIN_QUICKSTART.md)
+
+The Codex task adapter upgrade remains unreleased; the unchanged `0.3.0a7`
+metadata alone cannot identify this build. In an environment containing it, run
+`python -m coprogrammer.codex_harness --check` for discovery without starting
+Codex. Read `coprogrammer knowledge show templates/CODEX_TASK_HARNESS` for the
+optional version/help probe and explicit scoped execution. Module/resource
+absence requires checking the installed build before retrying a task.
+
+Claude Code has an explicit task-only adapter in this candidate. Run
+`python -m coprogrammer.claude_harness --check` to discover its executable without
+starting a client. Read `coprogrammer knowledge show templates/CLAUDE_TASK_HARNESS`
+for installation, existing account checks, scoped execution and explicit message
+receipts. Read-only built-in tools are the default; edit tools require
+`--access workspace-write`. Native permissions remain in effect. Client discovery
+and GLM/DeepSeek session labels do not establish model access.
 
 ## What else can it do?
 

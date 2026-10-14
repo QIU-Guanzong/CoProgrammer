@@ -1,0 +1,27 @@
+{
+  "task": "Claude native task-only harness and installed collaboration acceptance",
+  "intent": "Connect an existing authorized Claude coding client to scoped worker tasks while distinguishing real native acceptance, explicit message receipts and offline fixtures.",
+  "scope": "tooling | tests | docs",
+  "core_changes": [
+    "Explicit Claude task adapter with read-only tool availability by default",
+    "Bounded strict structured result extraction and sensitive metadata isolation",
+    "Bundled installed command guidance and native/provider availability evidence"
+  ],
+  "contracts": [
+    "Existing task/result and Manager/message formats retained",
+    "No automatic receipt, retry, approval or account/provider configuration",
+    "Existing Codex, watcher, setup selections and protected paths unchanged"
+  ],
+  "tests": [
+    "Offline portable and real synthetic process failure/cleanup cases",
+    "Installed candidate discovery, scoped tasks and explicit receipt correlation",
+    "At most one bounded real task per existing usable native/provider combination",
+    "Serial full unittest, config/manifests, JSON/YAML and artifact preservation"
+  ],
+  "risks": [
+    "Existing authorized native execution may consume existing account credit",
+    "Built-in tool selection is not an OS sandbox and native settings/hooks remain trusted",
+    "Missing accounts or blocked network cannot establish model/provider collaboration",
+    "Native Windows and WorkBuddy GUI acceptance remain unclaimed"
+  ]
+}

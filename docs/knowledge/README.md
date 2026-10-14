@@ -6,9 +6,12 @@
 | --- | --- |
 | Skill | 项目接入、项目约定、任务简报、开发中同步、分支摘要审阅、集成计划，共 6 个工作流 |
 | MCP Tools | 任务领取、范围检查、会话、消息、租约和审阅等现有操作 |
-| MCP Resources | 6 个 Skill 与 6 份 Markdown，共 12 个固定目录资源 |
+| MCP Resources | 当前候选构建含 6 个 Skill 与 10 份 Markdown，共 16 个固定目录资源 |
 | MCP Prompts | 任务简报、交接说明，共 2 个带参数的模板入口 |
-| Markdown | AGENTS、CLAUDE、Copilot 说明、协作指南、任务简报、交接模板 |
+| Markdown | AGENTS、CLAUDE、Copilot 说明、协作指南、任务简报、交接模板，以及 Codex、Claude、前台 worker、中断核对指南 |
+
+新增四份指南的云端候选构建尚未发布，元数据仍为 `0.3.0a7`；旧安装的目录
+仍可能只有 12 项，版本号不能单独区分构建。用 `knowledge list` 核对实际内容。
 
 ## 先查看，再接入
 
@@ -18,6 +21,8 @@
 coprogrammer knowledge list
 coprogrammer knowledge list --kind skill
 coprogrammer knowledge show templates/COORDINATION
+coprogrammer knowledge show templates/CODEX_TASK_HARNESS
+coprogrammer knowledge show templates/CLAUDE_TASK_HARNESS
 coprogrammer setup --client codex --include-content
 ```
 
@@ -53,6 +58,9 @@ coprogrammer setup --client codex \
 需要按项目现状手动补充引用。Codex/Copilot 共用 `.agents/skills`；其他目录
 存在同名 Skill 时会提示。已通过插件安装这组 Skill 的客户端，宜用
 `--no-skills` 避免重复发现。
+
+新增的四份使用指南保留在包内，通过 `knowledge show` 或 MCP Resources 读取；
+setup 的项目文件选择保持原样，不自动在项目中复制这些指南。
 
 ## 已有文件
 

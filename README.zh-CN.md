@@ -110,8 +110,22 @@ Skills 或 MCP 配置会报告冲突。随后重新加载客户端，完成其�
 继续报告冲突。见[安装后如何升级](docs/INSTALLATION_MAINTENANCE.md)。
 
 MCP 提供同一套本地协作能力。`workspace_status` 汇总工作状态，`task_dispatch`
-筛选可领取任务。插件包含六个 Skills，命令行包提供十二个只读 Markdown 资源。
+筛选可领取任务。插件包含六个 Skills，当前候选构建提供十六个只读 Markdown
+资源，包括 worker 和中断核对指引。
 [接入指南](docs/knowledge/README.md) · [插件安装](docs/PLUGIN_QUICKSTART.md)
+
+Codex task adapter 升级尚未发布，仍显示 `0.3.0a7`，不能只凭版本号确认构建。
+在包含该升级的 Python 环境运行 `python -m coprogrammer.codex_harness --check`，
+普通检查不启动 Codex；通过 `coprogrammer knowledge show templates/CODEX_TASK_HARNESS`
+阅读随包的版本/help 诊断与明确执行流程。模块或资源缺失时先核对安装构建，
+不要据此重试原任务。
+
+当前候选也包含 Claude Code 的 task-only 适配器。运行
+`python -m coprogrammer.claude_harness --check` 查找可信原生程序，不启动客户端；
+通过 `coprogrammer knowledge show templates/CLAUDE_TASK_HARNESS` 阅读安装、已有
+账户核对、任务执行与明确消息回执流程。默认只提供内置读取工具；明确指定
+`--access workspace-write` 才提供编辑工具，仍遵循原生权限。找到客户端和
+GLM/DeepSeek 会话标签都不证明模型可用。
 
 ## 其他能力从哪里开始？
 

@@ -1,0 +1,29 @@
+{
+  "task": "Explicit Codex native version and help diagnostics",
+  "intent": "Detect missing advertised adapter flags or failed local CLI probes before a claimed task is executed.",
+  "scope": "tooling | tests | docs",
+  "core_changes": [
+    "Opt-in --check --probe-native preserving discovery-only default",
+    "Bounded trusted --version and exec --help subprocesses",
+    "Sanitized version and help-option evidence with fixed failure diagnostics"
+  ],
+  "contracts": [
+    "Existing discovery fields and task/result protocol unchanged",
+    "No version-threshold guessing or model/configuration readiness claim",
+    "No task stdin, Manager mutation, native retry or automatic install",
+    "Probe cleanup uses existing policy for its own new process group only"
+  ],
+  "tests": [
+    "Default zero-launch and opt-in CLI usage rules",
+    "Exact argv and independent version/help evidence",
+    "Missing flags, invalid/oversized output, nonzero exit and missing executable",
+    "Synthetic POSIX timeout and interruption descendant cleanup",
+    "Serial full unittest, config/manifests, JSON/YAML and Git/bundle integrity"
+  ],
+  "risks": [
+    "Help advertises flags but does not prove argument semantics or task correctness",
+    "Trusted executable startup/config/network internals are not independently verified",
+    "Temporary stdout sampling is not a hard output disk quota",
+    "Windows native and real model acceptance remain unrun; no public retry"
+  ]
+}

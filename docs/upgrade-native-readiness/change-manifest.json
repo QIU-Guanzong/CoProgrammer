@@ -1,0 +1,9 @@
+{
+  "task": "Optional Claude native readiness diagnostics and review handoff",
+  "intent": "Explain local native capability and authorization gaps before explicit task execution, and submit a tested public review tree",
+  "scope": "tooling | tests | docs",
+  "core_changes": ["Explicit version/help/auth-status probe with fixed output", "Private coordination identifiers removed from public handoff prose"],
+  "contracts": ["Existing worker/task/result/message formats retained", "No automatic model call, receipt, retry, approval or account configuration"],
+  "tests": ["Focused offline diagnostics", "Installed no-model native check", "Serial full unittest and configuration/artifact validation"],
+  "risks": ["Native auth status describes existing configuration, not model access", "Original commit history is private; public review commit must match its tested final tree"]
+}

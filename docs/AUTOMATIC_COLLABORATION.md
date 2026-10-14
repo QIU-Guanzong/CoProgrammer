@@ -20,7 +20,7 @@ stop installation. No global model credentials or client settings are changed.
 | --- | --- | --- |
 | Full | `coprogrammer setup --client codex --edition full` | Six Skills, Markdown guidance, native MCP config |
 | Skill | `coprogrammer setup --client codex --edition skills` | Six Skills and Markdown guidance; use CLI coordination |
-| MCP | `coprogrammer setup --client codex --edition mcp` | Only native MCP config; six Skills/twelve Markdown resources remain readable through MCP |
+| MCP | `coprogrammer setup --client codex --edition mcp` | Only native MCP config; bundled Skills and Markdown resources remain readable through MCP |
 
 Use `--client claude` for Claude Code, including GLM/DeepSeek-backed instances;
 use `--client copilot` for Copilot. Plugin installation is another way to install

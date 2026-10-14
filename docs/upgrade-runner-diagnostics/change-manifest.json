@@ -1,0 +1,30 @@
+{
+  "task": "Runner failure diagnostics",
+  "intent": "Make failed launches and harness exit/reply failures distinguishable while retaining original claims and side effects for inspection.",
+  "scope": "tooling | tests | docs",
+  "core_changes": [
+    "Set launched only after process creation succeeds",
+    "Retain original exit_code before process cleanup",
+    "Fixed next-step guidance for existing process/reply failure reasons",
+    "Offline process tests and failure recovery documentation"
+  ],
+  "contracts": [
+    "Advisory runner report metadata only; existing harness packet/result unchanged",
+    "Failure reasons, claim retention, guard, receipts, lease and lock semantics retained",
+    "No retry, takeover, rollback, model/provider selection or approval",
+    "Watcher exposes diagnostics through existing last; cancellation behavior unchanged"
+  ],
+  "tests": [
+    "Real missing executable, nonzero/signal exits and zero-exit invalid/oversized replies",
+    "Timeout retains null original code, claim and partial scoped edits",
+    "Watcher failure has one invocation with diagnostics in last",
+    "Explicit later success completes the original claim without a fresh claim",
+    "Serial focused/full unittest, config/manifests and JSON/YAML validation"
+  ],
+  "risks": [
+    "Exit codes diagnose process outcomes, not model understanding or code correctness",
+    "Null means no original exit was observed; cancellation remains the existing behavior",
+    "Public and Library delivery remain blocked; no upload retries in this batch",
+    "Real models and Windows native CI are not part of this offline Linux acceptance"
+  ]
+}
