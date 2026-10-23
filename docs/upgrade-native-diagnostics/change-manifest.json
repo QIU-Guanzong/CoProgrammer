@@ -1,0 +1,9 @@
+{
+  "task": "Complete fixed Codex failure diagnostics and recovery guidance",
+  "intent": "Distinguish input and local I/O failures without exposing raw diagnostic data or retrying tasks",
+  "scope": "tooling | tests | docs",
+  "core_changes": ["Terminal input failure checkpoints", "Allowlisted local OS error names", "Manual failure inspection guidance"],
+  "contracts": [],
+  "tests": ["Synthetic Codex diagnostic regressions", "Serial full unittest", "Config, manifest, JSON/YAML validation"],
+  "risks": ["Local errno is not evidence of native model failure cause", "Historical native stderr cannot be recovered", "Diagnostic storage failure can leave a prior checkpoint"]
+}

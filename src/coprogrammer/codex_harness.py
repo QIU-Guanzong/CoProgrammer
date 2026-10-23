@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import os
 import re
@@ -169,13 +170,37 @@ def _json_loads(raw: bytes) -> dict:
     return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
 
 
-def execute(packet: dict, executable: str, sandbox: str) -> dict:
+def _os_error_code(error: OSError) -> str:
+    # Emit only known symbolic codes; never exception text, paths or arbitrary
+    # attributes. These describe local Python I/O, not a native model's cause.
+    code = error.errno
+    if type(code) is int:
+        for name in ("EACCES", "EPERM", "ENOENT", "ENOSPC", "EROFS", "EIO",
+                     "EMFILE", "ENFILE", "EPIPE", "ENOEXEC"):
+            if code == getattr(errno, name, None):
+                return name
+    return "unknown"
+
+
+def execute(packet: dict, executable: str, sandbox: str, *, observe=None) -> dict:
+    evidence = {"format": "coprogrammer.codex-execution.v1", "phase": "validating_packet",
+                "native_process_started": False, "native_exit": None,
+                "model_start": "unknown", "result_status": "not_accepted"}
+
+    def record(phase, **fields):
+        evidence.update(phase=phase, **fields)
+        if observe is not None:
+            observe(dict(evidence))
+
+    record("validating_packet")
     if (not isinstance(packet, dict)
             or packet.get("format") != "coprogrammer.harness-task.v1"
             or packet.get("kind") != "task"
             or not isinstance(packet.get("task"), dict)):
+        record("packet_rejected")
         raise RuntimeError("Expected a task packet; inbox handling is not supported")
     if sandbox not in ("read-only", "workspace-write"):
+        record("sandbox_rejected")
         raise RuntimeError("Unsupported sandbox")
     # Reuse the existing claim validator rather than accepting an empty task or
     # forwarding mismatched worktree/session metadata to a model invocation.
@@ -194,7 +219,9 @@ def execute(packet: dict, executable: str, sandbox: str) -> dict:
         if packet["workspace"] != workspace:
             raise ValueError
     except (KeyError, TypeError, ValueError, RuntimeError):
+        record("packet_rejected")
         raise RuntimeError("Invalid or mismatched claimed task packet") from None
+    record("packet_validated", session=session, task_id=task["id"], claim_id=task["claim_id"])
     schema = {"type": "object", "properties": {
         "status": {"type": "string", "enum": ["done", "blocked"]},
         "summary": {"type": "string"}},
@@ -207,35 +234,57 @@ def execute(packet: dict, executable: str, sandbox: str) -> dict:
         "Return only status done or blocked and a nonempty summary. "
         "Do not run CoProgrammer finish yourself; the parent runner owns completion.\n"
         + json.dumps(packet, ensure_ascii=False))
-    with tempfile.TemporaryDirectory(prefix="coprogrammer-codex-") as directory:
-        root = Path(directory)
-        schema_path, reply = root / "result-schema.json", root / "result.json"
-        schema_path.write_text(json.dumps(schema), encoding="utf-8")
-        argv = [executable, "exec", "--ephemeral", "--sandbox", sandbox,
-                "--output-schema", str(schema_path), "--output-last-message", str(reply), "-"]
-        # Inherit the runner's process group so its timeout also stops this child.
-        # Never echo native progress, diagnostics, account settings or model logs.
-        try:
-            completed = subprocess.run(argv, input=instruction.encode("utf-8"),
-                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                       check=False)
+    record("preparing_result_storage")
+    try:
+        with tempfile.TemporaryDirectory(prefix="coprogrammer-codex-") as directory:
+            root = Path(directory)
+            schema_path, reply = root / "result-schema.json", root / "result.json"
+            schema_path.write_text(json.dumps(schema), encoding="utf-8")
+            argv = [executable, "exec", "--ephemeral", "--sandbox", sandbox,
+                    "--output-schema", str(schema_path), "--output-last-message", str(reply), "-"]
+            # subprocess.run can raise after launch during process I/O. Until it
+            # returns, neither an attempted call nor OSError proves startup.
+            record("invoking_native", native_process_started="unknown")
+            try:
+                completed = subprocess.run(argv, input=instruction.encode("utf-8"),
+                                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                           check=False)
+            except OSError as error:
+                record("native_launch_or_io_failed", os_error=_os_error_code(error))
+                raise RuntimeError("Codex launch or process I/O failed; native/model startup is unknown") from None
+            record("native_exited", native_process_started=True, native_exit=completed.returncode)
             if completed.returncode:
+                record("native_exit_nonzero")
                 raise RuntimeError("Codex CLI failed; inspect the native client separately")
-            with reply.open("rb") as stream:
-                raw = stream.read(MAX_RESULT_BYTES + 1)
-            if len(raw) > MAX_RESULT_BYTES:
-                raise ValueError
-            result = _json_loads(raw)
-            if (not isinstance(result, dict) or set(result) != {"status", "summary"}
-                    or result["status"] not in ("done", "blocked")
-                    or not isinstance(result["summary"], str)
-                    or not result["summary"].strip() or len(result["summary"]) > 16000):
-                raise ValueError
-            return result
-        except OSError:
-            raise RuntimeError("Codex executable or structured result unavailable") from None
-        except (ValueError, UnicodeError, RecursionError):
-            raise RuntimeError("Codex returned an invalid structured result") from None
+            record("reading_result")
+            try:
+                with reply.open("rb") as stream:
+                    raw = stream.read(MAX_RESULT_BYTES + 1)
+            except FileNotFoundError as error:
+                record("result_missing", os_error=_os_error_code(error))
+                raise RuntimeError("Codex exited without a structured result") from None
+            except OSError as error:
+                record("result_unavailable", os_error=_os_error_code(error))
+                raise RuntimeError("Codex structured result could not be read") from None
+            try:
+                if len(raw) > MAX_RESULT_BYTES:
+                    raise ValueError
+                result = _json_loads(raw)
+                if (not isinstance(result, dict) or set(result) != {"status", "summary"}
+                        or result["status"] not in ("done", "blocked")
+                        or not isinstance(result["summary"], str)
+                        or not result["summary"].strip() or len(result["summary"]) > 16000):
+                    raise ValueError
+            except (ValueError, UnicodeError, RecursionError):
+                record("result_invalid")
+                raise RuntimeError("Codex returned an invalid structured result") from None
+        # Temporary storage cleanup is part of success; do not report an
+        # accepted result before the context manager has exited successfully.
+        record("result_accepted", result_status=result["status"])
+        return result
+    except OSError as error:
+        record("result_storage_io_failed", os_error=_os_error_code(error))
+        raise RuntimeError("Codex local result storage could not be prepared or cleaned up") from None
 
 
 def main() -> int:
@@ -246,9 +295,12 @@ def main() -> int:
     parser.add_argument("--probe-native", action="store_true", help="With --check only, run trusted --version and exec --help (5 seconds each); no task or model request.")
     parser.add_argument("--executable", default="codex", help="Trusted native Codex CLI path.")
     parser.add_argument("--sandbox", choices=("read-only", "workspace-write"), default="read-only")
+    parser.add_argument("--diagnostics", help="With --execute only: create a new private fixed-metadata execution receipt; never native/account text.")
     args = parser.parse_args()
     if args.probe_native and not args.check:
         parser.error("--probe-native requires --check and cannot be used with --execute")
+    if args.diagnostics and not args.execute:
+        parser.error("--diagnostics requires --execute and cannot be used with --check")
     if args.check:
         try:
             report = check(args.executable, args.sandbox, probe_native=args.probe_native)
@@ -263,17 +315,67 @@ def main() -> int:
         return 0 if report["executable"]["status"] == "available" else 1
     if not args.execute:
         parser.error("--execute is required; this may invoke your configured model account")
+    diagnostic_stream = None
+    writer = None
+    if args.diagnostics:
+        try:
+            fd = os.open(args.diagnostics, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
+                         getattr(os, "O_NOFOLLOW", 0), 0o600)
+            diagnostic_stream = os.fdopen(fd, "w", encoding="utf-8")
+        except OSError:
+            parser.error("Cannot create new execution diagnostics; use an unused path in an existing private directory")
+
+        def writer(value):
+            try:
+                diagnostic_stream.seek(0)
+                json.dump(value, diagnostic_stream, ensure_ascii=True)
+                diagnostic_stream.truncate()
+                diagnostic_stream.flush()
+            except OSError:
+                raise RuntimeError("Execution diagnostics could not be saved; inspect the original claim before another explicit invocation") from None
+
     try:
-        raw = sys.stdin.buffer.read(MAX_RESULT_BYTES + 1)
+        if writer:
+            writer({"format": "coprogrammer.codex-execution.v1", "phase": "reading_packet",
+                    "native_process_started": False, "native_exit": None,
+                    "model_start": "unknown", "result_status": "not_accepted"})
+        def reject_input(phase, **fields):
+            if writer:
+                writer({"format": "coprogrammer.codex-execution.v1", "phase": phase,
+                        "native_process_started": False, "native_exit": None,
+                        "model_start": "unknown", "result_status": "not_accepted", **fields})
+
+        try:
+            raw = sys.stdin.buffer.read(MAX_RESULT_BYTES + 1)
+        except OSError as error:
+            reject_input("packet_read_failed", os_error=_os_error_code(error))
+            raise RuntimeError("Task packet could not be read; inspect the parent transport before another explicit invocation") from None
         if len(raw) > MAX_RESULT_BYTES:
+            reject_input("packet_too_large")
             raise RuntimeError("Task packet too large")
-        packet = _json_loads(raw)
-        result = execute(packet, args.executable, args.sandbox)
+        try:
+            packet = _json_loads(raw)
+        except (ValueError, UnicodeError, RecursionError):
+            reject_input("packet_parse_failed")
+            raise RuntimeError("Invalid task packet") from None
+        result = execute(packet, args.executable, args.sandbox, observe=writer)
+        if diagnostic_stream:
+            try:
+                diagnostic_stream.close()
+            except OSError:
+                raise RuntimeError("Execution diagnostics could not be closed; inspect the original claim before another explicit invocation") from None
+            diagnostic_stream = None
     except (RuntimeError, ValueError, UnicodeError, RecursionError) as error:
         # Parsing errors can contain packet data; use a fixed public diagnostic.
         message = str(error) if isinstance(error, RuntimeError) else "Invalid task packet"
         print(message, file=sys.stderr)
         return 1
+    finally:
+        if diagnostic_stream:
+            try:
+                diagnostic_stream.close()
+            except OSError:
+                pass  # An existing failure/interruption must keep its original meaning.
     print(json.dumps(result, ensure_ascii=True))
     return 0
 

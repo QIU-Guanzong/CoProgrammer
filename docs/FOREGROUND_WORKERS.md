@@ -82,6 +82,56 @@ task adapter, a trusted custom
 harness adapter or their existing MCP/Skill workflow.
 WorkBuddy GUI testing remains deferred.
 
+## Optional protection before retrying a task
+
+Explicitly running a failed claim again can replace newer edits within its
+allowed scope. To stop when content changed after the previous attempt ended,
+opt in from the **first** invocation of a newly queued task:
+
+```sh
+coprogrammer worker run --session codex-api --protect-retry -- python /path/to/trusted-harness.py
+coprogrammer worker run --session codex-api --protect-retry --apply -- python /path/to/trusted-harness.py
+```
+
+The first command is a preview; it creates no retry record and does not prove
+that an applied retry will be allowed. Use `--protect-retry` on each applied
+attempt. This task-only option is available on `worker run`, not `worker watch`,
+and cannot be combined with `--handle-inbox`. Without it, existing explicit
+execution behavior is unchanged.
+
+Protection reuses the existing worktree runner lock and workspace content
+snapshot. It records a started marker before launch and an aggregate end digest
+after a normally returning invocation, including command failure or timeout.
+The next attempt for the same claim compares content against that end digest.
+Added, deleted, renamed or modified tracked/nonignored files change it; a commit
+that preserves file content does not. Only fixed metadata, session/claim IDs and
+aggregate hashes are stored in the local Manager state directory's `runs/` log,
+which must be Git-ignored or outside the worktree. Source, prompts and argv are
+not saved in this retry record.
+
+| Stop reason | What to inspect |
+| --- | --- |
+| `retry_content_changed` | Newer edits differ from the previous end digest. Inspect `git status --short` and preserve/reconcile the files. Repeating the command does not replace the baseline. |
+| `retry_baseline_missing` | This existing claim has no protected end record. Enabling the option after a legacy attempt cannot recover an earlier baseline. |
+| `retry_attempt_incomplete` | A cancellation, process failure in the runner, or record-write failure left no confirmed end snapshot. Inspect the original worker report, process cleanup, claim and edits. |
+
+Invalid records or unstable/unreadable snapshots also stop execution. Inspect
+`coprogrammer manager task board` in the original worktree. Nothing automatically
+releases/reclaims a claim, accepts current files as a new baseline, or overrides
+a conflict. After preserving edits and checking that the old process stopped,
+the user may deliberately choose the existing unprotected invocation by omitting
+the flag; that is a separate decision to execute without this content check.
+Do not silently remove the option in a wrapper or UI. Expired claims still
+require the existing explicit creator recovery flow.
+
+The digest covers the whole tracked/nonignored worktree, not just task paths,
+under the existing snapshot size and file-type limits. It is an observation,
+not a write sandbox or authenticated evidence: ignored/external inputs, edits
+restored between observations and writes after the check remain outside this
+protection. Edits made during the previous attempt are part of its end snapshot;
+their writer cannot be identified. Do not edit concurrently with a live harness.
+Local record removal/editing cannot establish a trustworthy recovery baseline.
+
 ## Inspect process failures before another invocation
 
 Applied runner reports include `launched` and `exit_code`; a watch retains these
