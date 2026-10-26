@@ -27,7 +27,7 @@ def command(args):
                            progress=progress)
         else:
             try:
-                report = run(path, cwd, args.session, argv, **options)
+                report = run(path, cwd, args.session, argv, **options, protect_retry=args.protect_retry)
             except RunInterrupted as interrupted:
                 emit(json.dumps(interrupted.report, ensure_ascii=False, indent=2) + "\n")
                 return 130
@@ -58,6 +58,8 @@ def add_parsers(parsers):
             parser.add_argument("--timeout-seconds", type=int, default=120)
             parser.add_argument("--notify", action="append")
             parser.add_argument("--handle-inbox", action="store_true", help="Deliver inbox to the trusted command; acknowledge only its explicit receipt IDs, with no project edits.")
+            if action == "run":
+                parser.add_argument("--protect-retry", action="store_true", help="Task-only opt-in: stop retries if project content differs from the previous protected attempt's end snapshot; start with the first attempt.")
             if action == "watch":
                 parser.add_argument("--wait", action="store_true", help="Wait in this foreground process for peer task/message changes; bounded by cycle/duration limits.")
                 parser.add_argument("--max-cycles", type=int, default=20)

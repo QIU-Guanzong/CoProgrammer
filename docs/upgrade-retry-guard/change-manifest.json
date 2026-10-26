@@ -1,0 +1,9 @@
+{
+  "task": "Optional worker retry content guard",
+  "intent": "Stop opted-in retries when project content differs from the previous attempt's end snapshot",
+  "scope": "tooling | tests | docs",
+  "core_changes": ["worker run --protect-retry", "Reuse workspace digest and per-worktree runner log", "Fail closed on conflicting or incomplete local evidence"],
+  "contracts": [],
+  "tests": ["Offline subprocess retry and cancellation fixtures", "CLI preview and option validation", "Serial full unittest and configuration validation"],
+  "risks": ["Ignored/external inputs and edits after observation are not covered", "First opted-in run must claim new work", "Legacy mode remains available only as a deliberate user choice", "No authenticity guarantee for locally edited or removed evidence"]
+}

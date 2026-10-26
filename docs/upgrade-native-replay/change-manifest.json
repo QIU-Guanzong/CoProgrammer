@@ -1,0 +1,9 @@
+{
+  "task": "Bounded Codex native replay and precise failure evidence",
+  "intent": "Resume an explicitly authorized cloud task without confusing process launch, model completion or fixture success",
+  "scope": "tooling | tests | docs",
+  "core_changes": ["Preserved original claim history and bounded native replay evidence", "Minimal confirmed harness failure diagnostic fix if required"],
+  "contracts": ["Task/result, claim, lease and explicit message receipt formats retained", "No automatic model retry, account setup, provider selection, approval or merge"],
+  "tests": ["Focused offline regression for confirmed changes", "Installed candidate bounded native execution and failure receipt", "Config/manifest validation and required serial regression"],
+  "risks": ["An authorized native task may use existing account credit", "A process launch does not prove model completion", "Unavailable native authorization remains a concrete blocker"]
+}

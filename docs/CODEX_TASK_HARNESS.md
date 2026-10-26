@@ -115,6 +115,46 @@ run/watch` with this task-only adapter still delivers a refused inbox packet.
 Existing claims and edits remain intact after a launch failure; no claim is
 invented for an inbox without owned work. Inspect them and the native client separately before
 another explicit invocation. `--check` neither retries nor clears that state.
+
+For a separately authorized execution, optionally add
+`--diagnostics /private/execution.json` to the adapter argv after `--execute`.
+The parent directory must already exist and the file must be new. The adapter
+creates it with owner-only POSIX permissions and refuses to overwrite an old
+receipt. Keep it outside claimed project files, in an ignored/private runtime
+directory. Plain check cannot create an execution receipt.
+
+This local operator artifact records fixed stages, task/session/claim IDs and
+observed native exit status, without packet titles, summaries, account values
+or native stdout/stderr. It does not change the task/result contract. A returned
+native exit establishes process startup; an OSError around subprocess I/O leaves
+startup unknown. Model startup remains unknown in this artifact, including after
+a valid structured reply. The receipt is evidence to inspect, never authority
+to complete, ACK, take over a lease or retry a task. A timeout/interruption may
+leave the last checkpoint rather than a final outcome; consult the parent runner
+report and original claim. Local storage, native nonzero exit, missing result
+and invalid result are distinguished without weakening the existing guards.
+
+For local Python I/O failures, `os_error` contains an allowlisted symbolic errno
+such as `ENOENT`, `EACCES`, `ENOSPC` or `EPIPE`, otherwise `unknown`. It never
+contains exception text or filenames. This describes the operation at the
+recorded stage; it does not explain a native nonzero exit or establish that a
+model request did or did not start. Native stdout/stderr remain discarded.
+
+Before considering another explicitly authorized invocation:
+
+| Recorded failure | Inspect first |
+| --- | --- |
+| `packet_read_failed`, `packet_too_large`, `packet_parse_failed` | Parent packet transport/size/encoding; native execution has not begun. Do not paste the packet into shared logs. |
+| `packet_rejected`, `sandbox_rejected` | Current task, session, claim, worktree and allowed sandbox; do not fabricate a replacement claim. |
+| `result_storage_io_failed` | Local temporary storage/access; use the recorded startup state because cleanup can fail after execution. |
+| `native_launch_or_io_failed` | Selected executable and local process I/O; startup remains unknown even with an errno. |
+| `native_exit_nonzero`, `result_missing`, `result_unavailable`, `result_invalid` | Original worker report, retained claim and edits; exit status alone does not identify account, quota or network failure. |
+
+Use the existing `coprogrammer manager task board` and `git status --short` from
+the affected worktree to inspect retained work. An expired lease does not prove
+the old worker stopped. A partial checkpoint or failed diagnostic write needs
+manual inspection; none of these stages authorizes release, takeover or retry.
+
 Claude can use the separate [task-only Claude adapter](CLAUDE_TASK_HARNESS.md),
 project MCP/Skills or a trusted custom harness. Each native adapter keeps the
 client's existing authorized configuration; neither handles inbox receipts.
