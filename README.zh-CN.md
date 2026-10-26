@@ -114,7 +114,8 @@ MCP 提供同一套本地协作能力。`workspace_status` 汇总工作状态，
 资源，包括 worker 和中断核对指引。
 [接入指南](docs/knowledge/README.md) · [插件安装](docs/PLUGIN_QUICKSTART.md)
 
-Codex task adapter 升级尚未发布，仍显示 `0.3.0a7`，不能只凭版本号确认构建。
+`0.3.0a8` 预发布候选包含 Codex task adapter 和诊断；从 PyPI 安装前先核对
+[发布状态](https://github.com/QIU-Guanzong/CoProgrammer/releases)，`0.3.0a7` 不含这些新增功能。
 在包含该升级的 Python 环境运行 `python -m coprogrammer.codex_harness --check`，
 普通检查不启动 Codex；通过 `coprogrammer knowledge show templates/CODEX_TASK_HARNESS`
 阅读随包的版本/help 诊断与明确执行流程。模块或资源缺失时先核对安装构建，

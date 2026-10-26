@@ -1,0 +1,20 @@
+{
+  "task": "Prepare 0.3.0a8 prerelease",
+  "intent": "Give merged native harness and reliability improvements a distinct installable version",
+  "scope": "tooling",
+  "core_changes": [
+    "Align Python and portable/Codex/Claude plugin version metadata",
+    "Explain a8 candidate availability and normal PyPI release path"
+  ],
+  "contracts": [],
+  "tests": [
+    "Plugin manifest consistency",
+    "Offline sdist and wheel build and payload identity",
+    "Isolated a7 candidate to a8 wheel upgrade and packaged CLI checks"
+  ],
+  "risks": [
+    "Publication is a separate tag-triggered PyPI Trusted Publishing operation",
+    "Native model access is not established by package installation",
+    "Existing filesystem concurrency and platform limitations remain"
+  ]
+}
