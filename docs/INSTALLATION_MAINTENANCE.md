@@ -23,10 +23,10 @@ it does not establish model access. WorkBuddy GUI testing remains deferred.
 
 ## Check an installed Codex harness build
 
-The cloud upgrade containing the Codex task adapter and its diagnostics remains
-unreleased. Its package metadata is still `0.3.0a7`; that version alone does not
-prove these additions are installed. Use the intended Python environment and
-review the exact candidate build rather than assuming the public package has it.
+The `0.3.0a8` prerelease candidate contains the Codex task adapter and its
+diagnostics. The public `0.3.0a7` package does not contain these additions. Check
+the [release status](https://github.com/QIU-Guanzong/CoProgrammer/releases) before
+installing from PyPI, then inspect the intended Python environment.
 
 ```sh
 python -m coprogrammer.codex_harness --check
@@ -41,7 +41,7 @@ are also readable without a source checkout. A missing module/resource means
 the selected environment/build needs inspection, not a task retry. Neither
 diagnostic establishes account authorization or model readiness.
 
-The same unreleased candidate includes the Claude task-only adapter:
+The same `0.3.0a8` candidate includes the Claude task-only adapter:
 
 ```sh
 python -m coprogrammer.claude_harness --check
@@ -203,7 +203,7 @@ here. Neither policy makes external-editor writes atomic with filesystem checks.
 不等于模型已登录或已自主协作。失败后先检查文件；整组文件不提供跨文件原子性，
 安装记录也不能阻止任意程序修改文件。
 
-Codex adapter 的当前云端升级尚未发布，包版本仍为 `0.3.0a7`，不能只凭版本号
-确认新增功能。用同一 Python 环境运行 `python -m coprogrammer.codex_harness --check`，
+Codex adapter 及诊断包含在 `0.3.0a8` 预发布候选中，公开的 `0.3.0a7` 不含这些功能。
+从 PyPI 安装前先核对发布状态。用同一 Python 环境运行 `python -m coprogrammer.codex_harness --check`，
 再通过 `knowledge show templates/CODEX_TASK_HARNESS` 阅读随包指引；普通检查不启动
 客户端。模块或资源缺失时先核对安装的构建，不重试原任务。

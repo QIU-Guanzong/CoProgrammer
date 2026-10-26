@@ -124,8 +124,9 @@ contains six Skills, and this candidate build serves sixteen read-only Markdown
 resources, including the worker and recovery guides.
 [Client setup](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/knowledge/README.md) · [Plugin installation](https://github.com/QIU-Guanzong/CoProgrammer/blob/main/docs/PLUGIN_QUICKSTART.md)
 
-The Codex task adapter upgrade remains unreleased; the unchanged `0.3.0a7`
-metadata alone cannot identify this build. In an environment containing it, run
+The `0.3.0a8` prerelease candidate includes the Codex task adapter and diagnostics.
+Check the [release status](https://github.com/QIU-Guanzong/CoProgrammer/releases)
+before installing from PyPI; `0.3.0a7` does not contain these additions. Run
 `python -m coprogrammer.codex_harness --check` for discovery without starting
 Codex. Read `coprogrammer knowledge show templates/CODEX_TASK_HARNESS` for the
 optional version/help probe and explicit scoped execution. Module/resource
