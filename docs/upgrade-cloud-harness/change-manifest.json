@@ -1,0 +1,9 @@
+{
+  "task": "Add explicit Codex CLI task harness adapter",
+  "intent": "Bridge installed worker commands to Codex structured final output",
+  "scope": "tooling",
+  "core_changes": ["Opt-in single task Codex CLI adapter", "Offline native process acceptance tests", "Client and provider boundary documentation"],
+  "contracts": [],
+  "tests": ["Focused adapter and runner tests", "Full unittest discovery", "Config and manifest validation"],
+  "risks": ["Explicit execution may use the client's existing authorized paid account", "Sandbox and scope guards do not prove model correctness", "Native CLI version compatibility needs real-client validation"]
+}

@@ -1,0 +1,30 @@
+{
+  "task": "Single worker run interruption receipt",
+  "intent": "Expose observed interruption stages without inventing durable claim, completion or message receipt facts.",
+  "scope": "tooling | tests | docs",
+  "core_changes": [
+    "KeyboardInterrupt subtype carrying a sanitized advisory report",
+    "Single worker run CLI interruption JSON with exit 130",
+    "Short default SIGINT deferral for owned launch handoff and cleanup",
+    "Offline cancellation, atomic boundary and compatibility tests"
+  ],
+  "contracts": [
+    "Harness packet/result and Manager events unchanged",
+    "Python runner and watch still propagate/catch KeyboardInterrupt",
+    "Unknown durable outcomes are not replayed, released, approved or retried",
+    "Original process cleanup strategy and bounded wait retained"
+  ],
+  "tests": [
+    "Actual CLI SIGINT child/grandchild shutdown, JSON and exit 130",
+    "Pre/post commit step, finish and ACK interruption uncertainty",
+    "Launch/cleanup deferred SIGINT and handler restoration",
+    "Direct API and watcher compatibility",
+    "Serial full regression and config/manifest/JSON/YAML validation"
+  ],
+  "risks": [
+    "No complete delivery guarantee when stdout itself is interrupted",
+    "Custom signal handlers and injected Popen exceptions require launch uncertainty",
+    "Linux offline acceptance does not prove Windows native signal behavior or AI quality",
+    "GitHub/Library delivery remains blocked; do not retry in this batch"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "task": "Safe inspection of unknown interruption outcomes",
+  "intent": "Give users precise read-only checks and an executable offline example without replaying commands, finish or ACK.",
+  "scope": "docs | examples | advisory diagnostics | tests",
+  "core_changes": [
+    "Inspection commands checked against existing help",
+    "Temporary synthetic CLI example with post-commit interruption",
+    "Accurate claim_retained for failed inbox handling without a claim"
+  ],
+  "contracts": [
+    "No Manager event, schema, protocol, permission or ownership change",
+    "Queries are existing non-mutating operations",
+    "Unknown outcomes never cause automatic retry, release or ACK replay",
+    "Confirmed semantics limited to validated top-level CLI/watch calls"
+  ],
+  "tests": [
+    "Offline executable example verifies finish/ACK unknown then read-only durable inspection",
+    "Read queries preserve exact synthetic event-log bytes",
+    "Inbox failure diagnostics for unclaimed and already claimed tasks",
+    "Independent review of latest two diagnostic batches and serial regression",
+    "Config/manifests, JSON/YAML, protected paths and Git/bundle integrity"
+  ],
+  "risks": [
+    "A done record or ACK does not prove correctness, understanding or process liveness",
+    "Task identity and pagination must be correlated before judging unknown results",
+    "External nested Manager transactions are outside validated runner usage",
+    "Windows native behavior and real AI calls are untested; no public delivery retry"
+  ]
+}

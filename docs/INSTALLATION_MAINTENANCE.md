@@ -21,6 +21,37 @@ and complete its normal project/MCP trust flow after reviewing updated files.
 Verification reports installation, transport and native discovery separately;
 it does not establish model access. WorkBuddy GUI testing remains deferred.
 
+## Check an installed Codex harness build
+
+The cloud upgrade containing the Codex task adapter and its diagnostics remains
+unreleased. Its package metadata is still `0.3.0a7`; that version alone does not
+prove these additions are installed. Use the intended Python environment and
+review the exact candidate build rather than assuming the public package has it.
+
+```sh
+python -m coprogrammer.codex_harness --check
+coprogrammer knowledge show templates/CODEX_TASK_HARNESS
+coprogrammer knowledge show templates/INTERRUPTED_RUN_INSPECTION
+```
+
+Plain `--check` starts no native client and tests discovery only. The bundled
+Codex guide explains the optional `--check --probe-native` version/help probe,
+worker preview, queued-task prerequisite and explicit execution. These guides
+are also readable without a source checkout. A missing module/resource means
+the selected environment/build needs inspection, not a task retry. Neither
+diagnostic establishes account authorization or model readiness.
+
+The same unreleased candidate includes the Claude task-only adapter:
+
+```sh
+python -m coprogrammer.claude_harness --check
+coprogrammer knowledge show templates/CLAUDE_TASK_HARNESS
+```
+
+Its check only discovers an executable. Review the trusted native CLI's version
+and existing authorization separately; this adapter never installs, logs in or
+configures providers. The guide covers explicit execution and message receipts.
+
 ## What is refreshed?
 
 | Existing file | Default setup | Setup with `--upgrade` |
@@ -82,3 +113,8 @@ receipt is an advisory record, not authenticated evidence or a sandbox.
 升级后重载客户端，完成原有信任流程，再运行 `integrations verify`。文件已更新
 不等于模型已登录或已自主协作。失败后先检查文件；整组文件不提供跨文件原子性，
 安装记录也不能阻止任意程序修改文件。
+
+Codex adapter 的当前云端升级尚未发布，包版本仍为 `0.3.0a7`，不能只凭版本号
+确认新增功能。用同一 Python 环境运行 `python -m coprogrammer.codex_harness --check`，
+再通过 `knowledge show templates/CODEX_TASK_HARNESS` 阅读随包指引；普通检查不启动
+客户端。模块或资源缺失时先核对安装的构建，不重试原任务。
