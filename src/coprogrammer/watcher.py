@@ -110,7 +110,11 @@ def watch(path: Path, cwd: Path, session: str, command: list[str], *,
                             break
             else:
                 report.update(state="stopped", reason="cycle_limit")
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as interrupted:
+            if isinstance(interrupted, runner.RunInterrupted):
+                # Keep the current invocation's observations, including unknown
+                # commit/cleanup outcomes. Do not count or replay an interrupted result.
+                report["last"] = interrupted.report
             report.update(state="stopped", reason="interrupted",
                           next_step="Inspect the original claim and edits before resuming.")
     return report

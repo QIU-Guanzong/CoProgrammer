@@ -1,0 +1,9 @@
+{
+  "task": "Audit ignored content and retry observation boundaries",
+  "intent": "Prove actual protection and explicit limitations with offline fixtures",
+  "scope": "tests | docs",
+  "core_changes": ["Synthetic ignored-file and timing regression coverage", "Measured observation counts and bounded compatibility conclusions"],
+  "contracts": [],
+  "tests": ["Focused retry guard suite", "Serial full unittest", "Config, manifest and JSON/YAML validation"],
+  "risks": ["Ignored untracked files remain outside protection", "External edits after observation can still be overwritten", "Characterization tests do not establish an atomic editor lock"]
+}

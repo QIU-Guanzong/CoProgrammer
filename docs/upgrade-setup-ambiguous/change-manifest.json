@@ -1,0 +1,9 @@
+{
+  "task": "Preserve ambiguous receipt and hard-link recovery states",
+  "intent": "Avoid destructive rollback after uncertain publication or observed shared inode ownership",
+  "scope": "tooling",
+  "core_changes": ["Apply receipt consistency guard to ordinary write failures", "Conservatively retain recovery targets with multiple hard links"],
+  "contracts": [],
+  "tests": ["Fault injection before runtime changes", "Actual CLI SIGINT", "Setup and serial full regression", "Offline installed candidate"],
+  "risks": ["Ambiguous output remains for inspection", "Transient hard links and post-check writes remain outside protection", "Windows native signals unverified"]
+}

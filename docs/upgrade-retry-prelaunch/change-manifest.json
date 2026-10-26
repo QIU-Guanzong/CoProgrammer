@@ -1,0 +1,9 @@
+{
+  "task": "Narrow the protected retry prelaunch window",
+  "intent": "Stop before child startup if covered content changed during durable record or output setup",
+  "scope": "tooling | tests | docs",
+  "core_changes": ["Reuse bounded snapshot immediately before Popen", "Retain incomplete record and original claim on conflict", "Keep legacy execution unchanged"],
+  "contracts": [],
+  "tests": ["Failing baseline then passing deterministic subprocess regressions", "Focused retry suite and serial full unittest", "Config, manifest and JSON/YAML validation"],
+  "risks": ["One extra double-pass snapshot in protected mode", "Ignored files and changes after final observation remain uncovered", "Stopped prelaunch attempts require manual inspection rather than automatic recovery"]
+}

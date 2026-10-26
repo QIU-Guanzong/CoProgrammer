@@ -48,6 +48,12 @@ coprogrammer worker watch --session codex-api --apply --wait --handle-inbox \
   -- python /path/to/trusted-harness.py
 ```
 
+`--notify` must name registered, non-closed peer sessions, not the running session itself.
+Invalid self-notification or an already closed peer is rejected during preview and before an applied run
+claims work or launches the harness. Correct the recipient and review again.
+Blocked, idle or stale peers can still receive messages. This preflight observes
+current state; completion rechecks the recipient, which may change during execution.
+
 The harness receives either a scoped task or an inbox packet. Task completion
 can notify the specified windows; inbox handling acknowledges only unique
 delivered IDs explicitly returned by the harness. A valid receipt lets the
@@ -102,6 +108,10 @@ execution behavior is unchanged.
 Protection reuses the existing worktree runner lock and workspace content
 snapshot. It records a started marker before launch and an aggregate end digest
 after a normally returning invocation, including command failure or timeout.
+After the start record is persisted and the child's output storage is prepared,
+it rechecks covered content immediately before launching the child. A change
+during that preparation stops before execution and leaves the start record
+incomplete; it does not adopt the newer content as an end baseline.
 The next attempt for the same claim compares content against that end digest.
 Added, deleted, renamed or modified tracked/nonignored files change it; a commit
 that preserves file content does not. Only fixed metadata, session/claim IDs and
@@ -112,6 +122,7 @@ not saved in this retry record.
 | Stop reason | What to inspect |
 | --- | --- |
 | `retry_content_changed` | Newer edits differ from the previous end digest. Inspect `git status --short` and preserve/reconcile the files. Repeating the command does not replace the baseline. |
+| `retry_prelaunch_content_changed` | Covered files changed during invocation preparation. No child was launched. Preserve/reconcile edits and inspect the original claim and incomplete record before deciding how to continue. |
 | `retry_baseline_missing` | This existing claim has no protected end record. Enabling the option after a legacy attempt cannot recover an earlier baseline. |
 | `retry_attempt_incomplete` | A cancellation, process failure in the runner, or record-write failure left no confirmed end snapshot. Inspect the original worker report, process cleanup, claim and edits. |
 
@@ -131,6 +142,11 @@ restored between observations and writes after the check remain outside this
 protection. Edits made during the previous attempt are part of its end snapshot;
 their writer cannot be identified. Do not edit concurrently with a live harness.
 Local record removal/editing cannot establish a trustworthy recovery baseline.
+Each snapshot uses two content passes. A normally returning protected invocation
+now uses three snapshots (start, prelaunch and end), or six passes instead of
+four. The extra prelaunch snapshot narrows the preparation window; an external
+write after that check can still be overwritten. Unprotected execution adds no
+snapshot, and ignored untracked files remain outside this protection.
 
 ## Inspect process failures before another invocation
 
@@ -167,7 +183,16 @@ When `worker run` is interrupted inside the runner, its CLI emits one
 `coprogrammer.runner.v1` report with `state=stopped`, `reason=interrupted` and
 exit status 130. The Python API still raises a `KeyboardInterrupt` subtype,
 `RunInterrupted`, whose `report` contains the same observations. `worker watch`
-keeps its existing stopped/interrupted summary and exit behavior.
+keeps its existing stopped/interrupted summary and exit behavior (CLI status 0).
+When the active runner supplies `RunInterrupted`, the watch summary's `last`
+contains that invocation's interruption report instead of an older preview or
+cycle. Inspect `last.interruption_phase`, launch/cleanup observations and unknown
+completion/receipt states before resuming. Counters include only normally returned
+results; an interrupted finish or ACK may have committed without incrementing a
+counter. Inspect durable task/inbox state; no mutation is replayed. A plain
+interrupt during idle waiting leaves `last` as the preceding boundary result.
+Automation should inspect the summary's `reason`, not treat status 0 as evidence
+that all work completed.
 
 | `interruption_phase` | Meaning and inspection |
 | --- | --- |

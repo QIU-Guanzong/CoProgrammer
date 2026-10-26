@@ -1,0 +1,9 @@
+{
+  "task": "Preserve setup cancellation when staging cleanup also fails",
+  "intent": "Keep Ctrl+C exit semantics and conditional recovery while retaining cleanup failure evidence",
+  "scope": "tooling",
+  "core_changes": ["Retain KeyboardInterrupt as the primary exception through failed cleanup", "Retain cleanup OSError as the explicit cause", "Fault-injection and offline CLI regression coverage"],
+  "contracts": [],
+  "tests": ["Baseline failures", "Focused staged-cleanup cancellation tests", "Setup regression", "Serial full unittest", "Config and manifest validation"],
+  "risks": ["Failed cleanup retains staging artifacts for inspection", "Publication bookkeeping window remains outside the guarantee", "Windows native signals not verified"]
+}

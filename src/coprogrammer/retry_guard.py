@@ -61,5 +61,12 @@ def begin(tx, cwd, session, task, newly_claimed):
     return None
 
 
+def check_launch(cwd, started_content):
+    """Recheck after durable record/output setup; this is not an editor lock."""
+    if _digest(cwd) != started_content:
+        return "retry_prelaunch_content_changed", "Project content changed while preparing the protected invocation. No command was launched. Preserve and inspect your edits and original claim; the start record remains incomplete and no end baseline was replaced."
+    return None
+
+
 def finish(tx, cwd, session, task):
     _record(tx, "retry.finished", session, task["claim_id"], _digest(cwd))

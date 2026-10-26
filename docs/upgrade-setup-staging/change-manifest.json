@@ -1,0 +1,9 @@
+{
+  "task": "Preserve externally replaced setup staging paths",
+  "intent": "Avoid unlinking a staging pathname whose recorded identity no longer matches",
+  "scope": "tooling",
+  "core_changes": ["Reuse staged identity for replacement cleanup", "Document reproducible publication boundaries and manual recovery"],
+  "contracts": [],
+  "tests": ["Failure-before-success-after staging ownership tests", "Actual CLI SIGINT", "Publication boundary probes", "Serial full and installed regression"],
+  "risks": ["Unverified staging names remain for inspection", "Same-inode and post-check races remain outside protection", "Windows native signals not verified"]
+}

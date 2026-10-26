@@ -88,11 +88,197 @@ print(json.dumps({'status':'done','summary':'Synthetic done'}))
         self.assertEqual(self.count.read_text(), '1')
         self.assertFalse(self.content.exists())
 
+    def test_ignored_untracked_changes_are_outside_retry_protection(self):
+        from coprogrammer import retry_guard, workspace as ws
+        ignored = self.repo / 'src/output.cache'
+        with (self.repo / '.gitignore').open('a') as stream:
+            stream.write('src/*.cache\n')
+        self.commit()
+        command = self.command()
+        command[2] = command[2].replace(
+            "Path(sys.argv[2]).write_text(str(os.getpid()))",
+            "Path('src/output.cache').write_text('synthetic-cache-'+str(n))\n"
+            "Path(sys.argv[2]).write_text(str(os.getpid()))")
+        for change in ('modify', 'delete', 'add'):
+            with self.subTest(change=change):
+                if change == 'add' and ignored.exists():
+                    ignored.unlink()
+                if change != 'add':
+                    ignored.write_text('synthetic-initial-cache')
+                self.call()  # End baseline excludes this untracked ignored file.
+                before = retry_guard._digest(self.repo)
+                if change == 'delete':
+                    ignored.unlink()
+                else:
+                    ignored.write_text('SYNTHETIC_EXTERNAL_CACHE')
+                self.assertEqual(retry_guard._digest(self.repo), before)
+                count = int(self.count.read_text())
+                with patch.object(ws, '_content', wraps=ws._content) as observe:
+                    result = runner.run(self.path, self.repo, 'codex', command,
+                                        apply=True, protect_retry=True)
+                self.assertEqual(result['reason'], 'command_failed')
+                self.assertTrue(result['launched'])
+                self.assertEqual(int(self.count.read_text()), count + 1)
+                self.assertEqual(ignored.read_text(), 'synthetic-cache-'+str(count + 1))
+                self.assertEqual(observe.call_count, 6)  # Two passes at start, prelaunch and end.
+                self.assertNotIn('SYNTHETIC_EXTERNAL_CACHE', self.run_log.read_text())
+
+    def test_tracked_file_matching_ignore_rule_is_still_protected(self):
+        # Git excludes untracked ignored files, not tracked files with that name.
+        exclude = self.repo / '.git/info/exclude'
+        with exclude.open('a') as stream:
+            stream.write('\nsrc/main.py\n')
+        self.assertEqual(self.git('check-ignore', '--no-index', 'src/main.py'), 'src/main.py')
+        self.call()
+        self.content.write_text('SYNTHETIC_TRACKED_CHANGE')
+        before = self.run_log.read_bytes()
+        self.assertEqual(self.call()['reason'], 'retry_content_changed')
+        self.assertEqual(self.count.read_text(), '1')
+        self.assertEqual(self.content.read_text(), 'SYNTHETIC_TRACKED_CHANGE')
+        self.assertEqual(self.run_log.read_bytes(), before)
+
+    def test_cli_preview_then_external_edit_is_rechecked_on_apply(self):
+        self.call()
+        before = self.run_log.read_bytes()
+        env = {**os.environ, 'PYTHONPATH': str(Path(runner.__file__).parents[1])}
+        prefix = [sys.executable, '-m', 'coprogrammer', 'worker', 'run',
+                  '--session', 'codex', '--protect-retry']
+        preview = subprocess.run(prefix + ['--', *self.command('done')],
+                                 cwd=self.repo, env=env, capture_output=True, text=True, timeout=10)
+        self.assertEqual(preview.returncode, 0, preview.stderr)
+        self.assertFalse(json.loads(preview.stdout)['applied'])
+        self.assertEqual(self.run_log.read_bytes(), before)
+        self.content.write_text('SYNTHETIC_AFTER_PREVIEW')
+        applied = subprocess.run(prefix + ['--apply', '--', *self.command('done')],
+                                 cwd=self.repo, env=env, capture_output=True, text=True, timeout=10)
+        self.assertEqual(applied.returncode, 1, applied.stderr)
+        report = json.loads(applied.stdout)
+        self.assertEqual(report['reason'], 'retry_content_changed')
+        self.assertFalse(report['launched'])
+        self.assertEqual(self.count.read_text(), '1')
+        self.assertEqual(self.content.read_text(), 'SYNTHETIC_AFTER_PREVIEW')
+        self.assertEqual(self.run_log.read_bytes(), before)
+
+    def test_change_between_snapshot_passes_stops_before_launch(self):
+        from coprogrammer import workspace as ws
+        self.call()
+        before = self.run_log.read_bytes()
+        content = ws._content
+        observations = []
+        def change_after_first_pass(cwd):
+            result = content(cwd)
+            observations.append(result)
+            if len(observations) == 1:
+                self.content.write_text('SYNTHETIC_DURING_OBSERVATION')
+            return result
+        with patch.object(ws, '_content', side_effect=change_after_first_pass):
+            with self.assertRaisesRegex(RuntimeError, 'stable project content'):
+                self.call()
+        self.assertEqual(len(observations), 2)
+        self.assertEqual(self.count.read_text(), '1')
+        self.assertEqual(self.content.read_text(), 'SYNTHETIC_DURING_OBSERVATION')
+        self.assertEqual(self.run_log.read_bytes(), before)
+
+    def test_external_edit_after_check_is_not_an_atomic_write_guard(self):
+        from coprogrammer import retry_guard
+        self.call()
+        claim = self.task_view()['claim_id']
+        popen = runner.Popen
+        before_launch = []
+        def edit_then_launch(*args, **kwargs):
+            # Deterministic external-editor interleaving; no timing/sleep race.
+            self.assertEqual(load_events(self.run_log)[-1]['type'], 'retry.started')
+            self.content.write_text('SYNTHETIC_AFTER_CHECK')
+            before_launch.append(1)
+            return popen(*args, **kwargs)
+        with patch.object(runner, 'Popen', side_effect=edit_then_launch):
+            report = self.call()
+        self.assertEqual(before_launch, [1])
+        self.assertEqual(report['reason'], 'command_failed')
+        self.assertEqual(self.count.read_text(), '2')
+        self.assertEqual(self.content.read_text(), 'synthetic-2')
+        self.assertEqual(self.task_view()['claim_id'], claim)
+        self.assertEqual(load_events(self.run_log)[-1]['payload']['content_sha256'],
+                         retry_guard._digest(self.repo))
+
     def test_content_preserving_commit_does_not_block_retry(self):
         self.call()
         self.commit()
         self.assertEqual(self.call('done')['state'], 'done')
         self.assertEqual(self.count.read_text(), '2')
+
+    def test_prelaunch_edit_during_start_record_commit_is_preserved(self):
+        from coprogrammer import manager_store
+        self.call()
+        claim = self.task_view()['claim_id']
+        original = load_events(self.run_log)
+        replace = manager_store._replace_event_log
+        writes = []
+        def persist_then_edit(source, target):
+            result = replace(source, target)
+            if target == self.run_log:
+                writes.append(1)
+                if len(writes) == 1:
+                    self.content.write_text('SYNTHETIC_DURING_COMMIT')
+            return result
+        with patch.object(manager_store, '_replace_event_log', side_effect=persist_then_edit):
+            result = self.call('done')
+        self.assertEqual(result.get('reason'), 'retry_prelaunch_content_changed')
+        self.assertFalse(result['launched'])
+        self.assertTrue(result['claim_retained'])
+        self.assertEqual(self.count.read_text(), '1')
+        self.assertEqual(self.content.read_text(), 'SYNTHETIC_DURING_COMMIT')
+        self.assertEqual(self.task_view()['claim_id'], claim)
+        self.assertEqual(load_events(self.run_log)[:-1], original)
+        self.assertEqual(load_events(self.run_log)[-1]['type'], 'retry.started')
+        self.assertNotIn('SYNTHETIC_DURING_COMMIT', json.dumps(result))
+        self.assertEqual(self.call()['reason'], 'retry_attempt_incomplete')
+        self.assertEqual(self.count.read_text(), '1')
+
+    def test_prelaunch_edit_during_output_setup_is_preserved(self):
+        self.call()
+        temporary = runner.tempfile.TemporaryFile
+        opened = []
+        def open_then_edit(*args, **kwargs):
+            output = temporary(*args, **kwargs)
+            opened.append(output)
+            self.content.write_text('SYNTHETIC_DURING_OUTPUT_SETUP')
+            return output
+        with patch.object(runner.tempfile, 'TemporaryFile', side_effect=open_then_edit):
+            result = self.call('done')
+        self.assertEqual(result.get('reason'), 'retry_prelaunch_content_changed')
+        self.assertFalse(result['launched'])
+        self.assertEqual(self.count.read_text(), '1')
+        self.assertEqual(self.content.read_text(), 'SYNTHETIC_DURING_OUTPUT_SETUP')
+        self.assertEqual(len(opened), 1)
+        self.assertTrue(opened[0].closed)
+        self.assertEqual(load_events(self.run_log)[-1]['type'], 'retry.started')
+
+    def test_prelaunch_snapshot_error_keeps_incomplete_record_without_child(self):
+        from coprogrammer import retry_guard
+        self.call()
+        digest = retry_guard._digest
+        snapshots = []
+        def fail_before_launch(cwd):
+            snapshots.append(1)
+            if len(snapshots) == 2:
+                raise RuntimeError('synthetic prelaunch observation failure')
+            return digest(cwd)
+        with patch.object(retry_guard, '_digest', side_effect=fail_before_launch):
+            with self.assertRaisesRegex(RuntimeError, 'synthetic prelaunch'):
+                self.call()
+        self.assertEqual(self.count.read_text(), '1')
+        self.assertEqual(self.content.read_text(), 'synthetic-1')
+        self.assertEqual(load_events(self.run_log)[-1]['type'], 'retry.started')
+        self.assertEqual(self.call()['reason'], 'retry_attempt_incomplete')
+
+    def test_legacy_run_never_calls_prelaunch_content_check(self):
+        from coprogrammer import retry_guard
+        with patch.object(retry_guard, 'check_launch', side_effect=AssertionError('guard must stay opt-in')):
+            result = runner.run(self.path, self.repo, 'codex', self.command('done'), apply=True)
+        self.assertEqual(result['state'], 'done')
+        self.assertEqual(self.count.read_text(), '1')
+        self.assertFalse(self.run_log.exists())
 
     def test_existing_unprotected_claim_has_no_invented_baseline(self):
         runner.run(self.path, self.repo, 'codex', self.command(), apply=True)
@@ -167,7 +353,7 @@ print(json.dumps({'status':'done','summary':'Synthetic done'}))
         calls = []
         def digest(cwd):
             calls.append(1)
-            if len(calls) == 2:
+            if len(calls) == 3:
                 raise RuntimeError('synthetic end observation failure')
             return real_digest(cwd)
         with patch.object(retry_guard, '_digest', side_effect=digest):

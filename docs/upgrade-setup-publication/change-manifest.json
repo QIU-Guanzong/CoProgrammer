@@ -1,0 +1,9 @@
+{
+  "task": "Record confirmed setup replacement ownership before helper return",
+  "intent": "Recover interrupted upgrades without overwriting foreign replacement files",
+  "scope": "tooling",
+  "core_changes": ["Move successful update bookkeeping inside the write helper", "Retain staging identity for conditional rollback"],
+  "contracts": [],
+  "tests": ["Failure injection before and after publication", "Actual synthetic CLI SIGINT", "Setup and serial full regression", "Installed candidate and config validation"],
+  "risks": ["Syscall-to-record interruption window remains", "Identity checks are not atomic compare-and-swap", "Windows native signals unverified"]
+}
