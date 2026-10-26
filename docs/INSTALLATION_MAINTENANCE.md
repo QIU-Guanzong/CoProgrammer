@@ -75,6 +75,22 @@ no file contents or credentials and remains local to each worktree. The
 existing repository-wide Manager lock serializes cooperating installers.
 Selections retain records for other installed clients and unselected Skills.
 
+New files, including a new setup receipt, are fully written and synced in a
+same-directory temporary file before publication. Publication uses a hard link
+that refuses an existing destination: a file created while setup is preparing
+its output is preserved, even when its bytes match the generated content.
+Filesystems without hard-link support fail without an overwriting fallback.
+Normal creation permissions still follow the process umask; setup does not
+change the umask or global permissions.
+
+On a later failure, removal of a newly created file requires both its observed
+file identity and its contents to match this invocation. Independently replaced
+or edited files are retained for inspection. Existing-file updates continue to
+use their expected-content check and staged replacement. These checks do not
+lock external editors, make rollback an atomic conditional unlink, or make the
+whole multi-file installation atomic. A crash or uncertain publication may
+leave complete output or staging files; inspect them before explicitly retrying.
+
 For installations made before 0.3.0a6, run setup once to record files that still
 match the current package. Differing older files require manual comparison;
 the installer cannot prove their provenance. For mixed or custom MCP configs,
@@ -94,10 +110,83 @@ the target. The receipt is written last. On a caught failure, setup attempts to
 restore/remove completed writes only while they still match this invocation's
 bytes. It preserves concurrent edits and partial writes for manual inspection.
 
+A catchable Ctrl+C also attempts that conditional recovery when the setup
+receipt still matches its pre-run bytes (or is still absent for a new install).
+The interruption remains an interruption: no success report or automatic retry
+is issued. If the receipt changed or cannot be read, setup retains completed
+writes for inspection, since receipt publication may already have completed.
+A second Ctrl+C can interrupt recovery itself. Inspect the files and receipt,
+then preview the same `setup --upgrade` selection before explicitly applying it.
+Clean recovery permits a later explicit upgrade; preserved user edits continue
+to conflict. This does not add recovery for SIGKILL or process crashes, and the
+receipt comparison does not lock arbitrary external editors.
+
+If Ctrl+C interrupts a staged setup write and temporary-file cleanup also raises
+an I/O error, setup retains the original `KeyboardInterrupt` as the primary
+exception with the cleanup error as its cause. Failed staging cleanup is not
+retried; inspect any remaining staging file. Ordinary cleanup errors still fail
+the operation, and another Ctrl+C can interrupt cleanup/recovery. This does not
+close the interval between file publication and recording a completed write;
+unconfirmed output is retained rather than assigned optimistic rollback ownership.
+
+Confirmed upgrade replacements are now recorded inside the write helper before
+it returns to the installer. Recovery requires both their staged file identity
+and unchanged content; a later same-content replacement is preserved. Identity
+is checked again after staging a rollback, before replacing the target. These
+checks narrow the recovery window, but do not lock external editors or provide
+atomic compare-and-swap. An interruption inside publication before confirmation
+still leaves output for inspection. Hard links to the same inode and edits after
+the final observation remain outside this protection.
+
+Recovery also retains files after an ordinary I/O/runtime failure when the receipt
+has changed or cannot be read reliably; publication may have succeeded before the
+primitive reported failure. The error reports retention instead of claiming rollback.
+A recovery target observed with multiple hard links is retained even when content
+and inode match, including an alias left by failed staging cleanup. This is more
+conservative than older cleanup behavior: inspect the receipt, generated target
+and staging artifacts before manually retrying. No automatic deletion/retry is
+added. A transient alias removed before observation, or a link/write added after
+the final check, remains indistinguishable; no global signal mask or transaction
+guarantee is introduced.
+
 An entire multi-file update is **not a filesystem transaction**. A process kill,
 disk failure or arbitrary editor can interrupt it. Inspect the selected files
 and receipt before retrying; mismatched hashes continue to conflict. A local
 receipt is an advisory record, not authenticated evidence or a sandbox.
+
+### Inspect an uncertain installation before retrying
+
+1. Stop the current setup invocation and coordinate a quiet interval with other
+   project editors. Do not remove leases or kill unrelated processes to obtain it.
+2. Preserve a private copy of the affected targets, the setup receipt and any
+   remaining staging files. Do not delete the receipt to force adoption or use a
+   wildcard cleanup of `.coprogrammer-setup-*` paths; a name may now belong to
+   another writer. Replacement cleanup retains staging names whose captured
+   identity is unavailable or no longer matches, as creation cleanup already does.
+3. Preview the same client, edition and selection without `--apply`, for example:
+   `coprogrammer setup --client claude --edition mcp --upgrade`.
+   A successful preview or `unchanged` content does not prove provenance or a
+   live client connection. Review preserved content and the prior receipt together.
+4. If the old receipt and files were restored together, an explicitly reviewed
+   retry can proceed. If some files are new/custom while the receipt is old,
+   retain those edits and either manually reconcile them or restore the complete
+   known-good file/receipt pair from a trusted backup. Do not restore only the
+   receipt over newer files. A new readable receipt matching the selected files
+   may mean publication completed before the error; inspect instead of undoing it.
+5. Resolve unreadable/linked receipts and conflicting files with their owner,
+   preview again, then explicitly apply only the reviewed selection. There is no
+   automatic force, lease takeover, rollback replay or evidence deletion step.
+
+The existing v1 receipt format is unchanged, including legacy projects without
+a receipt. Files retained for inspection are not a durable recovery journal.
+For reproducible boundary observations in a source checkout, run
+`PYTHONPATH=src python docs/upgrade-setup-staging/probe_publication_boundaries.py`.
+It uses disposable synthetic directories and an in-memory pre-registration
+counterexample. It does not exercise an AI model or modify production source.
+Pre-registering uncertainty can support a future explicit retain-all policy, but
+pre-registering completed ownership is unsafe. A retain-all policy would also
+disable useful existing recovery on failed syscalls; it is not silently enabled
+here. Neither policy makes external-editor writes atomic with filesystem checks.
 
 ## 中文操作说明
 

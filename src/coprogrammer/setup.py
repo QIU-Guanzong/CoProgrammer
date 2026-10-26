@@ -12,6 +12,7 @@ import json
 import os
 import stat
 import tempfile
+import uuid
 from pathlib import Path
 
 from . import integrations, knowledge
@@ -20,6 +21,7 @@ CLIENT_LAYOUTS = integrations.CLIENT_LAYOUTS
 MAX_EXISTING_BYTES = 1_000_000
 MANIFEST_PATH = ".coprogrammer/setup-manifest.json"
 MANIFEST_FORMAT = "coprogrammer.setup-manifest.v1"
+_CompletedWrite = tuple[str, bytes, bytes | None, int, tuple[int, int] | None]
 
 
 def _existing(target: Path) -> bytes | None:
@@ -55,17 +57,22 @@ def _manifest(root: Path) -> tuple[dict, bytes | None]:
 
 
 def _replace(root: Path, relative: str, content: bytes, expected: bytes,
-             mode: int) -> None:
+             mode: int, completed: list[_CompletedWrite] | None = None,
+             expected_identity: tuple[int, int] | None = None) -> None:
     # Stage a complete file before rechecking and replacing its project path.
     # The Manager lock protects cooperating installers, not arbitrary editors.
     from .manager_store import _replace_event_log
 
     target = _target(root, relative)
     temporary = None
+    identity = None
+    interrupted = None
     try:
         with tempfile.NamedTemporaryFile(dir=target.parent, prefix=".coprogrammer-setup-",
                                          delete=False) as handle:
             temporary = handle.name
+            value = os.fstat(handle.fileno())
+            identity = (value.st_dev, value.st_ino)
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
@@ -73,11 +80,86 @@ def _replace(root: Path, relative: str, content: bytes, expected: bytes,
         target = _target(root, relative)
         if _existing(target) != expected:
             raise RuntimeError("setup target changed during application")
+        if expected_identity is not None and not _recovery_owned(target, expected_identity):
+            raise RuntimeError("setup target replaced or shared during recovery")
         _replace_event_log(temporary, target)
+        if completed is not None:
+            # Only confirmed publication establishes recovery ownership. Keep
+            # the staged inode, not an observation of a possibly replaced target.
+            # An interrupt inside the publishing primitive remains unconfirmed.
+            completed.append((relative, content, expected, mode, identity))
         temporary = None
+    except KeyboardInterrupt as exc:
+        interrupted = exc
+        raise
     finally:
-        if temporary is not None:
-            Path(temporary).unlink(missing_ok=True)
+        try:
+            # The pathname may have been replaced while staging failed. Only
+            # clean up the inode captured from our original open file.
+            if temporary is not None and identity is not None and _identity(Path(temporary)) == identity:
+                Path(temporary).unlink(missing_ok=True)
+        except OSError as cleanup_error:
+            if interrupted is not None:
+                # Keep the interruption's earlier chain instead of a cycle
+                # through the same interruption during failed cleanup.
+                cleanup_error.__context__ = interrupted.__cause__ or (
+                    None if interrupted.__suppress_context__ else interrupted.__context__)
+                raise interrupted from cleanup_error
+            raise
+
+
+def _identity(path: Path) -> tuple[int, int] | None:
+    try:
+        value = path.lstat()
+    except FileNotFoundError:
+        return None
+    return (value.st_dev, value.st_ino) if stat.S_ISREG(value.st_mode) else None
+
+
+def _recovery_owned(path: Path, expected: tuple[int, int]) -> bool:
+    # An observed alias makes name ownership ambiguous, even for the same inode.
+    # This is a conservative observation, not atomic conditional replacement.
+    try:
+        value = path.lstat()
+    except FileNotFoundError:
+        return False
+    return (stat.S_ISREG(value.st_mode) and (value.st_dev, value.st_ino) == expected
+            and value.st_nlink == 1)
+
+
+def _create(root: Path, relative: str, content: bytes,
+            created: dict[str, tuple[int, int]]) -> None:
+    target = _target(root, relative)
+    temporary = target.with_name(f".coprogrammer-setup-{target.name}-{uuid.uuid4().hex}")
+    identity = None
+    interrupted = None
+    try:
+        # Use the original xb creation mode/umask, not mkstemp's private mode.
+        with temporary.open("xb") as handle:
+            value = os.fstat(handle.fileno())
+            identity = (value.st_dev, value.st_ino)
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        target = _target(root, relative)
+        # Same-directory hard-link publication is atomic and refuses any existing
+        # name. Unsupported filesystems fail closed; never fall back to replace.
+        os.link(temporary, target)
+        created[relative] = identity
+    except KeyboardInterrupt as exc:
+        interrupted = exc
+        raise
+    finally:
+        # A collision before exclusive open is not our temporary file.
+        try:
+            if identity is not None and _identity(temporary) == identity:
+                temporary.unlink()
+        except OSError as cleanup_error:
+            if interrupted is not None:
+                cleanup_error.__context__ = interrupted.__cause__ or (
+                    None if interrupted.__suppress_context__ else interrupted.__context__)
+                raise interrupted from cleanup_error
+            raise
 
 
 def _target(root: Path, relative: str) -> Path:
@@ -257,7 +339,8 @@ def apply(cwd: Path, client: str, skills: list[str] | None = None,
         report = _report(root, client, files, warnings, include_content, receipt, upgrade=upgrade)
         if not report["can_apply"]:
             return report
-        completed: list[tuple[str, bytes, bytes | None, int]] = []
+        completed: list[_CompletedWrite] = []
+        created: dict[str, tuple[int, int]] = {}
         owned, original_receipt = receipt
         owned = dict(owned)
         try:
@@ -278,13 +361,11 @@ def apply(cwd: Path, client: str, skills: list[str] | None = None,
                     if old is None or hashlib.sha256(old).hexdigest() != entry["sha256"]:
                         raise RuntimeError("setup target changed during application")
                     mode = stat.S_IMODE(target.stat().st_mode)
-                    _replace(root, item["path"], content, old, mode)
-                    completed.append((item["path"], content, old, mode))
+                    _replace(root, item["path"], content, old, mode, completed)
                     item["status"] = "updated"
                 else:
-                    with target.open("xb") as handle:
-                        completed.append((item["path"], content, None, mode))
-                        handle.write(content)
+                    completed.append((item["path"], content, None, mode, None))
+                    _create(root, item["path"], content, created)
                     item["status"] = "created"
                 if item["kind"] != "instructions":
                     owned[item["path"]] = {"kind": item["kind"], "sha256": item["sha256"]}
@@ -295,24 +376,40 @@ def apply(cwd: Path, client: str, skills: list[str] | None = None,
             target.parent.mkdir(parents=True, exist_ok=True)
             target = _target(root, MANIFEST_PATH)
             if original_receipt is None:
-                with target.open("xb") as handle:
-                    completed.append((MANIFEST_PATH, encoded, None, 0o600))
-                    handle.write(encoded)
+                completed.append((MANIFEST_PATH, encoded, None, 0o600, None))
+                _create(root, MANIFEST_PATH, encoded, created)
             elif encoded != original_receipt:
                 _replace(root, MANIFEST_PATH, encoded, original_receipt,
                          stat.S_IMODE(target.stat().st_mode))
-        except (OSError, RuntimeError) as exc:
-            # Restore only writes still matching this call's completed bytes.
-            # Partial writes and concurrent edits remain visible for recovery.
-            for relative, expected, old, mode in reversed(completed):
+        except (OSError, RuntimeError, KeyboardInterrupt) as exc:
+            # A primitive may publish then fail before returning confirmation,
+            # including ordinary I/O errors. Never break a new/unknown pair.
+            try:
+                rollback_safe = _existing(_target(root, MANIFEST_PATH)) == original_receipt
+            except (OSError, RuntimeError):
+                rollback_safe = False
+            if not rollback_safe:
+                if isinstance(exc, KeyboardInterrupt):
+                    raise
+                raise RuntimeError("setup write failed; receipt changed or could not be verified; files retained for inspection before retrying") from exc
+            # Rollback needs confirmed publication identity and unchanged bytes.
+            # This is not atomic conditional unlink against arbitrary editors.
+            for relative, expected, old, mode, identity in reversed(completed):
                 try:
                     target = _target(root, relative)
+                    if old is None and (relative not in created or not _recovery_owned(target, created[relative])):
+                        continue
+                    if old is not None and not _recovery_owned(target, identity):
+                        continue
                     if _existing(target) == expected:
                         if old is None:
-                            target.unlink()
+                            if _recovery_owned(target, created[relative]):
+                                target.unlink()
                         else:
-                            _replace(root, relative, old, expected, mode)
+                            _replace(root, relative, old, expected, mode, None, identity)
                 except (OSError, RuntimeError):
                     continue
+            if isinstance(exc, KeyboardInterrupt):
+                raise
             raise RuntimeError("setup write failed; unchanged completed writes were rolled back where possible; inspect the target before retrying") from exc
     return _report(root, client, files, warnings, include_content, receipt, applied=True, upgrade=upgrade)

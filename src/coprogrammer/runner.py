@@ -148,8 +148,11 @@ def _run(path: Path, cwd: Path, session: str, command: list[str], *, apply: bool
     sessions, _ = co.reconstruct(load_events(path))
     for recipient in recipients:
         co.identity(recipient)
+        if recipient == session:
+            raise RuntimeError("notify must address another session")
         if recipient not in sessions:
             raise RuntimeError("unknown notification recipient")
+        co._session(sessions, recipient)
     if not apply:
         return {"format": "coprogrammer.runner.v1", "applied": False,
                 "command_sha256": fingerprint, "boundary": worker.step(path, cwd, session)}
@@ -170,21 +173,24 @@ def _run(path: Path, cwd: Path, session: str, command: list[str], *, apply: bool
         if not inbox_mode and boundary["state"] not in ("claimed", "working"):
             return report
         task = boundary["task"]
+        prelaunch_check = None
         if protect_retry:
             from . import retry_guard
             conflict = retry_guard.begin(run_tx, cwd, session, task, boundary["state"] == "claimed")
             if conflict:
                 report.update(state="attention", reason=conflict[0], next_step=conflict[1], claim_retained=True)
                 return report
+            started_content = run_tx.pending[-1]["payload"]["content_sha256"]
+            prelaunch_check = lambda: retry_guard.check_launch(cwd, started_content)
         result = _invoke(path, cwd, session, command, timeout, notify, observed,
-                         workspace, boundary, report, inbox_mode)
-        if protect_retry:
+                         workspace, boundary, report, inbox_mode, prelaunch_check=prelaunch_check)
+        if protect_retry and result.get("reason") != "retry_prelaunch_content_changed":
             retry_guard.finish(run_tx, cwd, session, task)
         return result
 
 
 def _invoke(path, cwd, session, command, timeout, notify, observed,
-            workspace, boundary, report, inbox_mode):
+            workspace, boundary, report, inbox_mode, *, prelaunch_check=None):
     from .scheduler_cli import working_files
     task = boundary["task"]
     payload = {"format": "coprogrammer.harness-task.v1", "kind": "inbox" if inbox_mode else "task", "workspace": workspace,
@@ -200,6 +206,11 @@ def _invoke(path, cwd, session, command, timeout, notify, observed,
     # Output is never echoed or saved to Manager events. Limit parsing to a
     # bounded slice; temporary files permit noisy trusted tools without pipe deadlocks.
     with tempfile.TemporaryFile() as output:
+        if prelaunch_check is not None:
+            conflict = prelaunch_check()
+            if conflict:
+                report.update(state="attention", reason=conflict[0], next_step=conflict[1], claim_retained=True)
+                return report
         process = None
         try:
             observed.update(phase="launching", launched=None, cleanup_status="unknown")

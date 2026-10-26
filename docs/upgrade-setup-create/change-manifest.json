@@ -1,0 +1,9 @@
+{
+  "task": "Publish new setup files without partial final writes",
+  "intent": "Keep incomplete writes off final paths and preserve newer replacement files during rollback",
+  "scope": "tooling | tests | docs",
+  "core_changes": ["Same-directory staged new-file creation", "Atomic no-replace publication", "Identity and content checks before rollback deletion"],
+  "contracts": [],
+  "tests": ["Failing baseline partial-write and rollback-ownership regressions", "Focused setup and full offline unittest", "Configuration, manifest and JSON/YAML validation", "Independent review of local commit"],
+  "risks": ["Filesystems without hard-link support fail closed", "External changes after rollback observations remain a race", "Multi-file installation is not an atomic transaction", "Existing-file update path remains unchanged"]
+}

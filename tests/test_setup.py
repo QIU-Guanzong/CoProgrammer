@@ -182,12 +182,12 @@ class ProjectSetupTest(unittest.TestCase):
         self.assertFalse((self.root / "AGENTS.md").exists())
 
     def test_failed_late_write_rolls_back_created_files(self):
-        original = Path.open
-        def fail(target, mode="r", *args, **kwargs):
-            if target.name == ".mcp.json" and mode == "xb":
+        original = setup.os.link
+        def fail(source, target, *args, **kwargs):
+            if Path(target).name == ".mcp.json":
                 raise OSError("simulated write failure")
-            return original(target, mode, *args, **kwargs)
-        with patch.object(Path, "open", fail), self.assertRaisesRegex(RuntimeError, "rolled back"):
+            return original(source, target, *args, **kwargs)
+        with patch.object(setup.os, "link", fail), self.assertRaisesRegex(RuntimeError, "rolled back"):
             setup.apply(self.root, "claude")
         self.assertFalse((self.root / "AGENTS.md").exists())
         self.assertFalse(any(self.root.rglob("SKILL.md")))

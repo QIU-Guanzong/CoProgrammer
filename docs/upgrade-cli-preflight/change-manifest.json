@@ -1,0 +1,9 @@
+{
+  "task": "Audit CLI preflight and reject closed notification targets",
+  "intent": "Avoid launching a harness for a notification target already known to be closed",
+  "scope": "tooling",
+  "core_changes": ["Reuse existing recipient session validation before claim/launch", "Cover missing input and read-only CLI boundaries"],
+  "contracts": [],
+  "tests": ["Closed target red/green", "Static invalid requests and dry-run snapshots", "Valid peer and unavailable-command compatibility", "Serial full and installed verification"],
+  "risks": ["Recipient state can change after preflight; finish still validates", "Runtime locking and Git inspection remain allowed", "Windows native execution unverified"]
+}

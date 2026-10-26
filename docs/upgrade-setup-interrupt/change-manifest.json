@@ -1,0 +1,9 @@
+{
+  "task": "Recover completed setup writes after a catchable interruption",
+  "intent": "Avoid stale receipt conflicts after Ctrl+C before receipt publication",
+  "scope": "tooling",
+  "core_changes": ["Reuse conditional rollback on KeyboardInterrupt while retaining interruption semantics", "Preserve completed writes when receipt publication is uncertain", "Synthetic interruption and explicit recovery regression tests"],
+  "contracts": [],
+  "tests": ["Focused setup interruption tests", "All setup tests", "Serial full unittest", "Config and manifest validation"],
+  "risks": ["Best-effort recovery cannot handle process kill or arbitrary external writes", "Interrupted receipt publication must preserve files for inspection", "Windows native signals remain unverified"]
+}

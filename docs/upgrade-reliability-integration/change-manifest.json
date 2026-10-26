@@ -1,0 +1,9 @@
+{
+  "task": "Integrate reviewed retry, setup recovery and foreground reliability fixes",
+  "intent": "Deliver the previously verified cumulative increment after PR11 and PR12 without changing its runtime bytes",
+  "scope": "tooling",
+  "core_changes": ["Protected retry prelaunch recheck", "Conservative setup creation and interruption recovery", "Preserve interrupted watch evidence and validate notification targets", "Clarify historical validation checkpoints"],
+  "contracts": [],
+  "tests": ["Verify candidate runtime/test identity against the full-suite accepted tree", "Validate integration manifest, config and JSON/YAML", "Independent cumulative diff and publication content review", "Verify remote base, tree and changed file blob identities"],
+  "risks": ["Filesystem observations are not atomic compare-and-swap or an editor lock", "Unconfirmed publication may require manual inspection", "Windows native signals remain unverified", "Technical review does not substitute for repository-required approval"]
+}

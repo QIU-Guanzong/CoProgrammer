@@ -1,0 +1,9 @@
+{
+  "task": "Retain interrupted runner observations in worker watch",
+  "intent": "Expose the current invocation's recovery evidence instead of a stale preview",
+  "scope": "tooling",
+  "core_changes": ["Carry existing RunInterrupted report into watch last", "Document unchanged counters and watch exit behavior"],
+  "contracts": [],
+  "tests": ["Deterministic interruption propagation", "Actual synthetic CLI SIGINT", "Idle interruption compatibility", "Serial full and installed regression"],
+  "risks": ["Unknown Manager outcomes still require inspection", "Watch historical exit code remains unchanged", "Windows native signals unverified"]
+}

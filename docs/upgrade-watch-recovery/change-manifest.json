@@ -1,0 +1,9 @@
+{
+  "task": "Verify recovery consumers and reject invalid self notifications early",
+  "intent": "Prevent a known-invalid finish request from launching a side-effecting harness",
+  "scope": "tooling",
+  "core_changes": ["Reuse existing self-notification rejection at runner preflight", "Cover durable-state inspection and repeated watch startup"],
+  "contracts": [],
+  "tests": ["Finish and ACK before/after commit recovery", "CLI self-notify red/green", "Serial regression and installed verification"],
+  "risks": ["Uncommitted work can rerun on a new explicit invocation", "Unknown outcomes require durable inspection", "Windows native execution unverified"]
+}
