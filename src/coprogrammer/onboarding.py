@@ -118,17 +118,35 @@ def _line(value: str) -> str:
 
 def render_start(report: dict) -> str:
     verb = "resumed" if report["operation"] == "resume" else "registered"
-    lines = ["CoProgrammer — Teamwork for coding agents", "",
-             f"Window: {report['session']} ({report['client']})",
-             f"Branch: {_line(report['workspace']['branch'])}",
-             f"Session: {verb}" if report["applied"] else
-             "Blocked: resolve project setup conflicts before registration" if report["blocked"] else
-             f"Preview: would {report['operation']} this window",
-             f"Client setup: {report['setup']['missing']} missing files, {len(report['setup']['conflicts'])} conflicts",
-             "", "Next:", f"  coprogrammer status --session {report['session']}",
-             f"  coprogrammer setup --client {report['client']} --include-content",
-             "", "Review generated files before scoped tasks. Commit them or deliberately ignore local setup files; keep .coprogrammer/ out of commits.",
-             report["note"]]
+    action = "resuming" if report["operation"] == "resume" else "registration"
+    setup_report = report["setup"]
+    status = (f"Session: {verb}" if report["applied"] else
+              f"Blocked: resolve project setup conflicts before {action}" if report["blocked"] else
+              f"Preview: would {report['operation']} this window")
+    setup_status = ("Client setup: applied" if setup_report["applied"] else
+                    "Client setup: not applied" if report["blocked"] else
+                    f"Client setup plan: {setup_report['missing']} missing files, "
+                    f"{setup_report['updates']} updates, {len(setup_report['conflicts'])} conflicts")
+    lines = [status, f"Window: {report['session']} ({report['client']})",
+             f"Branch: {_line(report['workspace']['branch'])}", setup_status]
+    if setup_report["conflicts"]:
+        lines.append("Conflicts: " + ", ".join(_line(path) for path in setup_report["conflicts"]))
+    lines.extend(["", "Next:"])
+    if report["applied"]:
+        lines.append(f"  coprogrammer status --session {report['session']}")
+    if not setup_report["applied"]:
+        upgrade = " --upgrade" if "files" in setup_report else ""
+        lines.append(f"  coprogrammer setup --client {report['client']}{upgrade} --include-content")
+    if report["blocked"]:
+        lines.append("Resolve the listed conflicts before rerunning the start command.")
+    elif not report["applied"]:
+        lines.append("Run the reviewed start command without --dry-run to register or resume this window.")
+    elif setup_report["applied"]:
+        lines.append("Reload the client and complete its normal project/MCP trust flow.")
+    lines.extend(["", "Review project files before scoped tasks; keep .coprogrammer/ out of commits.",
+                  "No coding client or model was started."])
+    if "files" in setup_report:
+        lines.append("File installation and session registration are separate operations; inspect files after a failure.")
     return "\n".join(lines) + "\n"
 
 
