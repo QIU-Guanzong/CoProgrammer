@@ -1,0 +1,19 @@
+{
+  "task": "Clarify first-use CLI results and requirements",
+  "intent": "Avoid stale missing-file counts and unusable next-step commands",
+  "scope": "tooling",
+  "core_changes": [
+    "State-aware human start output",
+    "Existing design/localization/first-use documentation aligned with runtime"
+  ],
+  "contracts": [],
+  "tests": [
+    "Three failing baseline CLI regressions",
+    "Onboarding and foreground suites",
+    "Full unittest/config/manifest validation"
+  ],
+  "risks": [
+    "Human screen text changes; automation must use existing JSON contracts",
+    "No full CLI localization or native connectivity validation"
+  ]
+}

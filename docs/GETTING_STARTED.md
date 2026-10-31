@@ -47,7 +47,12 @@ Each window needs a unique session ID. A repeated start reports the existing
 identity instead of silently replacing it. To refresh this same window after a
 break, explicitly run `coprogrammer start --client codex --session codex-api
 --resume`. Start uses the existing session events; its default five-minute
-freshness is unchanged. It never creates Skills or MCP configuration.
+freshness is unchanged. By default, start previews Skills and MCP configuration
+without installing them. To install/refresh unchanged recorded project files
+before registration, preview with `--apply-setup --dry-run`, then remove
+`--dry-run` after review. Setup conflicts block registration or resume; inspect
+them with `coprogrammer setup --client codex --upgrade --include-content`.
+See [foreground setup](FOREGROUND_WORKERS.md) for the combined workflow.
 Blocked/closed sessions, another client/worktree and a branch that differs
 from an active claim require reconciliation instead of automatic recovery.
 Task labels cannot change through resume while the window owns a claim.

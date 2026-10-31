@@ -14,6 +14,10 @@ add a regression that exercises the failure through a real checkout or server.
 Open a [GitHub issue](https://github.com/QIU-Guanzong/CoProgrammer/issues) for
 questions with a minimal reproduction; remove credentials and private source.
 
+See [current product requirements and CLI flow](docs/MVP_DESIGN.md#current-product-requirements-and-cli-design)
+and [product wording rules](docs/LOCALIZATION.md#product-wording-and-model-generated-text)
+when changing user-facing output or installation guidance.
+
 ## Development Rules
 
 1. Keep protocol changes, tool changes, dependency upgrades, and formatting-only

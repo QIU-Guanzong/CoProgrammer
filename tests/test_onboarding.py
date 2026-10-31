@@ -199,3 +199,44 @@ class OnboardingTests(Fixture):
                                     env=env, capture_output=True, timeout=20)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn(expected, result.stdout.decode("utf-8"))
+
+    def test_start_guidance_applied_setup_reports_result_then_valid_status(self):
+        code, text = self.call('start', '--client', 'claude', '--session', 'new-window', '--apply-setup')
+        self.assertEqual(code, 0)
+        self.assertNotIn('missing files', text)
+        self.assertTrue(text.startswith('Session: registered'))
+        self.assertIn('Client setup: applied', text)
+        self.assertIn('coprogrammer status --session new-window', text)
+        status, _ = self.call('status', '--session', 'new-window')
+        self.assertEqual(status, 0)
+        self.assertTrue((self.repo / '.mcp.json').exists())
+
+    def test_start_guidance_preview_does_not_send_user_to_unknown_session(self):
+        before = list(self.repo.rglob('*'))
+        code, text = self.call('start', '--client', 'claude', '--session', 'preview-window',
+                               '--apply-setup', '--dry-run')
+        self.assertEqual(code, 0)
+        self.assertIn('Preview: would register', text)
+        self.assertNotIn('coprogrammer status --session preview-window', text)
+        self.assertIn('Run the reviewed start command without --dry-run', text)
+        self.assertEqual(before, list(self.repo.rglob('*')))
+
+    def test_start_guidance_conflict_shows_path_and_preserves_registration_state(self):
+        (self.repo / '.mcp.json').write_text('Private configuration marker')
+        for resume in (False, True):
+            if resume:
+                self.call('start', '--client', 'claude', '--session', 'blocked-window')
+            before = load_events(self.path)
+            args = ['start', '--client', 'claude', '--session', 'blocked-window', '--apply-setup']
+            if resume:
+                args.append('--resume')
+            code, text = self.call(*args)
+            self.assertEqual(code, 1)
+            self.assertIn('Conflicts: .mcp.json', text)
+            self.assertTrue(text.startswith('Blocked:'))
+            self.assertIn('resuming' if resume else 'registration', text)
+            self.assertIn('setup --client claude --upgrade --include-content', text)
+            self.assertNotIn('coprogrammer status --session blocked-window', text)
+            self.assertNotIn('Private configuration marker', text)
+            self.assertEqual(before, load_events(self.path))
+            self.assertEqual((self.repo / '.mcp.json').read_text(), 'Private configuration marker')
